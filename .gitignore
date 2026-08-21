@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+*.db
+*.sqlite3
+*.log
+scratch/
+.system_generated/
+patients/
+reports/
+exports/
+backups/
+LabSoft.zip
