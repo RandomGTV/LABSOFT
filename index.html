@@ -1159,7 +1159,7 @@ function verifyAndCompleteJob() {
   }
   activeJob.status = "ready";
   saveJobLocal();
-  openReportPreview(activeJob);
+  verifyAndCompleteJob();
 }
 
 /* --------------------------------------------------------------------------
@@ -1236,7 +1236,7 @@ function openReportPreview(job) {
   `;
 
   const content = `
-    <div class="report-page">
+    <div class="report-page" id="printable-report">
       ${letterheadHTML}
 
       <!-- Metadata Header Block -->
@@ -1306,16 +1306,55 @@ function openReportPreview(job) {
   document.getElementById("modal-body").innerHTML = content;
   document.getElementById("modal-footer").innerHTML = `
     <button class="btn p" onclick="window.print()">🖨️ Print / Save PDF</button>
-    <button class="btn" onclick="sendWhatsAppDemo('${job.mobile}', '${job.report_no}', '${job.name}')">📱 WhatsApp Dispatch</button>
+    <button class="btn go" onclick="openWhatsAppDispatchModal(jobs.find(x=>x.id==='${job.id}')||activeJob)">📱 WhatsApp Dispatch</button>
     <button class="btn" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
   document.getElementById("modal").classList.add("show");
 }
 
-function sendWhatsAppDemo(phone, repNo, name) {
-  const msg = `Dear ${name},\nYour clinical test report from New Mithra Medical Laboratory (Report No: ${repNo}) is ready for download.\nThank you for choosing New Mithra Laboratory!`;
-  const url = `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`;
-  window.open(url, "_blank");
+function openWhatsAppDispatchModal(job) {
+  const fileName = `Report_${job.report_no}_${job.name.replace(/\s+/g, '_')}.pdf`;
+  const msg = `Dear ${job.name} .${job.initial}.,\n\nYour clinical diagnostic report from *New Mithra Medical Laboratory* (Report No: *${job.report_no}*) is ready.\n\n*Tests:* ${job.tests.map(c => TESTS[c]?.n || c).join(", ")}\n\nThank you for choosing New Mithra Medical Laboratory!`;
+  const cleanPhone = job.mobile.replace(/\D/g, "");
+  const targetPhone = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
+  const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`;
+
+  const content = `
+    <div style="padding:10px 14px;">
+      <div style="background:#075E54; color:#FFF; padding:14px 18px; border-radius:8px; display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+        <span style="font-size:28px;">📱</span>
+        <div>
+          <h3 style="margin:0; color:#FFF; font-size:16px;">WhatsApp Report Dispatch</h3>
+          <div style="font-size:12px; color:#E0F2F1;">Sending to: <b>+${targetPhone}</b> (${job.name} .${job.initial}.)</div>
+        </div>
+      </div>
+
+      <fieldset>
+        <legend>Message Preview</legend>
+        <textarea style="width:100%; height:110px; font-size:12.5px; background:var(--panel);" id="wa-msg-edit">${msg}</textarea>
+      </fieldset>
+
+      <div style="background:#F0F6FC; border:1px solid #CCDDF0; border-left:4px solid #0E4D92; border-radius:6px; padding:12px 16px; margin-bottom:16px; font-size:12.5px; color:#141719;">
+        <b style="color:#0E4D92;">How to send PDF on WhatsApp:</b>
+        <ol style="margin:6px 0 0 18px; padding:0; line-height:1.5;">
+          <li>Click <b>"1. Save / Download PDF Report"</b> (or press Ctrl+P → Save as PDF).</li>
+          <li>Click <b>"2. Open WhatsApp Web"</b> to open the patient's chat with the message.</li>
+          <li>In WhatsApp, press <b>Ctrl + V</b> or drag & drop the saved PDF into the chat window to send!</li>
+        </ol>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn p" onclick="window.print()">📥 1. Save / Download PDF Report</button>
+        <a class="btn go" href="${waUrl}" target="_blank" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">💬 2. Open WhatsApp Web (Chat) ↗</a>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("modal-title").textContent = `WhatsApp Dispatch — Job #${job.report_no}`;
+  document.getElementById("modal-body").innerHTML = content;
+  document.getElementById("modal-footer").innerHTML = `
+    <button class="btn" style="margin-left:auto;" onclick="closeModal()">Close</button>
+  `;
 }
 
 function openBillModal() {
