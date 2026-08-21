@@ -181,7 +181,7 @@
   }
   .req-star { color: #E5484D; font-weight: bold; font-size: 13px; }
 
-  input[type=text], input[type=number], select {
+  input[type=text], input[type=number], input[type=password], select {
     background: var(--panel);
     border: 1px solid #88929B;
     border-radius: 5px;
@@ -329,6 +329,35 @@
     border-radius: 0 0 10px 10px;
   }
 
+  /* Login Screen Card */
+  .login-card {
+    max-width: 440px;
+    margin: 40px auto;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 28px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, .15);
+    text-align: center;
+  }
+  .pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 240px;
+    margin: 16px auto 0;
+  }
+  .pin-btn {
+    padding: 14px;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--brand-soft);
+    color: var(--brand-dark);
+  }
+  .pin-btn:hover { background: var(--brand-edge); }
+
   /* Printable Report Page Simulation (A4) */
   .report-page {
     width: 210mm;
@@ -466,40 +495,8 @@
 </head>
 <body>
 
-<div class="app">
-  <!-- Titlebar with Author Credit & Online Tester Tag -->
-  <div class="titlebar">
-    <div class="dot"></div>
-    <b>LabSoft</b> — New Mithra Medical Laboratory
-    <span class="author-badge" onclick="showAbout()">Author: RANDOM_GTV ⓘ</span>
-    <span class="online-test-tag">Online Client Testing Edition</span>
-  </div>
-
-  <!-- Navigation Tabs -->
-  <div class="tabs">
-    <button class="tab on" id="tab-btn-job" onclick="setTab('job')">Job</button>
-    <button class="tab" id="tab-btn-queue" onclick="setTab('queue')">Work Queue</button>
-    <button class="tab" id="tab-btn-patients" onclick="setTab('patients')">Patients</button>
-    <button class="tab" id="tab-btn-doctors" onclick="setTab('doctors')">Doctors</button>
-    <button class="tab" id="tab-btn-tests" onclick="setTab('tests')">Tests Catalog</button>
-    <button class="tab" id="tab-btn-billing" onclick="setTab('billing')">Billing</button>
-    <button class="tab" id="tab-btn-settings" onclick="setTab('settings')">Settings</button>
-  </div>
-
-  <!-- Main Screen Container -->
-  <main id="app-main">
-    <!-- Dynamic Tab Content Rendered via JS -->
-  </main>
-
-  <!-- Status Bar -->
-  <div class="statusbar">
-    <span id="st-counts">Today: <b>4</b> &nbsp;·&nbsp; Pending results: <b>0</b> &nbsp;·&nbsp; Ready to send: <b>4</b></span>
-    <div class="right">
-      <span>Database: <b>Client Test Mode (Active)</b> ✓</span>
-      <a onclick="showAbout()">ⓘ About LabSoft</a>
-      <a onclick="toggleTheme()" id="theme-btn">🌙 Dark Mode</a>
-    </div>
-  </div>
+<div class="app" id="app-root">
+  <!-- Dynamic App / Login Layout -->
 </div>
 
 <!-- Modal Dialog (For Report Preview, Billing Receipt, About Dialog) -->
@@ -518,7 +515,7 @@
 
 <script>
 /* ==========================================================================
-   LabSoft Web App Engine — by RANDOM_GTV
+   LabSoft Web App Engine — by RANDOM_GTV (Fresh Clean Edition with Login)
    ========================================================================== */
 
 const AUTHOR = "RANDOM_GTV";
@@ -552,70 +549,50 @@ const PANELS = {
   "Thyroid Profile": ["T3", "T4", "TSH"]
 };
 
-// Initial state
+// Staff accounts
+const STAFF_ACCOUNTS = [
+  { username: "admin", name: "Administrator", role: "Admin", pin: "1598" },
+  { username: "saheed", name: "SAHEED MOHAMED. P.", role: "Technologist", pin: "1598" },
+  { username: "reception", name: "Front Desk Staff", role: "Staff", pin: "1598" }
+];
+
+// Clean state (no hardcoded old test jobs)
 let currentTab = "job";
 let currentTheme = localStorage.getItem("labsoft_theme") || "light";
 let letterheadStyle = localStorage.getItem("labsoft_lh") || "classic";
+let currentUser = JSON.parse(sessionStorage.getItem("labsoft_user") || "null");
 
-let jobs = JSON.parse(localStorage.getItem("labsoft_jobs") || "null") || [
-  {
-    id: 1,
-    report_no: "51365",
-    date: "21-08-2026",
-    collected_at: "21-08-2026 01:11 PM",
-    reported_at: "21-08-2026 01:11 PM",
-    name: "ashik",
-    initial: "H",
-    mobile: "6282378262",
+let jobs = JSON.parse(localStorage.getItem("labsoft_jobs_v2") || "[]");
+
+let activeJob = createEmptyJob();
+
+function createEmptyJob() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-GB").replace(/\//g, "-");
+  const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const nextNo = String(51360 + jobs.length);
+
+  return {
+    id: Date.now(),
+    report_no: nextNo,
+    date: dateStr,
+    collected_at: `${dateStr} ${timeStr}`,
+    reported_at: `${dateStr} ${timeStr}`,
+    name: "",
+    initial: "M",
+    mobile: "",
     sex: "Male",
     age: 30,
     age_unit: "Years",
     referrer: "Self",
-    tests: ["GLU_F", "GLU_PP"],
-    results: { GLU_F: "105", GLU_PP: "128" },
-    status: "ready",
-    bill_paid: 120
-  },
-  {
-    id: 2,
-    report_no: "51367",
-    date: "21-08-2026",
-    collected_at: "21-08-2026 02:30 PM",
-    reported_at: "21-08-2026 02:35 PM",
-    name: "ashik",
-    initial: "G",
-    mobile: "6282378262",
-    sex: "Male",
-    age: 41,
-    age_unit: "Years",
-    referrer: "Self",
     tests: ["HBA1C", "EAG"],
-    results: { HBA1C: "10.5", EAG: "255" },
-    status: "ready",
-    bill_paid: 450
-  }
-];
-
-let activeJob = {
-  id: Date.now(),
-  report_no: "51368",
-  date: "21-08-2026",
-  collected_at: "21-08-2026 02:40 PM",
-  reported_at: "21-08-2026 02:45 PM",
-  name: "FARAS",
-  initial: "M",
-  mobile: "9526677311",
-  sex: "Male",
-  age: 28,
-  age_unit: "Years",
-  referrer: "Self",
-  tests: ["HBA1C", "EAG"],
-  results: { HBA1C: "6.8", EAG: "148" },
-  status: "draft"
-};
+    results: {},
+    status: "draft"
+  };
+}
 
 function saveState() {
-  localStorage.setItem("labsoft_jobs", JSON.stringify(jobs));
+  localStorage.setItem("labsoft_jobs_v2", JSON.stringify(jobs));
   localStorage.setItem("labsoft_theme", currentTheme);
   localStorage.setItem("labsoft_lh", letterheadStyle);
 }
@@ -623,10 +600,12 @@ function saveState() {
 function applyTheme() {
   if (currentTheme === "dark") {
     document.body.classList.add("dark");
-    document.getElementById("theme-btn").textContent = "☀️ Light Mode";
+    const tb = document.getElementById("theme-btn");
+    if (tb) tb.textContent = "☀️ Light Mode";
   } else {
     document.body.classList.remove("dark");
-    document.getElementById("theme-btn").textContent = "🌙 Dark Mode";
+    const tb = document.getElementById("theme-btn");
+    if (tb) tb.textContent = "🌙 Dark Mode";
   }
 }
 
@@ -657,10 +636,105 @@ function getLogoSVG() {
 }
 
 /* --------------------------------------------------------------------------
-   Render Functions
+   Auth & Login System
+   -------------------------------------------------------------------------- */
+
+let enteredPIN = "";
+
+function loginWithPIN(pin) {
+  const user = STAFF_ACCOUNTS.find(u => u.pin === pin);
+  if (user) {
+    currentUser = user;
+    sessionStorage.setItem("labsoft_user", JSON.stringify(user));
+    enteredPIN = "";
+    render();
+  } else {
+    alert("Incorrect PIN. Default PIN is 1598.");
+    enteredPIN = "";
+    updatePinDisplay();
+  }
+}
+
+function appendPIN(digit) {
+  if (enteredPIN.length < 4) {
+    enteredPIN += digit;
+    updatePinDisplay();
+    if (enteredPIN.length === 4) {
+      setTimeout(() => loginWithPIN(enteredPIN), 150);
+    }
+  }
+}
+
+function clearPIN() {
+  enteredPIN = "";
+  updatePinDisplay();
+}
+
+function updatePinDisplay() {
+  const el = document.getElementById("pin-display");
+  if (el) {
+    el.value = "● ".repeat(enteredPIN.length).trim();
+  }
+}
+
+function signOut() {
+  currentUser = null;
+  sessionStorage.removeItem("labsoft_user");
+  enteredPIN = "";
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Main Render Router
    -------------------------------------------------------------------------- */
 
 function render() {
+  const root = document.getElementById("app-root");
+  applyTheme();
+
+  if (!currentUser) {
+    renderLoginScreen(root);
+    return;
+  }
+
+  const pending = jobs.filter(j => j.status !== 'ready' && j.status !== 'sent').length;
+  const ready = jobs.filter(j => j.status === 'ready').length;
+
+  root.innerHTML = `
+    <!-- Titlebar with Author Credit & Online Tester Tag -->
+    <div class="titlebar">
+      <div class="dot"></div>
+      <b>LabSoft</b> — New Mithra Medical Laboratory
+      <span class="author-badge" onclick="showAbout()">Author: RANDOM_GTV ⓘ</span>
+      <span class="online-test-tag">Online Client Testing Edition</span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <button class="tab ${currentTab==='job'?'on':''}" id="tab-btn-job" onclick="setTab('job')">Job</button>
+      <button class="tab ${currentTab==='queue'?'on':''}" id="tab-btn-queue" onclick="setTab('queue')">Work Queue (${jobs.length})</button>
+      <button class="tab ${currentTab==='patients'?'on':''}" id="tab-btn-patients" onclick="setTab('patients')">Patients</button>
+      <button class="tab ${currentTab==='doctors'?'on':''}" id="tab-btn-doctors" onclick="setTab('doctors')">Doctors</button>
+      <button class="tab ${currentTab==='tests'?'on':''}" id="tab-btn-tests" onclick="setTab('tests')">Tests Catalog</button>
+      <button class="tab ${currentTab==='billing'?'on':''}" id="tab-btn-billing" onclick="setTab('billing')">Billing</button>
+      <button class="tab ${currentTab==='settings'?'on':''}" id="tab-btn-settings" onclick="setTab('settings')">Settings</button>
+    </div>
+
+    <!-- Main Screen Container -->
+    <main id="app-main"></main>
+
+    <!-- Status Bar -->
+    <div class="statusbar">
+      <span id="st-counts">Total Jobs: <b>${jobs.length}</b> &nbsp;·&nbsp; Pending: <b>${pending}</b> &nbsp;·&nbsp; Ready: <b>${ready}</b></span>
+      <div class="right">
+        <span>Logged in: <b style="color:var(--brand);">${currentUser.name} (${currentUser.role})</b></span>
+        <a onclick="signOut()" style="color:var(--red);">Sign Out</a>
+        <a onclick="showAbout()">ⓘ About</a>
+        <a onclick="toggleTheme()" id="theme-btn">${currentTheme==='dark'?'☀️ Light Mode':'🌙 Dark Mode'}</a>
+      </div>
+    </div>
+  `;
+
   const main = document.getElementById("app-main");
   if (currentTab === "job") renderJobScreen(main);
   else if (currentTab === "queue") renderQueueScreen(main);
@@ -670,6 +744,54 @@ function render() {
   else if (currentTab === "billing") renderBillingScreen(main);
   else if (currentTab === "settings") renderSettingsScreen(main);
 }
+
+/* --------------------------------------------------------------------------
+   Login Screen
+   -------------------------------------------------------------------------- */
+
+function renderLoginScreen(container) {
+  container.innerHTML = `
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px;">
+      <div class="login-card">
+        <div style="margin-bottom:16px;">
+          ${getLogoSVG()}
+          <h2 style="margin:8px 0 2px; color:var(--brand); font-size:22px;">LabSoft</h2>
+          <div style="color:var(--ink3); font-size:12px; font-weight:600;">NEW MITHRA MEDICAL LABORATORY</div>
+          <div style="color:var(--brand-cyan); font-size:10px; font-weight:700; letter-spacing:1px; margin-top:2px;">ACCURACY • CARE • TRUST</div>
+        </div>
+
+        <div style="background:var(--brand-soft); border:1px solid var(--brand-edge); border-radius:8px; padding:12px; margin-bottom:18px;">
+          <div style="font-size:12px; font-weight:700; color:var(--brand-dark); margin-bottom:4px;">Enter Staff PIN to Sign In</div>
+          <input type="text" id="pin-display" readonly placeholder="Enter 4-digit PIN" style="font-size:22px; text-align:center; letter-spacing:6px; font-weight:800; background:var(--panel);">
+          <div style="font-size:11px; color:var(--ink3); margin-top:6px;">Default PIN: <b>1598</b></div>
+        </div>
+
+        <div class="pin-pad">
+          <button class="pin-btn" onclick="appendPIN('1')">1</button>
+          <button class="pin-btn" onclick="appendPIN('2')">2</button>
+          <button class="pin-btn" onclick="appendPIN('3')">3</button>
+          <button class="pin-btn" onclick="appendPIN('4')">4</button>
+          <button class="pin-btn" onclick="appendPIN('5')">5</button>
+          <button class="pin-btn" onclick="appendPIN('6')">6</button>
+          <button class="pin-btn" onclick="appendPIN('7')">7</button>
+          <button class="pin-btn" onclick="appendPIN('8')">8</button>
+          <button class="pin-btn" onclick="appendPIN('9')">9</button>
+          <button class="pin-btn" style="color:var(--red);" onclick="clearPIN()">C</button>
+          <button class="pin-btn" onclick="appendPIN('0')">0</button>
+          <button class="pin-btn" style="background:var(--brand); color:#FFF;" onclick="loginWithPIN(enteredPIN||'1598')">↵</button>
+        </div>
+
+        <div style="margin-top:22px; padding-top:14px; border-top:1px solid var(--line2); font-size:11.5px; color:var(--ink3);">
+          <b>LabSoft v1.0.0</b> &nbsp;·&nbsp; Developed by <b>${AUTHOR}</b>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* --------------------------------------------------------------------------
+   Job Screen
+   -------------------------------------------------------------------------- */
 
 function renderJobScreen(container) {
   let testsHTML = activeJob.tests.map(code => {
@@ -698,11 +820,11 @@ function renderJobScreen(container) {
 
   const total = activeJob.tests.length;
   const done = activeJob.tests.filter(c => activeJob.results[c]).length;
-  const ready = total > 0 && done === total;
+  const ready = total > 0 && done === total && activeJob.name.trim() && activeJob.mobile.trim() && activeJob.sex.trim();
 
   container.innerHTML = `
     <div style="display:flex; align-items:center; margin-bottom:14px;">
-      <h1 style="font-size:18px; margin:0;">Job — ${activeJob.name} .${activeJob.initial}.</h1>
+      <h1 style="font-size:18px; margin:0;">Job — ${activeJob.name ? activeJob.name + ' .' + activeJob.initial + '.' : 'New Patient Registration'}</h1>
       <span style="color:var(--ink3); margin-left:14px; font-size:12px;">Report No: <b>${activeJob.report_no}</b></span>
       <span class="pill ${ready?'p-ready':'p-draft'}" style="margin-left:auto;">${ready?'Ready to send':'Draft / In Progress'}</span>
     </div>
@@ -861,27 +983,15 @@ function searchTestQuick(term) {
 }
 
 function newJob() {
-  activeJob = {
-    id: Date.now(),
-    report_no: String(parseInt(jobs[jobs.length - 1]?.report_no || "51368") + 1),
-    date: "21-08-2026",
-    collected_at: "21-08-2026 03:00 PM",
-    reported_at: "21-08-2026 03:05 PM",
-    name: "",
-    initial: "M",
-    mobile: "",
-    sex: "Male",
-    age: 30,
-    age_unit: "Years",
-    referrer: "Self",
-    tests: ["GLU_F", "GLU_PP"],
-    results: {},
-    status: "draft"
-  };
+  activeJob = createEmptyJob();
   render();
 }
 
 function saveJobLocal() {
+  if (!activeJob.name.trim()) {
+    alert("Please enter patient name.");
+    return;
+  }
   let idx = jobs.findIndex(j => j.id === activeJob.id);
   if (idx >= 0) jobs[idx] = JSON.parse(JSON.stringify(activeJob));
   else jobs.push(JSON.parse(JSON.stringify(activeJob)));
@@ -890,6 +1000,10 @@ function saveJobLocal() {
 }
 
 function verifyAndCompleteJob() {
+  if (!activeJob.name.trim() || !activeJob.mobile.trim() || !activeJob.sex.trim()) {
+    alert("Name, Mobile and Sex are required to produce the clinical report.");
+    return;
+  }
   activeJob.status = "ready";
   saveJobLocal();
   openReportPreview(activeJob);
@@ -1127,6 +1241,19 @@ function closeModal() {
    -------------------------------------------------------------------------- */
 
 function renderQueueScreen(container) {
+  if (jobs.length === 0) {
+    container.innerHTML = `
+      <h1 style="font-size:18px; margin-bottom:14px;">Work Queue</h1>
+      <div style="text-align:center; padding:50px; color:var(--ink3); background:var(--brand-soft); border:1px solid var(--brand-edge); border-radius:8px;">
+        <div style="font-size:32px; margin-bottom:8px;">📋</div>
+        <div style="font-weight:700; font-size:15px; color:var(--brand-dark);">Work Queue is Empty</div>
+        <p style="font-size:13px; margin-top:4px;">No patient jobs registered yet. Click on the <b>Job</b> tab to create your first patient report.</p>
+        <button class="btn p" onclick="setTab('job')">Register First Patient</button>
+      </div>
+    `;
+    return;
+  }
+
   container.innerHTML = `
     <h1 style="font-size:18px; margin-bottom:14px;">Work Queue</h1>
     <table>
@@ -1161,6 +1288,14 @@ function renderQueueScreen(container) {
 }
 
 function renderPatientsScreen(container) {
+  if (jobs.length === 0) {
+    container.innerHTML = `
+      <h1 style="font-size:18px; margin-bottom:14px;">Patients Registry</h1>
+      <div style="text-align:center; padding:40px; color:var(--ink3);">No patient records found yet.</div>
+    `;
+    return;
+  }
+
   container.innerHTML = `
     <h1 style="font-size:18px; margin-bottom:14px;">Patients Registry</h1>
     <table>
@@ -1208,6 +1343,14 @@ function renderTestsScreen(container) {
 }
 
 function renderBillingScreen(container) {
+  if (jobs.length === 0) {
+    container.innerHTML = `
+      <h1 style="font-size:18px; margin-bottom:14px;">Billing & Counter Summary</h1>
+      <div style="text-align:center; padding:40px; color:var(--ink3);">No transactions recorded yet.</div>
+    `;
+    return;
+  }
+
   container.innerHTML = `
     <h1 style="font-size:18px; margin-bottom:14px;">Billing & Counter Summary</h1>
     <table>
@@ -1234,14 +1377,15 @@ function renderSettingsScreen(container) {
       <legend>About & Credits</legend>
       <p style="margin:0 0 10px; color:var(--ink2);">
         <b>LabSoft</b> v1.0.0 — Medical Diagnostic Laboratory Information System.<br>
-        <b>Author / Developer:</b> <span style="color:#0E4D92; font-weight:800;">RANDOM_GTV</span>
+        <b>Author / Developer:</b> <span style="color:#0E4D92; font-weight:800;">${AUTHOR}</span>
       </p>
       <button class="btn p" onclick="showAbout()">View About & Credits Dialog</button>
     </fieldset>
 
     <fieldset>
-      <legend>Testing Data Reset</legend>
-      <button class="btn" style="color:var(--red);" onclick="if(confirm('Reset test data to defaults?')){localStorage.clear(); location.reload();}">Reset Demo Data</button>
+      <legend>Clear Saved Client Data</legend>
+      <p style="margin:0 0 8px; font-size:12px; color:var(--ink3);">Reset all client testing data and start as a completely fresh lab:</p>
+      <button class="btn" style="color:var(--red);" onclick="if(confirm('Clear all saved test data and reset to fresh start?')){localStorage.removeItem('labsoft_jobs_v2'); sessionStorage.clear(); location.reload();}">Wipe & Reset Everything</button>
     </fieldset>
   `;
 }
