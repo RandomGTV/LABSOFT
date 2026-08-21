@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New Mithra — Report Template v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400&display=swap');
+  :root{
+    --red:#C1121F; --dark:#111; --cream:#F7F0DF; --line:#111;
+    --ink3:#7b848b; --panel:#fff; --bg:#eceff2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+       color:#141719;font-size:14px}
+  .wrap{max-width:1000px;margin:0 auto;padding:36px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px;letter-spacing:-.02em}
+  .sub{color:#7b848b;margin:0 0 34px;font-size:13.5px}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:#0f5c73;margin:0 0 4px;font-weight:700}
+  .cap{color:#4a5157;margin:0 0 16px;max-width:800px;font-size:13.5px}
+  section{margin-bottom:46px}
+  .ann{font-size:12.5px;color:#4a5157;margin-top:10px;padding-left:11px;border-left:2px solid #dfe4e8;max-width:820px}
+  .ann b{color:#141719}
+
+  /* ---------- A4 PAGE ---------- */
+  .page{width:794px;min-height:1123px;margin:0 auto;background:#fff;position:relative;
+        box-shadow:0 2px 4px rgba(16,24,40,.06),0 14px 40px rgba(16,24,40,.12);
+        font-family:'Tinos','Times New Roman',Times,serif;color:#111;
+        display:flex;flex-direction:column;overflow:hidden}
+  .page.scaled{transform:scale(.86);transform-origin:top center;margin-bottom:-150px}
+
+  /* letterhead */
+  .lhead{background:linear-gradient(90deg,#FBF6EA 0%,#F7EFDC 62%,#FDF9F1 100%);
+         border-bottom:1px solid #d8cfb8;padding:12px 20px 10px;display:flex;align-items:center;gap:16px;
+         position:relative;min-height:104px}
+  .emblem{width:74px;height:74px;border-radius:50%;flex:0 0 auto;
+          background:radial-gradient(circle at 50% 45%,#fff 0 46%,#C1121F 47% 100%);
+          border:2px solid #8f0c17;display:flex;align-items:center;justify-content:center;
+          font-size:9px;font-weight:700;color:#8f0c17;text-align:center;line-height:1.1;
+          font-family:Arial,sans-serif;padding:4px}
+  .lname{flex:0 0 auto}
+  .lname .pre{font:italic 700 19px 'Tinos',serif;color:#C1121F;line-height:.9;margin-left:2px}
+  .lname .main{font:800 46px Arial,Helvetica,sans-serif;color:#C1121F;letter-spacing:.02em;line-height:.95}
+  .lname .strip{background:#111;color:#fff;font:700 15px Arial,Helvetica,sans-serif;
+                letter-spacing:.13em;padding:2px 8px;display:inline-block;margin-top:3px}
+  .vr{width:1px;background:#b9ae93;align-self:stretch;margin:6px 4px}
+  .laddr{font:400 13px Arial,Helvetica,sans-serif;color:#222;line-height:1.5}
+  .arc{position:absolute;right:0;top:0;width:210px;height:104px;
+       background:radial-gradient(ellipse at 78% 40%,#8a8f96 0 34%,#c9ced4 35% 58%,#F7EFDC 59% 100%);
+       border-bottom-left-radius:130px 104px}
+  .arc::after{content:"lab photo";position:absolute;right:52px;top:44px;font:400 10px Arial;color:#5c6167}
+
+  /* meta block */
+  .rmeta{padding:12px 26px 6px;font-size:15.5px;line-height:1.9}
+  .rmeta .row{display:flex}
+  .rmeta .c1{width:46%}.rmeta .c2{width:27%}.rmeta .c3{width:27%}
+  .rmeta .k{display:inline-block;min-width:104px}
+  .rmeta .v{font-weight:700}
+  .rule{border-top:2px solid #111;border-bottom:1px solid #111;height:4px;margin:8px 26px 0}
+
+  /* table */
+  .tbl{width:100%;border-collapse:collapse;font-size:15px;margin-top:0}
+  .tbl th{font-weight:700;font-size:15.5px;padding:9px 0 9px;border-bottom:2px solid #111;
+          font-family:'Tinos',serif}
+  .tbl td{padding:3px 0}
+  .tw{padding:0 26px}
+  .c-desc{width:46%;text-align:left;padding-left:14px !important}
+  .c-obs{width:27%;text-align:center}
+  .c-norm{width:27%;text-align:center}
+  .grp{font-weight:700;padding-top:12px !important;padding-bottom:4px !important}
+  .flagup{color:#C1121F;font-weight:700}
+  .flagdn{color:#1a5fb4;font-weight:700}
+
+  .endr{text-align:center;font-size:13.5px;margin-top:34px;line-height:2}
+  .endr .b{font-weight:700}
+
+  /* watermark */
+  .wm{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
+      width:430px;height:430px;border-radius:50%;border:16px solid rgba(120,120,125,.09);
+      display:flex;align-items:center;justify-content:center;
+      font:700 24px Arial;color:rgba(120,120,125,.10);letter-spacing:.2em;text-align:center;
+      pointer-events:none}
+
+  /* signatures pinned to bottom */
+  .sigs{margin-top:auto;display:flex;justify-content:space-between;padding:0 30px 34px;font-size:14px}
+  .sigs .nm{font-weight:700;font-size:15px;letter-spacing:.01em}
+  .sigs .q{font-size:11px}
+  .sigs .rl{font-size:15px}
+  .sigs .right{text-align:right}
+  .scrawl{font:italic 700 22px 'Segoe Script','Brush Script MT',cursive;color:#1a3a8f;
+          transform:rotate(-6deg);margin-bottom:-2px;height:26px}
+
+  .blankhead{height:104px;border-bottom:1px dashed #c9ced4;display:flex;align-items:center;
+             justify-content:center;color:#9aa1a8;font:400 12px Arial;letter-spacing:.1em;
+             background:repeating-linear-gradient(45deg,#fafbfc 0 10px,#f4f6f8 10px 20px)}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  .lbl{font:700 11px Arial;text-transform:uppercase;letter-spacing:.08em;color:#0f5c73;margin:0 0 8px}
+  .mini{width:100%;background:#fff;border:1px solid #dfe4e8;border-radius:6px;padding:16px 18px;
+        font-family:'Tinos',serif;font-size:12px}
+  .mini .tbl{font-size:12px}
+  .mini .tbl th{font-size:12px;padding:6px 0}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .checklist{background:#fff;border:1px solid #dfe4e8;border-radius:8px;padding:16px 20px;font-size:13.5px}
+  .checklist li{margin-bottom:7px}
+  .yes{color:#1a7f4b;font-weight:700}
+  .new{color:#8a5a00;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Report template — matched to your New Mithra format</h1>
+<p class="sub">Serif type, three columns, units inline, watermark, signatories pinned to the page foot. Rebuilt from the photo you sent.</p>
+
+<section>
+<h2>Full-page print (software prints everything, plain paper)</h2>
+<p class="cap">Same layout and proportions as your current report. The logo and top-right photo below are rough stand-ins drawn in code — send me the real image files and they drop straight in.</p>
+
+<div class="page scaled">
+  <div class="lhead">
+    <div class="emblem">NEW<br>MITHRA<br>LAB</div>
+    <div class="lname">
+      <div class="pre">New</div>
+      <div class="main">MITHRA</div>
+      <div class="strip">MEDICAL LABORATORY</div>
+    </div>
+    <div class="vr"></div>
+    <div class="laddr">Chettiyankinar Road, Kuttippala,<br>Opp. Govt. Ayurveda Dispensary<br>
+      Ph : +91 81578 87311, 95266 77311<br>e-mail : mithralab12020@gmail.com</div>
+    <div class="arc"></div>
+  </div>
+
+  <div class="rmeta">
+    <div class="row"><div class="c1"><span class="k">Report No</span>: <span class="v">51358</span></div>
+      <div class="c2"></div><div class="c3"><span class="k">Date</span>: <span class="v">18-08-2026</span></div></div>
+    <div class="row"><div class="c1"><span class="k">Name</span>: <span class="v">FARAS .M.</span></div>
+      <div class="c2"><span class="k" style="min-width:44px">Sex</span>: <span class="v">Female</span></div>
+      <div class="c3"><span class="k">Age</span>: <span class="v">31 Years</span></div></div>
+    <div class="row"><div class="c1"><span class="k">Ref. by Dr</span>: <span class="v">&nbsp;</span></div></div>
+  </div>
+  <div class="rule"></div>
+
+  <div class="tw">
+    <table class="tbl">
+      <tr><th class="c-desc">Test Description</th><th class="c-obs">Observed Value</th><th class="c-norm">Normal Value</th></tr>
+      <tr><td class="c-desc grp">BIO-CHEMISTRY (Routine)</td><td></td><td></td></tr>
+      <tr><td class="c-desc">Blood Glucose [Fasting]</td><td class="c-obs">105mg/dl</td><td class="c-norm">70 - 110mg/dl</td></tr>
+      <tr><td class="c-desc">Blood Glucose [ P P 2 hrs ]</td><td class="c-obs">123mg/dl</td><td class="c-norm">70 - 140mg/dl</td></tr>
+    </table>
+    <div class="endr"><div>-End of Report-</div><div class="b">- New MITHRA -</div></div>
+  </div>
+
+  <div class="wm">NEW MITHRA<br>MEDICAL<br>LABORATORY</div>
+
+  <div class="sigs">
+    <div><div class="nm">SAHEED MOHAMED P</div><div class="q">(Bsc MLT)</div><div class="rl">Technologist</div></div>
+    <div class="right"><div class="scrawl">Abdu</div><div class="nm">ABDUNNASER MAYYERI</div>
+      <div class="q">(DMLT, Bsc MLT)</div><div class="rl">Lab Incharge</div></div>
+  </div>
+</div>
+
+<p class="ann"><b>What the software fills in:</b> report number (auto-increments — I can start it at 51359 so your numbering continues unbroken), date, name, sex, age, referring doctor, and the whole test table with group headings. Everything else — letterhead, watermark, both signatory names and qualifications, the "- New MITHRA -" line — lives in Settings and prints identically every time.</p>
+</section>
+
+<section>
+<h2>The decision: plain paper vs your preprinted letterhead</h2>
+<p class="cap">If you already buy printed letterhead sheets, the software should leave the top blank and start at the Report No line. If you print on plain paper, it draws the header itself. This is a one-line setting — but it changes what I need from you.</p>
+<div class="cmp">
+  <div>
+    <p class="lbl">Option 1 — plain paper, software prints header</p>
+    <div class="mini">
+      <div style="background:linear-gradient(90deg,#FBF6EA,#F7EFDC);border:1px solid #d8cfb8;
+                  padding:8px 10px;display:flex;gap:9px;align-items:center;margin:-16px -18px 10px">
+        <div style="width:34px;height:34px;border-radius:50%;background:#C1121F"></div>
+        <div><div style="font:800 22px Arial;color:#C1121F;line-height:1">MITHRA</div>
+        <div style="background:#111;color:#fff;font:700 8px Arial;letter-spacing:.12em;padding:1px 5px;display:inline-block">MEDICAL LABORATORY</div></div>
+      </div>
+      <div style="font-size:11px">Report No : 51358 &nbsp;&nbsp;&nbsp; Date : 18-08-2026<br>Name : FARAS .M.</div>
+      <div style="border-top:1.5px solid #111;border-bottom:1px solid #111;height:3px;margin:6px 0"></div>
+      <table class="tbl"><tr><th class="c-desc">Test</th><th class="c-obs">Observed</th><th class="c-norm">Normal</th></tr>
+      <tr><td class="c-desc">Blood Glucose [F]</td><td class="c-obs">105mg/dl</td><td class="c-norm">70-110mg/dl</td></tr></table>
+    </div>
+    <p class="ann" style="border:0;padding:0;margin-top:8px">Any printer, any paper. Needs your logo file &amp; the top-right photo. Colour ink used on every page.</p>
+  </div>
+  <div>
+    <p class="lbl">Option 2 — your preprinted letterhead</p>
+    <div class="mini">
+      <div class="blankhead" style="height:56px;margin:-16px -18px 10px">LEFT BLANK FOR PREPRINTED HEADER</div>
+      <div style="font-size:11px">Report No : 51358 &nbsp;&nbsp;&nbsp; Date : 18-08-2026<br>Name : FARAS .M.</div>
+      <div style="border-top:1.5px solid #111;border-bottom:1px solid #111;height:3px;margin:6px 0"></div>
+      <table class="tbl"><tr><th class="c-desc">Test</th><th class="c-obs">Observed</th><th class="c-norm">Normal</th></tr>
+      <tr><td class="c-desc">Blood Glucose [F]</td><td class="c-obs">105mg/dl</td><td class="c-norm">70-110mg/dl</td></tr></table>
+    </div>
+    <p class="ann" style="border:0;padding:0;margin-top:8px">Cheaper per page, looks exactly like today. But the WhatsApp PDF would have a blank top — so I'd generate the PDF <i>with</i> the header and print <i>without</i> it.</p>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Optional: abnormal-value marking</h2>
+<p class="cap">Your current report shows the observed value plainly — a reader has to compare it against the normal range themselves. I can leave that exactly as-is, or mark out-of-range values. Three levels, your choice:</p>
+<div class="two" style="grid-template-columns:1fr 1fr 1fr">
+  <div><p class="lbl">A — exactly as today</p>
+    <div class="mini"><table class="tbl">
+      <tr><th class="c-desc">Test</th><th class="c-obs">Observed</th><th class="c-norm">Normal</th></tr>
+      <tr><td class="c-desc">Blood Glucose [F]</td><td class="c-obs">148mg/dl</td><td class="c-norm">70 - 110mg/dl</td></tr>
+      <tr><td class="c-desc">Haemoglobin</td><td class="c-obs">9.2g/dl</td><td class="c-norm">12 - 16g/dl</td></tr>
+    </table></div></div>
+  <div><p class="lbl">B — bold + arrow</p>
+    <div class="mini"><table class="tbl">
+      <tr><th class="c-desc">Test</th><th class="c-obs">Observed</th><th class="c-norm">Normal</th></tr>
+      <tr><td class="c-desc">Blood Glucose [F]</td><td class="c-obs"><b>148mg/dl &uarr;</b></td><td class="c-norm">70 - 110mg/dl</td></tr>
+      <tr><td class="c-desc">Haemoglobin</td><td class="c-obs"><b>9.2g/dl &darr;</b></td><td class="c-norm">12 - 16g/dl</td></tr>
+    </table></div></div>
+  <div><p class="lbl">C — coloured</p>
+    <div class="mini"><table class="tbl">
+      <tr><th class="c-desc">Test</th><th class="c-obs">Observed</th><th class="c-norm">Normal</th></tr>
+      <tr><td class="c-desc">Blood Glucose [F]</td><td class="c-obs flagup">148mg/dl &uarr;</td><td class="c-norm">70 - 110mg/dl</td></tr>
+      <tr><td class="c-desc">Haemoglobin</td><td class="c-obs flagdn">9.2g/dl &darr;</td><td class="c-norm">12 - 16g/dl</td></tr>
+    </table></div></div>
+</div>
+<p class="ann">Whatever you pick for the printed page, the <b>data entry screen</b> always shows the flag in colour — that's your own safety net against typing 1480 instead of 148. The flag on the printed report is a separate setting.</p>
+</section>
+
+<section>
+<h2>What I read off your report</h2>
+<div class="checklist">
+<ul style="margin:0;padding-left:18px">
+<li><span class="yes">✓</span> Serif typeface throughout — matched</li>
+<li><span class="yes">✓</span> Three columns: Test Description / Observed Value / Normal Value — matched</li>
+<li><span class="yes">✓</span> Units written inline with the number (<code>105mg/dl</code>), not in a separate column — matched</li>
+<li><span class="yes">✓</span> Bold group heading rows (<code>BIO-CHEMISTRY (Routine)</code>) — matched</li>
+<li><span class="yes">✓</span> Double rule under the patient block — matched</li>
+<li><span class="yes">✓</span> Centred <code>-End of Report-</code> and <code>- New MITHRA -</code> — matched</li>
+<li><span class="yes">✓</span> Large faint circular watermark — matched</li>
+<li><span class="yes">✓</span> Two signatories pinned to the bottom of the page regardless of how short the report is — matched</li>
+<li><span class="yes">✓</span> Sequential report number (51358) and date only, no time — matched</li>
+<li><span class="new">?</span> <b>Ref. by Dr</b> was blank here — I've kept the field; it prints only when filled</li>
+<li><span class="new">?</span> Need from you: the <b>logo image</b> and the <b>top-right photo</b> as files, plus a scan of the signature if you want it printed</li>
+</ul>
+</div>
+</section>
+
+<p style="color:#7b848b;font-size:12px;border-top:1px solid #dfe4e8;padding-top:16px">
+Mockup only. Nothing is built yet — say what's still wrong and I'll change it before any code is written.</p>
+
+</div>
+</body>
+</html>

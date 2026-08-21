@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LabSoft — Design Mockups</title>
+<style>
+  :root{
+    --ink:#141719; --ink2:#4a5157; --ink3:#7b848b;
+    --line:#dfe4e8; --line2:#eef1f4;
+    --bg:#f4f6f8; --panel:#ffffff;
+    --brand:#0f5c73; --brand-soft:#e6f1f4;
+    --ok:#1a7f4b; --hi:#b3261e; --lo:#1a5fb4; --warn:#8a5a00;
+    --hi-bg:#fdeceb; --lo-bg:#eaf1fc; --ok-bg:#eaf5ee; --warn-bg:#fdf5e3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.02em}
+  .sub{color:var(--ink3);margin:0 0 40px;font-size:14px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--brand);
+     margin:0 0 4px;font-weight:700}
+  .cap{color:var(--ink2);margin:0 0 16px;max-width:760px;font-size:13.5px}
+  section{margin-bottom:56px}
+
+  /* ---- fake desktop window ---- */
+  .win{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+       overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.07)}
+  .titlebar{background:linear-gradient(#fafbfc,#f1f3f5);border-bottom:1px solid var(--line);
+            padding:8px 12px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink2)}
+  .titlebar .dot{width:10px;height:10px;border-radius:50%;background:#d9dee3}
+  .titlebar b{color:var(--ink);font-weight:600}
+  .menubar{display:flex;gap:2px;padding:6px 8px;border-bottom:1px solid var(--line);background:#fff}
+  .mi{padding:6px 12px;border-radius:5px;font-size:13px;color:var(--ink2);cursor:default}
+  .mi.on{background:var(--brand);color:#fff;font-weight:600}
+
+  .toolbar{display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line2);align-items:center;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 13px;
+       font-size:13px;color:var(--ink);font-weight:500;white-space:nowrap}
+  .btn.p{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.g{background:#1a7f4b;border-color:#1a7f4b;color:#fff}
+  .search{flex:1;min-width:170px;border:1px solid var(--line);border-radius:6px;
+          padding:7px 11px;color:var(--ink3);background:#fbfcfd}
+  .kbd{font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace;background:#fff;
+       border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;color:var(--ink2)}
+
+  table{width:100%;border-collapse:collapse}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);
+     text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:#fafbfc;font-weight:700}
+  td{padding:10px 12px;border-bottom:1px solid var(--line2);font-size:13.5px}
+  tr.sel td{background:var(--brand-soft)}
+  .mono{font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;
+        letter-spacing:.02em}
+  .p-new{background:#eef1f4;color:var(--ink2)}
+  .p-prog{background:var(--warn-bg);color:var(--warn)}
+  .p-done{background:var(--ok-bg);color:var(--ok)}
+  .p-sent{background:var(--brand-soft);color:var(--brand)}
+  .p-late{background:var(--hi-bg);color:var(--hi)}
+
+  .statusbar{display:flex;gap:22px;padding:8px 12px;border-top:1px solid var(--line);
+             background:#fafbfc;font-size:12px;color:var(--ink3)}
+  .statusbar b{color:var(--ink)}
+
+  /* ---- result entry ---- */
+  .split{display:grid;grid-template-columns:230px 1fr}
+  .side{border-right:1px solid var(--line2);background:#fafbfc;padding:12px}
+  .side .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3);
+             font-weight:700;margin:12px 0 3px}
+  .side .val{font-size:13.5px;font-weight:600}
+  .side .val.s{font-weight:500;color:var(--ink2);font-size:13px}
+  .inp{border:1px solid #b9c2c9;border-radius:5px;padding:5px 8px;width:88px;
+       font:600 13px ui-monospace,SFMono-Regular,Menlo,monospace;background:#fff}
+  .inp.focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,92,115,.14)}
+  .calc{background:#f2f5f7;border:1px dashed #c3ccd3;color:var(--ink2)}
+  .flag{font-weight:800;font-size:12px;padding:2px 7px;border-radius:4px}
+  .f-h{background:var(--hi-bg);color:var(--hi)}
+  .f-l{background:var(--lo-bg);color:var(--lo)}
+  .f-n{background:var(--ok-bg);color:var(--ok)}
+  .f-f{background:var(--hi-bg);color:var(--hi)}
+  .f-p{background:var(--ok-bg);color:var(--ok)}
+  .grouprow td{background:#f7f9fa;font-weight:700;font-size:11.5px;text-transform:uppercase;
+               letter-spacing:.06em;color:var(--brand)}
+  .note{background:var(--warn-bg);border-left:3px solid #d9a520;padding:9px 12px;
+        font-size:12.5px;color:#6b4a05;margin:0}
+
+  /* ---- report paper ---- */
+  .paper{background:#fff;border:1px solid var(--line);border-radius:4px;padding:38px 42px;
+         box-shadow:0 1px 2px rgba(16,24,40,.05),0 10px 30px rgba(16,24,40,.08);
+         font-family:"Segoe UI",Helvetica,Arial,sans-serif}
+  .lh{display:flex;justify-content:space-between;align-items:flex-start;
+      border-bottom:2.5px solid var(--brand);padding-bottom:12px}
+  .lh .name{font-size:23px;font-weight:800;color:var(--brand);letter-spacing:-.01em;line-height:1.15}
+  .lh .tag{font-size:11.5px;color:var(--ink2);margin-top:3px}
+  .lh .contact{text-align:right;font-size:11px;color:var(--ink2);line-height:1.6}
+  .logo{width:44px;height:44px;border-radius:8px;background:var(--brand);color:#fff;
+        display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;
+        margin-right:12px;flex:0 0 auto}
+  .rtitle{text-align:center;font-size:12.5px;font-weight:800;letter-spacing:.16em;
+          text-transform:uppercase;color:var(--ink);margin:16px 0 14px}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:2px 28px;font-size:12px;
+        border:1px solid var(--line);border-radius:4px;padding:11px 14px}
+  .meta div{display:flex;gap:6px;padding:2px 0}
+  .meta .k{color:var(--ink3);min-width:96px}
+  .meta .v{font-weight:600}
+  .rt{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}
+  .rt th{background:#f2f5f7;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+         font-size:10px;padding:7px 9px;color:var(--ink2)}
+  .rt td{padding:6px 9px;border-bottom:1px solid var(--line2);font-size:12px}
+  .rt .g td{background:var(--brand-soft);font-weight:800;font-size:10.5px;letter-spacing:.08em;
+            text-transform:uppercase;color:var(--brand);padding:5px 9px}
+  .rt .res{font-weight:700}
+  .rt .num{text-align:right}
+  .sig{display:flex;justify-content:space-between;margin-top:34px;font-size:11.5px;text-align:center}
+  .sig div{width:31%}
+  .sigline{border-top:1px solid var(--ink2);margin-bottom:4px;padding-top:0}
+  .sig .nm{font-weight:700}
+  .sig .rl{color:var(--ink3);font-size:10.5px}
+  .foot{border-top:1px solid var(--line);margin-top:22px;padding-top:8px;
+        font-size:9.5px;color:var(--ink3);display:flex;justify-content:space-between}
+  .endmark{text-align:center;font-size:9.5px;letter-spacing:.2em;color:var(--ink3);margin-top:14px}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:900px){.two{grid-template-columns:1fr}.split{grid-template-columns:1fr}}
+  .ann{font-size:12px;color:var(--ink3);margin-top:9px;padding-left:11px;border-left:2px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>LabSoft — visual design proposal</h1>
+<p class="sub">Native Windows app (PyQt) · offline · single database file · mixed medical + analytical lab</p>
+
+<!-- ============ 1. HOME ============ -->
+<section>
+<h2>1 · Home screen — the work queue</h2>
+<p class="cap">The app opens straight here. Not a bill screen, not a menu — the list of jobs and what each one is waiting for. Colour tells you the state at a glance; overdue jobs float to the top in red.</p>
+
+<div class="win">
+  <div class="titlebar"><span class="dot"></span><b>LabSoft</b> — Sunrise Diagnostics &amp; Testing</div>
+  <div class="menubar">
+    <div class="mi on">Work Queue</div><div class="mi">Customers</div><div class="mi">Tests</div>
+    <div class="mi">Billing</div><div class="mi">Reports</div><div class="mi">Settings</div>
+  </div>
+  <div class="toolbar">
+    <div class="btn p">+ New Job &nbsp;<span class="kbd" style="background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35);color:#fff">F2</span></div>
+    <div class="search">Search name, phone, job no…&nbsp; <span class="kbd">Ctrl F</span></div>
+    <div class="btn">Today</div><div class="btn">Pending</div><div class="btn">Overdue</div><div class="btn">All</div>
+  </div>
+  <table>
+    <tr><th>Job No</th><th>Customer</th><th>Type</th><th>Tests</th><th>Received</th><th>Due</th><th>Status</th><th>Payment</th></tr>
+    <tr class="sel">
+      <td class="mono">J-2608</td><td><b>Ramesh Kumar</b><br><span style="color:var(--ink3);font-size:12px">98765 43210 · Dr. Mehta</span></td>
+      <td>Patient</td><td>CBC, LFT, Lipid</td><td>18 Aug 09:12</td>
+      <td style="color:var(--hi);font-weight:700">18 Aug 14:00 <br><span style="font-size:11px">2h late</span></td>
+      <td><span class="pill p-late">Overdue</span></td><td><span style="color:var(--ink3)">—</span></td>
+    </tr>
+    <tr>
+      <td class="mono">J-2607</td><td><b>Krishna Foods Pvt Ltd</b><br><span style="color:var(--ink3);font-size:12px">Corporate · 3 samples</span></td>
+      <td>Water</td><td>pH, TDS, Hardness +4</td><td>18 Aug 08:40</td><td>19 Aug 17:00</td>
+      <td><span class="pill p-prog">In Progress</span></td><td><span style="color:var(--ink3)">On account</span></td>
+    </tr>
+    <tr>
+      <td class="mono">J-2606</td><td><b>Sunita Devi</b><br><span style="color:var(--ink3);font-size:12px">91234 56780</span></td>
+      <td>Patient</td><td>Thyroid Profile</td><td>17 Aug 16:05</td><td>18 Aug 12:00</td>
+      <td><span class="pill p-done">Ready to send</span></td><td><span style="color:var(--warn)">₹300 due</span></td>
+    </tr>
+    <tr>
+      <td class="mono">J-2605</td><td><b>Green Valley Farms</b><br><span style="color:var(--ink3);font-size:12px">Soil sample S-118</span></td>
+      <td>Soil</td><td>NPK, pH, OC</td><td>17 Aug 11:20</td><td>20 Aug 17:00</td>
+      <td><span class="pill p-new">Registered</span></td><td>Paid</td>
+    </tr>
+    <tr>
+      <td class="mono">J-2604</td><td><b>Anil Sharma</b><br><span style="color:var(--ink3);font-size:12px">99887 76655 · Dr. Iyer</span></td>
+      <td>Patient</td><td>RBS, HbA1c</td><td>17 Aug 09:00</td><td>17 Aug 15:00</td>
+      <td><span class="pill p-sent">Sent ✓ WhatsApp</span></td><td>Paid</td>
+    </tr>
+  </table>
+  <div class="statusbar">
+    <span>Today: <b>14 jobs</b></span><span>Pending results: <b>6</b></span>
+    <span style="color:var(--hi)">Overdue: <b>1</b></span><span>Ready to send: <b>3</b></span>
+    <span style="margin-left:auto">Backup: <b>today 09:02</b> ✓</span>
+  </div>
+</div>
+<p class="ann">Double-click any row → result entry. <b>F2</b> anywhere → new job. The status bar is the daily health check: if "Overdue" is 0 and "Ready to send" is 0, the day is clear.</p>
+</section>
+
+<!-- ============ 2. RESULT ENTRY ============ -->
+<section>
+<h2>2 · Result entry — where auto-calculation happens</h2>
+<p class="cap">One screen, keyboard-driven. You type raw values into the white boxes and tab down. Grey dashed boxes fill themselves in from formulas. Flags appear the instant a value leaves the box — no "Calculate" button to remember.</p>
+
+<div class="win">
+  <div class="titlebar"><span class="dot"></span><b>Result Entry</b> — J-2608 · Ramesh Kumar</div>
+  <div class="split">
+    <div class="side">
+      <div class="lbl">Job</div><div class="val">J-2608</div>
+      <div class="lbl">Customer</div><div class="val">Ramesh Kumar</div>
+      <div class="val s">Male · 45 y · 98765 43210</div>
+      <div class="lbl">Referred by</div><div class="val s">Dr. S. Mehta</div>
+      <div class="lbl">Sample</div><div class="val s">Blood (EDTA + Serum)<br>Collected 18 Aug 09:12</div>
+      <div class="lbl">Due</div><div class="val" style="color:var(--hi)">18 Aug 14:00</div>
+      <div class="lbl">Progress</div><div class="val s">9 of 11 entered</div>
+      <div style="height:6px;background:#e3e8ec;border-radius:4px;margin-top:6px;overflow:hidden">
+        <div style="width:82%;height:100%;background:var(--brand)"></div></div>
+    </div>
+    <div>
+      <div class="toolbar">
+        <div class="btn">Prev test <span class="kbd">↑</span></div>
+        <div class="btn">Next test <span class="kbd">↓</span></div>
+        <div class="btn">Add remark</div>
+        <div style="flex:1"></div>
+        <div class="btn">Save draft <span class="kbd">Ctrl S</span></div>
+        <div class="btn g">Verify &amp; make PDF <span class="kbd" style="background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35);color:#fff">F9</span></div>
+      </div>
+      <table>
+        <tr><th style="width:40%">Test</th><th style="width:110px">Result</th><th>Unit</th><th>Reference</th><th>Flag</th></tr>
+        <tr class="grouprow"><td colspan="5">Liver Function Test</td></tr>
+        <tr><td>Total Protein</td><td><input class="inp" value="7.2"></td><td>g/dL</td><td>6.0 – 8.3</td><td><span class="flag f-n">N</span></td></tr>
+        <tr><td>Albumin</td><td><input class="inp focus" value="3.1"></td><td>g/dL</td><td>3.5 – 5.2</td><td><span class="flag f-l">LOW</span></td></tr>
+        <tr><td><b>Globulin</b> <span style="color:var(--ink3);font-size:11.5px">= Total Protein − Albumin</span></td>
+            <td><input class="inp calc" value="4.1" readonly></td><td>g/dL</td><td>2.0 – 3.5</td><td><span class="flag f-h">HIGH</span></td></tr>
+        <tr><td><b>A/G Ratio</b> <span style="color:var(--ink3);font-size:11.5px">= Albumin ÷ Globulin</span></td>
+            <td><input class="inp calc" value="0.76" readonly></td><td>ratio</td><td>1.0 – 2.1</td><td><span class="flag f-l">LOW</span></td></tr>
+        <tr class="grouprow"><td colspan="5">Lipid Profile</td></tr>
+        <tr><td>Total Cholesterol</td><td><input class="inp" value="212"></td><td>mg/dL</td><td>&lt; 200</td><td><span class="flag f-h">HIGH</span></td></tr>
+        <tr><td>Triglycerides</td><td><input class="inp" value="180"></td><td>mg/dL</td><td>&lt; 150</td><td><span class="flag f-h">HIGH</span></td></tr>
+        <tr><td>HDL Cholesterol</td><td><input class="inp" value="38"></td><td>mg/dL</td><td>&gt; 40</td><td><span class="flag f-l">LOW</span></td></tr>
+        <tr><td><b>LDL Cholesterol</b> <span style="color:var(--ink3);font-size:11.5px">= TC − HDL − TG/5</span></td>
+            <td><input class="inp calc" value="138" readonly></td><td>mg/dL</td><td>&lt; 100</td><td><span class="flag f-h">HIGH</span></td></tr>
+        <tr><td><b>TC / HDL Ratio</b> <span style="color:var(--ink3);font-size:11.5px">auto</span></td>
+            <td><input class="inp calc" value="5.58" readonly></td><td>ratio</td><td>&lt; 4.5</td><td><span class="flag f-h">HIGH</span></td></tr>
+      </table>
+      <p class="note"><b>2 tests still empty.</b> Verify is disabled until every test has a value or is marked "not done".</p>
+    </div>
+  </div>
+</div>
+<p class="ann">The same screen serves an analytical job — only the columns' meaning changes: raw reading × dilution factor → final value, and the Reference column becomes the spec limit with a <b>PASS / FAIL</b> flag instead of HIGH/LOW.</p>
+
+<div style="height:20px"></div>
+
+<div class="win">
+  <div class="titlebar"><span class="dot"></span><b>Result Entry</b> — J-2607 · Krishna Foods · Water Sample W-441</div>
+  <table>
+    <tr><th style="width:32%">Parameter</th><th>Reading</th><th>Dil. factor</th><th>Result</th><th>Unit</th><th>Spec limit</th><th>Result</th></tr>
+    <tr><td>pH @ 25 °C</td><td><input class="inp" value="8.9"></td><td>—</td><td><input class="inp calc" value="8.9" readonly></td><td>—</td><td>6.5 – 8.5</td><td><span class="flag f-f">FAIL</span></td></tr>
+    <tr><td>Total Dissolved Solids</td><td><input class="inp" value="84"></td><td><input class="inp" value="5"></td><td><input class="inp calc" value="420" readonly></td><td>mg/L</td><td>≤ 500</td><td><span class="flag f-p">PASS</span></td></tr>
+    <tr><td>Total Hardness (as CaCO₃)</td><td><input class="inp" value="21.4"></td><td><input class="inp" value="10"></td><td><input class="inp calc" value="214" readonly></td><td>mg/L</td><td>≤ 200</td><td><span class="flag f-f">FAIL</span></td></tr>
+    <tr><td>Chloride</td><td><input class="inp" value="12.8"></td><td><input class="inp" value="10"></td><td><input class="inp calc" value="128" readonly></td><td>mg/L</td><td>≤ 250</td><td><span class="flag f-p">PASS</span></td></tr>
+  </table>
+  <div class="statusbar"><span>Overall: <b style="color:var(--hi)">DOES NOT CONFORM</b> — 2 of 4 parameters outside limit</span></div>
+</div>
+<p class="ann">Same engine, same code. A test is just a row in your Tests master with a unit, a reference rule, and optionally a formula — so you can add a new test yourself without me touching the program.</p>
+</section>
+
+<!-- ============ 3. THE PDF ============ -->
+<section>
+<h2>3 · The report PDF — the actual product</h2>
+<p class="cap">This is what reaches the customer on WhatsApp. Left: a medical report. Right: an analytical test certificate. Same template engine, different header block and flag style. Your logo, lab name, address and signatories all come from Settings, so nothing is hardcoded.</p>
+
+<div class="two">
+
+  <!-- medical -->
+  <div class="paper">
+    <div class="lh">
+      <div style="display:flex">
+        <div class="logo">SD</div>
+        <div><div class="name">Sunrise Diagnostics</div>
+        <div class="tag">Pathology · Water · Food · Soil Testing</div></div>
+      </div>
+      <div class="contact">12 MG Road, Nagpur 440001<br>☎ 0712 234 5678<br>lab@sunrisedx.in</div>
+    </div>
+    <div class="rtitle">Laboratory Test Report</div>
+    <div class="meta">
+      <div><span class="k">Name</span><span class="v">Ramesh Kumar</span></div>
+      <div><span class="k">Report No</span><span class="v">J-2608</span></div>
+      <div><span class="k">Age / Sex</span><span class="v">45 Y / Male</span></div>
+      <div><span class="k">Collected</span><span class="v">18 Aug 26, 09:12</span></div>
+      <div><span class="k">Referred by</span><span class="v">Dr. S. Mehta</span></div>
+      <div><span class="k">Reported</span><span class="v">18 Aug 26, 16:05</span></div>
+      <div><span class="k">Sample</span><span class="v">Blood — Serum</span></div>
+      <div><span class="k">Barcode</span><span class="v">S-9041</span></div>
+    </div>
+    <table class="rt">
+      <tr><th>Test</th><th class="num">Result</th><th>Unit</th><th>Reference Range</th></tr>
+      <tr class="g"><td colspan="4">Liver Function Test</td></tr>
+      <tr><td>Total Protein</td><td class="num res">7.2</td><td>g/dL</td><td>6.0 – 8.3</td></tr>
+      <tr><td>Albumin</td><td class="num res" style="color:var(--lo)">3.1 ↓</td><td>g/dL</td><td>3.5 – 5.2</td></tr>
+      <tr><td>Globulin</td><td class="num res" style="color:var(--hi)">4.1 ↑</td><td>g/dL</td><td>2.0 – 3.5</td></tr>
+      <tr><td>A / G Ratio</td><td class="num res" style="color:var(--lo)">0.76 ↓</td><td>—</td><td>1.0 – 2.1</td></tr>
+      <tr class="g"><td colspan="4">Lipid Profile</td></tr>
+      <tr><td>Total Cholesterol</td><td class="num res" style="color:var(--hi)">212 ↑</td><td>mg/dL</td><td>&lt; 200</td></tr>
+      <tr><td>Triglycerides</td><td class="num res" style="color:var(--hi)">180 ↑</td><td>mg/dL</td><td>&lt; 150</td></tr>
+      <tr><td>HDL Cholesterol</td><td class="num res" style="color:var(--lo)">38 ↓</td><td>mg/dL</td><td>&gt; 40</td></tr>
+      <tr><td>LDL Cholesterol <span style="color:var(--ink3);font-size:10px">(calc.)</span></td><td class="num res" style="color:var(--hi)">138 ↑</td><td>mg/dL</td><td>&lt; 100</td></tr>
+      <tr><td>TC / HDL Ratio <span style="color:var(--ink3);font-size:10px">(calc.)</span></td><td class="num res" style="color:var(--hi)">5.58 ↑</td><td>—</td><td>&lt; 4.5</td></tr>
+    </table>
+    <p style="font-size:11px;color:var(--ink2);margin-top:14px"><b>Remarks:</b> Lipid profile suggestive of dyslipidaemia. Clinical correlation advised.</p>
+    <div class="sig">
+      <div><div class="sigline"></div><div class="nm">Ritu Patil</div><div class="rl">Lab Technician</div></div>
+      <div></div>
+      <div><div class="sigline"></div><div class="nm">Dr. A. Deshmukh, MD</div><div class="rl">Consultant Pathologist</div></div>
+    </div>
+    <div class="endmark">— END OF REPORT —</div>
+    <div class="foot"><span>Results relate only to the sample tested.</span><span>Page 1 of 1</span></div>
+  </div>
+
+  <!-- analytical -->
+  <div class="paper">
+    <div class="lh">
+      <div style="display:flex">
+        <div class="logo">SD</div>
+        <div><div class="name">Sunrise Diagnostics</div>
+        <div class="tag">Pathology · Water · Food · Soil Testing</div></div>
+      </div>
+      <div class="contact">12 MG Road, Nagpur 440001<br>☎ 0712 234 5678<br>lab@sunrisedx.in</div>
+    </div>
+    <div class="rtitle">Test Certificate</div>
+    <div class="meta">
+      <div><span class="k">Client</span><span class="v">Krishna Foods Pvt Ltd</span></div>
+      <div><span class="k">Certificate No</span><span class="v">J-2607 / W-441</span></div>
+      <div><span class="k">Sample</span><span class="v">Drinking Water</span></div>
+      <div><span class="k">Received</span><span class="v">18 Aug 26, 08:40</span></div>
+      <div><span class="k">Sample ID</span><span class="v">W-441</span></div>
+      <div><span class="k">Analysed</span><span class="v">18–19 Aug 26</span></div>
+      <div><span class="k">Method ref.</span><span class="v">IS 3025</span></div>
+      <div><span class="k">Reported</span><span class="v">19 Aug 26, 11:30</span></div>
+    </div>
+    <table class="rt">
+      <tr><th>Parameter</th><th class="num">Result</th><th>Unit</th><th class="num">Limit</th><th>Status</th></tr>
+      <tr class="g"><td colspan="5">Physico-Chemical Parameters</td></tr>
+      <tr><td>pH @ 25 °C</td><td class="num res">8.9</td><td>—</td><td class="num">6.5 – 8.5</td>
+          <td><span style="color:var(--hi);font-weight:800;font-size:10.5px">FAIL</span></td></tr>
+      <tr><td>Total Dissolved Solids</td><td class="num res">420</td><td>mg/L</td><td class="num">≤ 500</td>
+          <td><span style="color:var(--ok);font-weight:800;font-size:10.5px">PASS</span></td></tr>
+      <tr><td>Total Hardness (as CaCO₃)</td><td class="num res">214</td><td>mg/L</td><td class="num">≤ 200</td>
+          <td><span style="color:var(--hi);font-weight:800;font-size:10.5px">FAIL</span></td></tr>
+      <tr><td>Chloride (as Cl⁻)</td><td class="num res">128</td><td>mg/L</td><td class="num">≤ 250</td>
+          <td><span style="color:var(--ok);font-weight:800;font-size:10.5px">PASS</span></td></tr>
+      <tr><td>Turbidity</td><td class="num res">0.8</td><td>NTU</td><td class="num">≤ 1.0</td>
+          <td><span style="color:var(--ok);font-weight:800;font-size:10.5px">PASS</span></td></tr>
+      <tr><td>Total Alkalinity</td><td class="num res">186</td><td>mg/L</td><td class="num">≤ 200</td>
+          <td><span style="color:var(--ok);font-weight:800;font-size:10.5px">PASS</span></td></tr>
+    </table>
+    <div style="margin-top:16px;border:1.5px solid var(--hi);background:var(--hi-bg);border-radius:4px;
+                padding:9px 13px;font-size:11.5px">
+      <b style="color:var(--hi);letter-spacing:.05em">OPINION — DOES NOT CONFORM</b><br>
+      <span style="color:var(--ink2)">2 of 6 parameters exceed the specified limits. The sample is not fit for drinking as per the referenced standard.</span>
+    </div>
+    <div class="sig">
+      <div><div class="sigline"></div><div class="nm">Ritu Patil</div><div class="rl">Analyst</div></div>
+      <div></div>
+      <div><div class="sigline"></div><div class="nm">S. Kulkarni, M.Sc.</div><div class="rl">Technical Manager</div></div>
+    </div>
+    <div class="endmark">— END OF CERTIFICATE —</div>
+    <div class="foot"><span>Results relate only to the sample tested. Not to be reproduced except in full.</span><span>Page 1 of 1</span></div>
+  </div>
+</div>
+</section>
+
+<!-- ============ 4. SEND ============ -->
+<section>
+<h2>4 · Sending it — one button</h2>
+<p class="cap">After <b>Verify &amp; make PDF</b>, this dialog appears. The PDF is already written to disk and already copied to the clipboard; WhatsApp opens on the right number with the message typed. You press Ctrl+V then Enter.</p>
+
+<div class="win" style="max-width:560px">
+  <div class="titlebar"><span class="dot"></span><b>Send report — J-2608</b></div>
+  <div style="padding:18px">
+    <div style="border:1px solid var(--line);border-radius:6px;padding:12px;background:#fafbfc;
+                display:flex;gap:12px;align-items:center">
+      <div style="width:38px;height:46px;border-radius:4px;background:#fff;border:1px solid var(--line);
+                  display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--hi)">PDF</div>
+      <div><b style="font-size:13px">Ramesh_Kumar_J-2608_18Aug26.pdf</b>
+      <div style="color:var(--ink3);font-size:12px">2 pages · 148 KB · saved to reports\2026-08\</div></div>
+    </div>
+    <div style="margin-top:14px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;
+                color:var(--ink3);font-weight:700">Send to</div>
+    <div style="border:1px solid var(--line);border-radius:6px;padding:8px 11px;margin-top:5px;font-size:13px">
+      <b>+91 98765 43210</b> <span style="color:var(--ink3)">— Ramesh Kumar</span></div>
+    <div style="margin-top:12px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;
+                color:var(--ink3);font-weight:700">Message</div>
+    <div style="border:1px solid var(--line);border-radius:6px;padding:10px 11px;margin-top:5px;
+                font-size:12.5px;color:var(--ink2);background:#fafbfc;line-height:1.6">
+      Dear Ramesh Kumar,<br>Your test report from Sunrise Diagnostics (Job J-2608, 18 Aug 2026) is attached.<br>
+      For any query call 0712 234 5678.<br>Thank you.</div>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <div class="btn">Print</div><div class="btn">Save only</div><div class="btn">Email</div>
+      <div style="flex:1"></div><div class="btn g">Open WhatsApp &amp; send</div>
+    </div>
+    <p class="note" style="margin-top:14px">PDF copied to clipboard — press <span class="kbd">Ctrl V</span> then <span class="kbd">Enter</span> in WhatsApp.</p>
+  </div>
+</div>
+<p class="ann">The job is stamped <b>Sent ✓</b> with date and time, so the work queue and the audit log both know it went out. Message wording is editable in Settings. This same code path swaps to the WhatsApp Business API later without touching anything else.</p>
+</section>
+
+<!-- ============ 5. BILLING ============ -->
+<section>
+<h2>5 · Billing — present, but out of the way</h2>
+<p class="cap">Never blocks a report. It's a ledger you fill in when it suits you: what was charged, what's been paid, what's outstanding, and what each referring doctor has earned.</p>
+<div class="win">
+  <div class="titlebar"><span class="dot"></span><b>Billing &amp; Dues</b></div>
+  <table>
+    <tr><th>Job</th><th>Customer</th><th class="num">Charged</th><th>Discount</th><th>Paid</th><th>Balance</th><th>Referrer</th><th>Commission</th></tr>
+    <tr><td class="mono">J-2608</td><td>Ramesh Kumar</td><td>₹1,450</td><td>10% (₹145)</td><td>₹1,305</td><td style="color:var(--ok)">₹0</td><td>Dr. S. Mehta</td><td>₹130</td></tr>
+    <tr><td class="mono">J-2606</td><td>Sunita Devi</td><td>₹600</td><td>—</td><td>₹300</td><td style="color:var(--warn);font-weight:700">₹300</td><td>—</td><td>—</td></tr>
+    <tr><td class="mono">J-2607</td><td>Krishna Foods Pvt Ltd</td><td>₹4,200</td><td>Corporate rate</td><td>₹0</td><td style="color:var(--hi);font-weight:700">₹4,200</td><td>—</td><td>—</td></tr>
+  </table>
+  <div class="statusbar"><span>Month to date: <b>₹1,84,300</b></span><span style="color:var(--warn)">Outstanding: <b>₹12,700</b></span>
+  <span>Commission payable: <b>₹4,150</b></span><span style="margin-left:auto">Export to Excel</span></div>
+</div>
+</section>
+
+<p style="color:var(--ink3);font-size:12px;border-top:1px solid var(--line);padding-top:16px">
+Mockup only — colours, wording and field names are all adjustable. Nothing here is built yet.</p>
+
+</div>
+</body>
+</html>

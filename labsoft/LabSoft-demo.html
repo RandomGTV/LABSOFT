@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LabSoft — New Mithra Medical Laboratory</title>
+<style>
+  :root{
+    --brand:#0F5C73; --brand-dark:#0A4356; --brand-soft:#E6F1F4;
+    --red:#C1121F; --green:#16703F; --amber:#8A5A00; --blue:#1A5FB4;
+    --ink:#141719; --ink2:#4A5157; --ink3:#616A72;
+    --line:#C3CBD2; --line2:#EDF0F3; --bg:#F4F6F8; --panel:#fff;
+  }
+  /* Night theme. Same shapes, different surfaces — measured against WCAG AA
+     just like the daylight one. The report is never drawn in it. */
+  body.dark{
+    --brand:#5FC6DE; --brand-dark:#8AD8EA; --brand-soft:#204450;
+    --red:#FF8A8A; --green:#6FD79B; --amber:#F0C066; --blue:#8AB6F5;
+    --ink:#EEF2F5; --ink2:#C3CBD2; --ink3:#A6B0B9;
+    --line:#3C464E; --line2:#2A333A; --bg:#141A1F; --panel:#1C242A;
+  }
+  body.dark input[type=text],body.dark input[type=number],body.dark select{
+    background:var(--panel);border-color:#6C7880;color:var(--ink)}
+  body.dark input[readonly]{background:#232C33;color:var(--ink2)}
+  /* The plain-button rule below is more specific than .btn.p, so the coloured
+     buttons have to be restated or they lose their fill and vanish. */
+  body.dark .btn{background:var(--panel);color:var(--ink)}
+  body.dark .btn.p,body.dark .btn.on{background:var(--brand);border-color:var(--brand);color:#141A1F}
+  body.dark .btn.go{background:var(--green);border-color:var(--green);color:#141A1F}
+  body.dark .btn.q{background:none;color:var(--brand)}
+  body.dark .btn.panel{background:var(--brand-soft);border-color:#2F5A68;color:var(--ink)}
+  body.dark .btn:disabled{background:var(--line2);color:var(--ink3);border-color:var(--line)}
+  body.dark th{background:#222B32}
+  body.dark .f-H{background:#3A2326} body.dark .f-L{background:#22303F}
+  body.dark .f-N{background:#1F3229} body.dark .f-A{background:#38301E}
+  body.dark .p-draft{background:var(--line2);color:var(--ink2)}
+  body.dark .p-prog{background:#38301E;color:var(--amber)}
+  body.dark .p-ready{background:#1F3229;color:var(--green)}
+  body.dark .note{background:#332C1B;color:#F0DFB0;border-left-color:#B9862A}
+  body.dark .note.ok{background:#1E3128;color:#BDE7CC}
+  body.dark .kbd{background:var(--panel);color:var(--ink2)}
+  body.dark .bar{background:#2A333A}
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:14px/1.5 "Segoe UI",system-ui,-apple-system,Arial,sans-serif}
+  button{font:inherit;cursor:pointer}
+  input,select{font:inherit;color:var(--ink)}
+
+  .app{max-width:1320px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+
+  /* ---------- chrome ---------- */
+  .titlebar{background:#1b1f23;color:#e8eaed;padding:7px 16px;font-size:12.5px;
+            display:flex;align-items:center;gap:9px}
+  .titlebar .dot{width:9px;height:9px;border-radius:50%;background:#4b5158}
+  .titlebar b{color:#fff;font-weight:600}
+  .titlebar .demo{margin-left:auto;background:#b8860b;color:#fff;font-weight:700;
+                  font-size:10.5px;letter-spacing:.09em;padding:2px 9px;border-radius:20px}
+
+  .tabs{display:flex;gap:2px;padding:8px 12px 0;background:var(--bg);
+        border-bottom:1px solid var(--line)}
+  .tab{padding:9px 20px;border:1px solid transparent;border-bottom:0;
+       border-radius:6px 6px 0 0;color:var(--ink2);font-weight:600;background:none}
+  .tab.on{background:var(--panel);border-color:var(--line);color:var(--brand);
+          margin-bottom:-1px;padding-bottom:10px}
+  .tab:hover:not(.on){background:var(--line2)}
+
+  main{flex:1;background:var(--panel);border:1px solid var(--line);border-top:0;
+       margin:0 12px;border-radius:0 0 8px 8px;padding:16px 18px 12px;overflow:auto}
+  .statusbar{display:flex;gap:22px;padding:8px 20px;color:var(--ink3);font-size:12px}
+  .statusbar b{color:var(--ink)}
+  .statusbar .right{margin-left:auto}
+
+  /* ---------- bits ---------- */
+  h1{font-size:17px;margin:0}
+  .sub{color:var(--ink3);font-size:12.5px}
+  fieldset{border:1px solid var(--line);border-radius:7px;margin:0 0 11px;padding:14px 14px 12px}
+  legend{color:var(--brand);font-weight:700;font-size:11.5px;padding:0 6px}
+  label.f{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;
+          text-transform:uppercase;color:var(--ink3);margin-bottom:4px}
+  input[type=text],input[type=number],select{
+    background:#fff;border:1px solid #88929B;border-radius:5px;padding:7px 9px;width:100%}
+  input:focus,select:focus{outline:0;border:2px solid var(--brand);padding:6px 8px}
+  input[readonly]{background:#F2F5F7;color:var(--ink2);border-style:dashed}
+  input:disabled{background:var(--line2);color:var(--ink3)}
+
+  .btn{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 15px;
+       font-weight:600;color:var(--ink)}
+  .btn:hover{background:var(--line2)}
+  .btn:disabled{background:var(--line2);color:var(--ink3);cursor:not-allowed}
+  .btn.p{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.p:hover{background:var(--brand-dark)}
+  .btn.go{background:var(--green);border-color:var(--green);color:#fff}
+  .btn.go:hover{background:#125c34}
+  .btn.go:disabled{background:#A8CBB8;border-color:#A8CBB8;color:#F0F6F2}
+  .btn.q{background:none;border-color:transparent;color:var(--brand);padding:6px 10px}
+  .btn.q:hover{background:var(--brand-soft)}
+  .btn.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.panel{background:var(--brand-soft);border:1px solid #C4DCE4;color:var(--brand-dark);
+             padding:11px 15px}
+  .btn.panel:hover{background:#D5E8EE}
+
+  .rowg{display:grid;gap:11px}
+  .flexr{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  table{width:100%;border-collapse:collapse}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);
+     text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);
+     background:#FAFBFC;font-weight:700}
+  td{padding:9px 10px;border-bottom:1px solid var(--line2);font-size:13.5px}
+  tbody tr:hover{background:var(--brand-soft);cursor:pointer}
+  tbody tr.sel{background:var(--brand-soft)}
+  .empty{padding:44px 20px;text-align:center;color:var(--ink3);white-space:pre-line}
+
+  .flag{font-weight:800;font-size:11px;padding:3px 8px;border-radius:4px;display:inline-block;
+        min-width:52px;text-align:center}
+  .f-H{background:#FDECEB;color:var(--red)} .f-L{background:#EAF1FC;color:var(--blue)}
+  .f-N{background:#EAF5EE;color:var(--green)} .f-A{background:#FDF5E3;color:var(--amber)}
+
+  .pill{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px}
+  .p-draft{background:var(--line2);color:var(--ink2)}
+  .p-prog{background:#FDF5E3;color:var(--amber)}
+  .p-ready{background:#EAF5EE;color:var(--green)}
+  .p-sent{background:var(--brand-soft);color:var(--brand)}
+
+  .grid{display:grid;grid-template-columns:minmax(230px,1.3fr) 140px 68px 160px 80px 40px;
+        gap:5px 12px;align-items:center}
+  .grid .gh{grid-column:1/-1;color:var(--brand);font-weight:700;font-size:11.5px;
+            letter-spacing:.06em;text-transform:uppercase;padding:11px 0 3px}
+  .nm{font-size:13.5px}
+  .nm.calc{font-style:italic;color:var(--ink2)}
+  .nm.nd{color:var(--ink3);text-decoration:line-through}
+  .unit,.rng{color:var(--ink3);font-size:12.5px}
+  .bar{height:8px;background:#E3E8EC;border-radius:4px;overflow:hidden;margin-top:10px}
+  .bar>i{display:block;height:100%;background:var(--brand);transition:width .25s}
+
+  /* ---------- modal ---------- */
+  .modal{position:fixed;inset:0;background:rgba(16,20,24,.55);display:none;
+         align-items:center;justify-content:center;padding:22px;z-index:50}
+  .modal.show{display:flex}
+  .sheet{background:var(--panel);border-radius:10px;max-width:920px;width:100%;
+         max-height:92vh;display:flex;flex-direction:column;
+         box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .sheet header{padding:14px 18px;border-bottom:1px solid var(--line);
+                display:flex;align-items:center;gap:12px}
+  .sheet header h2{margin:0;font-size:15px}
+  .sheet .body{padding:16px 18px;overflow:auto;background:#6E7781}
+  .sheet .body.plain{background:var(--panel)}
+  .sheet footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px}
+  .sheet footer .sp{margin-left:auto}
+
+  /* ---------- the report ---------- */
+  .paper{background:#fff;width:720px;margin:0 auto;padding:26px 30px 20px;
+         font-family:"Tinos","Times New Roman",Times,serif;color:#111;position:relative;
+         box-shadow:0 6px 24px rgba(0,0,0,.28);min-height:1000px;
+         display:flex;flex-direction:column}
+  .lh{background:linear-gradient(90deg,#FBF6EA,#F7EFDC 62%,#FDF9F1);
+      border-bottom:1px solid #d8cfb8;margin:-26px -30px 0;padding:10px 18px;
+      display:flex;align-items:center;gap:14px;min-height:92px}
+  .emb{width:64px;height:64px;border-radius:50%;border:2px solid #8f0c17;flex:none;
+       display:flex;align-items:center;justify-content:center;text-align:center;
+       font:700 8px Arial;color:#8f0c17;background:#fff}
+  .lname .pre{font:italic 700 15px "Tinos",serif;color:#C1121F;line-height:1;margin-left:2px}
+  .lname .main{font:800 34px Arial;color:#C1121F;line-height:1.05}
+  .lname .strip{background:#111;color:#fff;font:700 11px Arial;letter-spacing:.13em;
+                padding:2px 7px;display:inline-block;margin-top:2px}
+  .ladr{border-left:1px solid #b9ae93;padding-left:14px;font:12px Arial;color:#222;line-height:1.5}
+
+  /* The new letterhead: a clinical teal band, white type, accent rule. */
+  .lh2{background:#0B6E7F;border-bottom:5px solid #2AA5A0;margin:-26px -30px 0;
+       padding:14px 20px;display:flex;align-items:center;gap:16px;min-height:92px;color:#fff}
+  .lh2 .emb2{width:56px;height:56px;border-radius:50%;border:2px solid #fff;flex:none;
+             display:flex;align-items:center;justify-content:center;font:700 22px Arial}
+  .lh2 .n1{font:800 30px Arial;line-height:1.05}
+  .lh2 .n2{font:12px Arial;color:#D6ECEE;margin-top:3px}
+  .lh2 .a2{margin-left:auto;text-align:right;font:11px Arial;color:#D6ECEE;line-height:1.6}
+  .rt .sp td{font:italic 11.5px "Tinos",serif;color:#555;padding:0 0 2px 22px}
+  .rt .spi td{font:italic 11px "Tinos",serif;color:#666;padding:0 0 3px 26px}
+  .rtitle{text-align:center;font:700 13px Arial;letter-spacing:.04em;color:#075462;
+          margin:8px 0 2px}
+  .interp{margin-top:14px;border-top:1px solid #bbb;padding-top:9px;font-size:12.5px;line-height:1.6}
+  .interp h4{margin:9px 0 3px;font:700 10.5px Arial;letter-spacing:.06em;color:#0B6E7F}
+  .interp pre{margin:0;font:12.5px "Tinos",serif;white-space:pre-wrap}
+
+  /* The receipt */
+  .rcpt .head{display:flex;font-size:13.5px;line-height:1.9;padding-top:10px}
+  .rcpt table{margin-top:6px}
+  .rcpt th{background:#EAF4F5;border:0;border-bottom:1px solid #999;color:#111;
+           font:700 12px "Tinos",serif;text-transform:none;letter-spacing:0;padding:6px 4px}
+  .rcpt td{border:0;padding:4px;font-size:13px}
+  .rcpt .num{text-align:right}
+  .rcpt .tot{margin-left:auto;width:58%;font-size:13.5px}
+  .rcpt .tot .r2{display:flex;justify-content:space-between;padding:3px 0}
+  .rcpt .tot .net{border-top:1px solid #999;margin-top:4px;padding-top:6px;
+                  font-weight:700;color:#075462}
+  .rcpt .tot .due{font-weight:700;color:#B3261E}
+  .rcpt .words{font:italic 12px "Tinos",serif;color:#555;margin-top:10px}
+  .rcpt .foot{margin-top:auto;border-top:1px solid #bbb;padding-top:8px;
+              display:flex;font:10.5px Arial;color:#666}
+  .rcpt .foot .sig{margin-left:auto;text-align:right;border-top:1px solid #999;
+                   padding-top:4px;width:150px}
+  .meta{font-size:14px;line-height:1.85;padding-top:10px}
+  .meta .r{display:flex}
+  .meta .c1{width:46%}.meta .c2{width:27%}.meta .c3{width:27%}
+  .meta b{font-weight:700}
+  .rule{border-top:2px solid #111;border-bottom:1px solid #111;height:3px;margin:6px 0 0}
+  .rt{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:4px}
+  .rt th{background:none;border:0;border-bottom:2px solid #111;font:700 14px "Tinos",serif;
+         color:#111;text-transform:none;letter-spacing:0;padding:7px 0}
+  .rt td{border:0;padding:3px 0;font-size:13.5px}
+  .rt .g td{font-weight:700;padding-top:11px}
+  .c-d{width:46%;padding-left:12px!important}
+  .c-o{width:27%;text-align:center}
+  .c-n{width:27%;text-align:center}
+  .endr{text-align:center;font-size:12.5px;margin-top:26px;line-height:1.9}
+  .wm{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      width:330px;height:330px;border-radius:50%;border:14px solid rgba(120,120,125,.08);
+      display:flex;align-items:center;justify-content:center;text-align:center;
+      font:700 19px Arial;color:rgba(120,120,125,.09);letter-spacing:.18em;pointer-events:none}
+  .sigs{margin-top:auto;display:flex;justify-content:space-between;padding-top:30px;font-size:13px}
+  .sigs .nm2{font-weight:700}
+  .sigs .q2{font-size:10px}
+  .sigs .rr{text-align:right}
+
+  /* ---------- whatsapp ---------- */
+  .wa{background:#0b141a;border-radius:10px;overflow:hidden;max-width:420px;margin:0 auto}
+  .wa .top{background:#202c33;color:#e9edef;padding:11px 14px;display:flex;gap:11px;align-items:center}
+  .wa .av{width:36px;height:36px;border-radius:50%;background:#6a7175;display:flex;
+          align-items:center;justify-content:center;color:#fff;font-weight:700}
+  .wa .chat{padding:16px 14px;min-height:210px;
+            background:#0b141a url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><circle cx='6' cy='6' r='1' fill='%23223'/></svg>")}
+  .bub{background:#005c4b;color:#e9edef;border-radius:8px;padding:9px 11px;font-size:13px;
+       margin-left:auto;max-width:88%;white-space:pre-line;line-height:1.45}
+  .att{background:#025144;border-radius:7px;padding:9px 10px;display:flex;gap:9px;
+       align-items:center;margin-bottom:7px}
+  .att .ic{width:30px;height:36px;background:#fff;border-radius:3px;color:#C1121F;
+           font:800 9px Arial;display:flex;align-items:center;justify-content:center}
+  .att .nm3{color:#e9edef;font-size:12px}
+  .att .sz{color:#8fa6a0;font-size:11px}
+  .wa .tick{text-align:right;color:#8fa6a0;font-size:10.5px;margin-top:3px}
+  .wa .send{background:#202c33;padding:9px 12px;display:flex;gap:9px;align-items:center}
+  .wa .box{flex:1;background:#2a3942;border-radius:18px;padding:8px 13px;color:#8696a0;font-size:13px}
+  .wa .go2{width:38px;height:38px;border-radius:50%;background:#00a884;border:0;color:#fff;
+           font-size:16px;display:flex;align-items:center;justify-content:center}
+
+  .note{background:#FDF5E3;border-left:3px solid #d9a520;padding:9px 12px;font-size:12.5px;
+        color:#6b4a05;border-radius:0 5px 5px 0;margin-top:11px}
+  .ok{background:#EAF5EE;border-left-color:var(--green);color:#14532d}
+  .login{position:fixed;inset:0;background:linear-gradient(160deg,#0F5C73,#07323f);
+         display:flex;align-items:center;justify-content:center;z-index:90;padding:20px}
+  .login.gone{display:none}
+  .login .card{background:#fff;border-radius:12px;padding:26px 28px 22px;width:400px;
+               box-shadow:0 24px 70px rgba(0,0,0,.4);text-align:left}
+  .login h2{margin:12px 0 0;font-size:17px;text-align:center}
+  .login .sub{text-align:center}
+  .lg-emb{width:62px;height:62px;border-radius:50%;border:2px solid #8f0c17;margin:0 auto;
+          display:flex;align-items:center;justify-content:center;text-align:center;
+          font:700 8px Arial;color:#8f0c17}
+  .lg-err{color:var(--red);font-weight:600;font-size:12.5px;min-height:18px;margin-top:8px}
+
+  .billband{display:flex;align-items:center;gap:14px}
+  .billband .amt{font-size:16px;font-weight:800}
+
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1b1f23;
+         color:#fff;padding:12px 20px;border-radius:8px;font-size:13.5px;z-index:80;
+         box-shadow:0 8px 30px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s}
+  .toast.show{opacity:1}
+  .kbd{font:600 10.5px ui-monospace,monospace;background:#fff;border:1px solid var(--line);
+       border-bottom-width:2px;border-radius:4px;padding:1px 5px;color:var(--ink2)}
+  .hide{display:none!important}
+  @media(max-width:900px){
+    .grid{grid-template-columns:1fr 110px 50px;gap:4px 8px}
+    .grid .rng,.grid .mn{display:none}
+    .paper{width:100%;padding:18px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="titlebar"><span class="dot"></span><b>LabSoft</b> — New MITHRA Medical Laboratory
+    <span class="demo">DEMO</span>
+    <button id="themebtn" title="Switch between daylight and night"
+            style="background:none;border:1px solid #4b5158;color:#e8eaed;border-radius:5px;
+                   padding:2px 10px;font-size:11.5px;margin-left:10px">☾ Night</button></div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <main id="main"></main>
+
+  <div class="statusbar">
+    <span>Today: <b id="s-today">0</b></span>
+    <span>Pending results: <b id="s-pending">0</b></span>
+    <span>Ready to send: <b id="s-ready">0</b></span>
+    <span class="right"><b id="s-user"></b> · <a href="#" id="s-out" style="color:var(--brand)">Sign out</a> · Backup: <b>today 09:02 ✓</b> · Google Drive ✓</span>
+  </div>
+</div>
+
+<div class="login" id="login">
+  <div class="card">
+    <div class="lg-emb">NEW<br>MITHRA<br>LAB</div>
+    <h2>New MITHRA Medical Laboratory</h2>
+    <p class="sub" style="margin:2px 0 16px">Sign in to continue</p>
+    <label class="f">Who are you?</label>
+    <select id="lg-user">
+      <option value="boss">Abdunnaser Mayyeri — Administrator</option>
+      <option value="ritu">Ritu Patil — Technologist</option>
+      <option value="saheed">Saheed Mohamed — Reception</option>
+    </select>
+    <label class="f" style="margin-top:11px">PIN</label>
+    <input type="password" id="lg-pin" value="8461" autocomplete="off">
+    <div class="lg-err" id="lg-err"></div>
+    <button class="btn p" style="width:100%;margin-top:14px" id="lg-go">Sign in</button>
+    <p class="sub" style="margin-top:12px;text-align:center">
+      Demo PINs — admin <b>8461</b> · technologist <b>7392</b> · reception <b>5150</b></p>
+  </div>
+</div>
+
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   Demo data. Mirrors the real program's seeded library.
+   ===================================================================== */
+const TESTS = {
+  GLU_F:{n:"Blood Glucose [Fasting]",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:110,r:"70 - 110mg/dl"},
+  GLU_PP:{n:"Blood Glucose [ P P 2 hrs ]",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:140,r:"70 - 140mg/dl"},
+  HBA1C:{n:"HbA1c (Glycated Haemoglobin)",g:"BIO-CHEMISTRY (Routine)",u:"%",d:1,hi:5.7,r:"< 5.7%"},
+  UREA:{n:"Blood Urea",g:"RENAL FUNCTION TEST",u:"mg/dl",d:0,lo:15,hi:45,r:"15 - 45mg/dl"},
+  CREAT:{n:"Serum Creatinine",g:"RENAL FUNCTION TEST",u:"mg/dl",d:2,lo:0.6,hi:1.3,r:"0.6 - 1.3mg/dl"},
+
+  HB:{n:"Haemoglobin",g:"HAEMATOLOGY",u:"g/dl",d:1,lo:12,hi:15,r:"12 - 15g/dl",
+      bySex:{M:{lo:13,hi:17,r:"13 - 17g/dl"},F:{lo:12,hi:15,r:"12 - 15g/dl"}}},
+  TC:{n:"Total WBC Count",g:"HAEMATOLOGY",u:"cells/cumm",d:0,lo:4000,hi:11000,r:"4000 - 11000cells/cumm"},
+  PLT:{n:"Platelet Count",g:"HAEMATOLOGY",u:"lakhs/cumm",d:2,lo:1.5,hi:4.5,r:"1.5 - 4.5lakhs/cumm"},
+  PCV:{n:"PCV / Haematocrit",g:"HAEMATOLOGY",u:"%",d:1,lo:36,hi:46,r:"36 - 46%"},
+  ESR:{n:"ESR (Westergren)",g:"HAEMATOLOGY",u:"mm/hr",d:0,hi:20,r:"0 - 20mm/hr"},
+
+  TBIL:{n:"Total Bilirubin",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,lo:0.2,hi:1.2,r:"0.2 - 1.2mg/dl"},
+  DBIL:{n:"Direct Bilirubin",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,hi:0.3,r:"< 0.3mg/dl"},
+  IBIL:{n:"Indirect Bilirubin",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,lo:0.2,hi:0.9,r:"0.2 - 0.9mg/dl",f:"TBIL - DBIL"},
+  SGPT:{n:"SGPT (ALT)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,hi:34,r:"< 34U/L"},
+  SGOT:{n:"SGOT (AST)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,hi:32,r:"< 32U/L"},
+  TP:{n:"Total Protein",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:6.0,hi:8.3,r:"6.0 - 8.3g/dl"},
+  ALB:{n:"Albumin",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:3.5,hi:5.2,r:"3.5 - 5.2g/dl"},
+  GLOB:{n:"Globulin",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:2.0,hi:3.5,r:"2.0 - 3.5g/dl",f:"TP - ALB"},
+  AGR:{n:"A / G Ratio",g:"LIVER FUNCTION TEST",u:"",d:2,lo:1.0,hi:2.1,r:"1.0 - 2.1",f:"ALB / GLOB"},
+
+  CHOL:{n:"Total Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:200,r:"< 200mg/dl"},
+  TG:{n:"Triglycerides",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:150,r:"< 150mg/dl"},
+  HDL:{n:"HDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,lo:50,r:"> 50mg/dl"},
+  LDL:{n:"LDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:100,r:"< 100mg/dl",f:"CHOL - HDL - TG/5"},
+  VLDL:{n:"VLDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,lo:5,hi:40,r:"5 - 40mg/dl",f:"TG / 5"},
+  CHR:{n:"Total Cholesterol / HDL Ratio",g:"LIPID PROFILE",u:"",d:2,hi:4.5,r:"< 4.5",f:"CHOL / HDL"},
+
+  T3:{n:"Total T3",g:"THYROID PROFILE",u:"ng/dl",d:0,lo:80,hi:200,r:"80 - 200ng/dl"},
+  T4:{n:"Total T4",g:"THYROID PROFILE",u:"µg/dl",d:1,lo:5.1,hi:14.1,r:"5.1 - 14.1µg/dl"},
+  TSH:{n:"TSH (Ultrasensitive)",g:"THYROID PROFILE",u:"µIU/ml",d:2,lo:0.27,hi:4.2,r:"0.27 - 4.2µIU/ml"},
+
+  HBSAG:{n:"HBsAg (Rapid)",g:"SEROLOGY",u:"",d:0,opts:["Non Reactive","Reactive"],ok:"Non Reactive",r:"Non Reactive"},
+  CRP:{n:"CRP (Quantitative)",g:"SEROLOGY",u:"mg/L",d:1,hi:6,r:"< 6mg/L"},
+
+  NEU:{n:"Neutrophils",g:"HAEMATOLOGY",u:"%",d:0,lo:40,hi:75,r:"40 - 75%"},
+  LYM:{n:"Lymphocytes",g:"HAEMATOLOGY",u:"%",d:0,lo:20,hi:45,r:"20 - 45%"},
+  ANC:{n:"Absolute Neutrophil Count",g:"HAEMATOLOGY",u:"cells/cumm",d:0,lo:1800,hi:7700,
+       r:"1800 - 7700cells/cumm",f:"TC * NEU / 100"},
+  ALC:{n:"Absolute Lymphocyte Count",g:"HAEMATOLOGY",u:"cells/cumm",d:0,lo:1000,hi:4800,
+       r:"1000 - 4800cells/cumm",f:"TC * LYM / 100"},
+  NLR:{n:"Neutrophil / Lymphocyte Ratio",g:"HAEMATOLOGY",u:"",d:2,hi:3.0,r:"< 3.0",f:"NEU / LYM"},
+
+  NA:{n:"Serum Sodium",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:135,hi:145,r:"135 - 145mmol/L"},
+  K:{n:"Serum Potassium",g:"ELECTROLYTES",u:"mmol/L",d:1,lo:3.5,hi:5.1,r:"3.5 - 5.1mmol/L"},
+  CL:{n:"Serum Chloride",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:98,hi:107,r:"98 - 107mmol/L"},
+  BICARB:{n:"Serum Bicarbonate",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:22,hi:29,r:"22 - 29mmol/L"},
+  ANGAP:{n:"Anion Gap",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:8,hi:16,r:"8 - 16mmol/L",
+         f:"NA - CL - BICARB"},
+
+  CA:{n:"Serum Calcium",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:1,lo:8.5,hi:10.5,r:"8.5 - 10.5mg/dl"},
+  CACORR:{n:"Corrected Calcium",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:1,lo:8.5,hi:10.5,
+          r:"8.5 - 10.5mg/dl",f:"CA + 0.8 * (4 - ALB)"},
+  EAG:{n:"Estimated Average Glucose",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,hi:117,
+       r:"< 117mg/dl",f:"28.7 * HBA1C - 46.7"},
+  INSULIN:{n:"Fasting Insulin",g:"BIO-CHEMISTRY (Routine)",u:"µIU/ml",d:1,lo:2.6,hi:24.9,
+           r:"2.6 - 24.9µIU/ml"},
+  HOMAIR:{n:"HOMA-IR (Insulin Resistance)",g:"BIO-CHEMISTRY (Routine)",u:"",d:2,hi:2.0,
+          r:"< 2.0",f:"GLU_F * INSULIN / 405"},
+  NONHDL:{n:"Non-HDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:130,r:"< 130mg/dl",
+          f:"CHOL - HDL"},
+
+  IRON:{n:"Serum Iron",g:"IRON STUDIES",u:"µg/dl",d:0,lo:65,hi:175,r:"65 - 175µg/dl"},
+  TIBC:{n:"Total Iron Binding Capacity",g:"IRON STUDIES",u:"µg/dl",d:0,lo:250,hi:450,
+        r:"250 - 450µg/dl"},
+  UIBC:{n:"Unsaturated Iron Binding Capacity",g:"IRON STUDIES",u:"µg/dl",d:0,lo:120,hi:380,
+        r:"120 - 380µg/dl",f:"TIBC - IRON"},
+  TSAT:{n:"Transferrin Saturation",g:"IRON STUDIES",u:"%",d:1,lo:20,hi:50,r:"20 - 50%",
+        f:"IRON / TIBC * 100"},
+  FERR:{n:"Serum Ferritin",g:"IRON STUDIES",u:"ng/ml",d:1,lo:30,hi:400,r:"30 - 400ng/ml"},
+
+  APTT:{n:"APTT",g:"COAGULATION PROFILE",u:"sec",d:1,lo:25,hi:35,r:"25 - 35sec"},
+  PT:{n:"Prothrombin Time",g:"COAGULATION PROFILE",u:"sec",d:1,lo:11,hi:15,r:"11 - 15sec"},
+  INR:{n:"INR",g:"COAGULATION PROFILE",u:"",d:2,lo:0.8,hi:1.2,r:"0.8 - 1.2"},
+  DDIMER:{n:"D-Dimer",g:"COAGULATION PROFILE",u:"ng/ml",d:0,hi:500,r:"< 500ng/ml"},
+
+  FSH:{n:"FSH",g:"HORMONE ASSAY",u:"mIU/ml",d:2,lo:3.5,hi:12.5,r:"3.5 - 12.5mIU/ml"},
+  LH:{n:"LH",g:"HORMONE ASSAY",u:"mIU/ml",d:2,lo:2.4,hi:12.6,r:"2.4 - 12.6mIU/ml"},
+  PRL:{n:"Prolactin",g:"HORMONE ASSAY",u:"ng/ml",d:1,lo:4.8,hi:23.3,r:"4.8 - 23.3ng/ml"},
+  TESTO:{n:"Testosterone (Total)",g:"HORMONE ASSAY",u:"ng/dl",d:1,lo:249,hi:836,r:"249 - 836ng/dl"},
+  CORT:{n:"Cortisol (Morning)",g:"HORMONE ASSAY",u:"µg/dl",d:1,lo:6.2,hi:19.4,r:"6.2 - 19.4µg/dl"},
+
+  TROPI:{n:"Troponin I",g:"CARDIAC PROFILE",u:"ng/ml",d:3,hi:0.04,r:"< 0.04ng/ml"},
+  CKMB:{n:"CK-MB",g:"CARDIAC PROFILE",u:"U/L",d:0,hi:25,r:"< 25U/L"},
+  HSCRP:{n:"hs-CRP",g:"CARDIAC PROFILE",u:"mg/L",d:2,hi:1.0,r:"< 1.0mg/L"},
+
+  CEA:{n:"CEA",g:"TUMOUR MARKERS",u:"ng/ml",d:1,hi:5,r:"< 5ng/ml"},
+  CA125:{n:"CA 125",g:"TUMOUR MARKERS",u:"U/ml",d:1,hi:35,r:"< 35U/ml"},
+  PSA:{n:"PSA Total",g:"TUMOUR MARKERS",u:"ng/ml",d:2,hi:4.0,r:"< 4.0ng/ml"},
+  FPSA:{n:"Free PSA",g:"TUMOUR MARKERS",u:"ng/ml",d:2,r:"—"},
+  PSARATIO:{n:"Free / Total PSA Ratio",g:"TUMOUR MARKERS",u:"%",d:1,lo:25,r:"> 25%",
+            f:"FPSA / PSA * 100"},
+
+  U_MALB:{n:"Urine Microalbumin",g:"URINE",u:"mg/L",d:1,hi:30,r:"< 30mg/L"},
+  U_CREAT:{n:"Urine Creatinine",g:"URINE",u:"mg/dl",d:1,lo:20,hi:320,r:"20 - 320mg/dl"},
+  U_ACR:{n:"Urine Albumin / Creatinine Ratio",g:"URINE",u:"mg/g",d:1,hi:30,r:"< 30mg/g",
+         f:"U_MALB / U_CREAT * 100"},
+
+  CUL_URINE:{n:"Urine Culture & Sensitivity",g:"CULTURE & SENSITIVITY",u:"",d:0,txt:1,r:""},
+};
+
+const PANELS = {
+  "CBC":["HB","TC","PLT","PCV"],
+  "Blood Sugar F & PP":["GLU_F","GLU_PP"],
+  "Lipid Profile":["CHOL","TG","HDL","LDL","VLDL","CHR"],
+  "Liver Function Test":["TBIL","DBIL","IBIL","SGPT","SGOT","TP","ALB","GLOB","AGR"],
+  "Renal Function Test":["UREA","CREAT"],
+  "Thyroid Profile":["T3","T4","TSH"],
+  "Diabetic Profile":["GLU_F","GLU_PP","HBA1C","EAG"],
+  "Iron Studies":["IRON","TIBC","UIBC","TSAT","FERR"],
+  "Coagulation Profile":["PT","INR","APTT"],
+  "Cardiac Profile":["TROPI","CKMB","HSCRP"],
+  "Electrolytes":["NA","K","CL","BICARB","ANGAP"],
+  "Full Body Checkup":["HB","TC","PLT","PCV","GLU_F","HBA1C","UREA","CREAT",
+                       "CHOL","TG","HDL","LDL","NONHDL","TBIL","SGPT","SGOT","TSH"],
+};
+
+const LAB = {
+  pre:"New", name:"MITHRA", sub:"MEDICAL LABORATORY",
+  a1:"Chettiyankinar Road, Kuttippala,", a2:"Opp. Govt. Ayurveda Dispensary",
+  ph:"Ph : +91 81578 87311, 95266 77311", em:"e-mail : mithralab12020@gmail.com",
+  sl:"SAHEED MOHAMED P", slq:"(Bsc MLT)", slr:"Technologist",
+  sr:"ABDUNNASER MAYYERI", srq:"(DMLT, Bsc MLT)", srr:"Lab Incharge",
+};
+
+let NEXT_NO = 51359;
+
+/* Doctors who refer patients here. The contact number is for the lab — it is
+   what you ring when a result needs telling straight away — and never prints. */
+let NEXT_DOC = 4;
+const DOCTORS = [
+  {id:1, name:"Dr. S. Mehta", qualification:"MBBS, MD", profession:"Cardiologist",
+   hospital:"City Heart Centre", phone:"9800011122", pct:10, active:true},
+  {id:2, name:"Dr. A. Iyer", qualification:"MBBS, DCH", profession:"Paediatrician",
+   hospital:"Kuttippala Clinic", phone:"9800033344", pct:8, active:true},
+  {id:3, name:"Dr. Reena Thomas", qualification:"MBBS, MS", profession:"Gynaecologist",
+   hospital:"Mother Care Hospital", phone:"9800055566", pct:12, active:true},
+];
+
+const PROFESSIONS=["General Physician","General Surgeon","Paediatrician",
+  "Gynaecologist","Orthopaedic Surgeon","Cardiologist","Diabetologist",
+  "Nephrologist","Dermatologist","ENT Surgeon","Ophthalmologist","Neurologist",
+  "Pulmonologist","Gastroenterologist","Urologist","Oncologist","Psychiatrist",
+  "Ayurveda Physician","Homeopath","Dentist"];
+
+/* Per-person permissions, exactly as the real program stores them. */
+const USERS = {
+  boss:   {name:"Abdunnaser Mayyeri", role:"Administrator", pin:"8461", can:"*"},
+  ritu:   {name:"Ritu Patil", role:"Technologist", pin:"7392",
+           can:["results","send"]},
+  saheed: {name:"Saheed Mohamed", role:"Reception", pin:"5150",
+           can:["results","bill","money"]},
+};
+
+const state = { tab:"job", jobs:[], job:null, selJob:null, selPatient:null,
+                user:null, q:{}, focusId:null };
+
+/* Every list has one of these. It filters as you type — no Enter needed —
+   and the caret is put back afterwards, because the screen redraws itself. */
+function searchBox(key, placeholder){
+  const i=el("input"); i.type="text"; i.id="q-"+key;
+  i.placeholder=placeholder; i.value=state.q[key]||"";
+  i.oninput=e=>{ state.q[key]=e.target.value; state.focusId=i.id; render(); };
+  return i;
+}
+function matchesTerm(term, ...fields){
+  term=String(term||"").trim().toLowerCase();
+  if(!term) return true;
+  const hay=fields.map(f=>String(f==null?"":f).toLowerCase()).join(" ");
+  if(hay.includes(term)) return true;
+  /* Initials count too: "fmk" has to find FARAS .M. Kutty, the same way it
+     does in the patient box on the job screen. */
+  const words=hay.split(/[^a-z0-9]+/).filter(Boolean);
+  const initials=words.map(w=>w[0]).join("");
+  const needle=term.replace(/[^a-z0-9]/g,"");
+  if(needle && initials.includes(needle)) return true;
+  const digits=term.replace(/\D/g,"");
+  return digits.length>=3 && hay.replace(/\D/g,"").includes(digits);
+}
+
+/* Things the lab chooses under Settings. */
+const SET = { theme:"light", header:"modern", specimen:true, details:true };
+
+/* Which specimen each group is run on, with the exceptions that matter.
+   Kept as a map rather than a field on every test, exactly as the program
+   does it, so adding a test does not mean remembering to fill this in. */
+const GROUP_SPECIMEN = {
+  "HAEMATOLOGY":"Whole Blood (EDTA)", "BIO-CHEMISTRY (Routine)":"Serum",
+  "LIVER FUNCTION TEST":"Serum", "RENAL FUNCTION TEST":"Serum",
+  "LIPID PROFILE":"Serum (fasting)", "THYROID PROFILE":"Serum",
+  "ELECTROLYTES":"Serum", "IRON STUDIES":"Serum", "HORMONE ASSAY":"Serum",
+  "TUMOUR MARKERS":"Serum", "CARDIAC PROFILE":"Serum", "SEROLOGY":"Serum",
+  "COAGULATION PROFILE":"Plasma (Citrate)", "URINE":"Random Urine",
+  "CULTURE & SENSITIVITY":"As collected",
+};
+const SPECIMEN_OF = {
+  HBA1C:"Whole Blood (EDTA)", GLU_F:"Fluoride Plasma", GLU_PP:"Fluoride Plasma",
+  ESR:"Whole Blood (EDTA)", EAG:"Whole Blood (EDTA)",
+};
+function specimenOf(code){
+  return SPECIMEN_OF[code] || GROUP_SPECIMEN[TESTS[code].g] || "Serum";
+}
+
+/* Tests the lab hands over with an explanation, on their own sheet. */
+const DETAIL = {
+  HBA1C:{title:"HbA1c (Glycated Haemoglobin)", with:["EAG"], text:
+`HbA1c reflects the average blood glucose over the previous 8 to 12 weeks and is not affected by short-term changes in diet.
+INTERPRETATION
+    Below 5.7%        Normal
+    5.7 - 6.4%        Prediabetes
+    6.5% and above    Diabetes mellitus
+GOALS IN A KNOWN DIABETIC
+    Below 7.0%        Good control
+    7.0 - 8.0%        Fair control — review treatment
+    Above 8.0%        Poor control — action needed
+Results may read falsely low in haemolytic anaemia, recent blood loss or transfusion, and falsely high in iron deficiency anaemia. Clinical correlation is advised.`},
+  TSH:{title:"TSH (Ultrasensitive)", with:["T3","T4"], text:
+`TSH is the most sensitive single test of thyroid function; it moves before T3 and T4 leave their normal ranges.
+INTERPRETATION
+    High TSH, low T4      Primary hypothyroidism
+    High TSH, normal T4   Subclinical hypothyroidism
+    Low TSH, high T4      Hyperthyroidism
+TSH is higher in the early morning and during illness. A single abnormal result should be repeated after 6 to 8 weeks before treatment is started.`},
+  PSA:{title:"PSA Total", with:["FPSA","PSARATIO"], text:
+`PSA rises in prostate cancer, but also in benign enlargement, prostatitis, after catheterisation, cycling or ejaculation within 48 hours.
+INTERPRETATION
+    Below 4.0 ng/ml    Within the usual range for age
+    4.0 - 10.0 ng/ml   Grey zone — the free/total ratio helps
+    Above 10.0 ng/ml   Urology referral advised
+A free/total ratio above 25% favours a benign cause. This test is not a diagnosis on its own.`},
+};
+
+function can(what){
+  const u = state.user;
+  if(!u) return true;
+  return u.can==="*" || u.can.includes(what);
+}
+
+/* Sample history so the demo does not open empty. */
+function seed(){
+  const mk = (name,initial,phone,sex,age,codes,vals,status,ref,daysAgo)=>{
+    const j = newJob();
+    j.name=name; j.initial=initial; j.phone=phone; j.sex=sex; j.age=age;
+    j.ref=ref||null;
+    j.codes=codes.slice(); j.vals=Object.assign({},vals); j.status=status;
+    j.date = new Date(Date.now()-daysAgo*864e5);
+    state.jobs.push(j); return j;
+  };
+  mk("Anil Sharma","K","9988776655","Male",52,PANELS["Diabetic Profile"],
+     {GLU_F:"148",GLU_PP:"212",HBA1C:"7.8"},"sent",1,2);
+  mk("Sunita Devi","R","9123456780","Female",40,PANELS["Thyroid Profile"],
+     {T3:"110",T4:"8.4",TSH:"6.30"},"ready",null,1);
+  mk("Krishnan Nair","P","9445566778","Male",61,PANELS["Renal Function Test"],
+     {UREA:"38"},"in_progress",2,0);
+  NEXT_NO = 51362;
+}
+
+/* Finds a returning patient from a few letters, initials, or a phone fragment. */
+function findPatients(text){
+  const people={};
+  state.jobs.forEach(j=>{
+    if(!j.name.trim()) return;
+    const key=j.name.trim().toLowerCase()+"|"+j.phone.trim();
+    (people[key]=people[key]||{name:j.name,initial:j.initial,phone:j.phone,
+                               sex:j.sex,age:j.age,jobs:[]})
+      .jobs.push(j);
+  });
+  const digits=text.replace(/\D/g,"");
+  const needle=text.toLowerCase().replace(/[^a-z0-9]/g,"");
+  const words=text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+
+  const out=[];
+  Object.values(people).forEach(p=>{
+    /* Matched against the name as written — FARAS .M. Kutty — so the initial
+       counts towards "fmk" the same as it does on the report. */
+    const parts=fullName(p.name,p.initial).toLowerCase()
+                  .split(/[^a-z0-9]+/).filter(Boolean);
+    const initials=parts.map(w=>w[0]).join("");
+    const phone=(p.phone||"").replace(/\D/g,"");
+    let score=null;
+    if(digits.length>=3 && phone.includes(digits)) score=0;
+    else if(words.length && parts[0] && parts[0].startsWith(words[0])) score=1;
+    else if(needle && initials.startsWith(needle)) score=2;
+    else if(words.length && parts.some(w=>w.startsWith(words[0]))) score=3;
+    else if(needle && parts.join("").includes(needle)) score=4;
+    if(score!==null) out.push([score,p]);
+  });
+  out.sort((a,b)=>a[0]-b[0]);
+  return out.slice(0,6).map(r=>r[1]);
+}
+
+function newJob(){
+  return { no:NEXT_NO++, name:"", initial:"", phone:"", sex:"", age:"", ref:null,
+           codes:[], vals:{}, nd:{}, status:"draft", date:new Date(),
+           bill:null, prev:null };
+}
+
+/* The name the way the lab writes it: FARAS .M. Kutty. The initial sits after
+   the first word, not at the end, because that is how it is said. */
+function fullName(name,initial){
+  name=String(name||"").trim().replace(/\s+/g," ");
+  initial=String(initial||"").trim().replace(/^\.|\.$/g,"").toUpperCase();
+  if(!initial) return name;
+  if(!name) return "."+initial+".";
+  const i=name.indexOf(" ");
+  if(i<0) return name+" ."+initial+".";
+  return name.slice(0,i)+" ."+initial+"."+name.slice(i);
+}
+function jobName(j){ return fullName(j.name,j.initial); }
+
+/* Name, mobile and sex are all required: the number is how the report reaches
+   the patient, and the sex decides which normal range a result is judged
+   against. Returns what is still missing, or "". */
+function missingField(j){
+  if(!String(j.name||"").trim()) return "the patient's name";
+  if(!String(j.phone||"").trim()) return "a mobile number";
+  if(!String(j.sex||"").trim()) return "the patient's sex";
+  return "";
+}
+
+function doctorLabel(d){
+  if(!d) return "";
+  const where=[d.profession,d.hospital].filter(Boolean).join(" · ");
+  return d.name+(where?" — "+where:"");
+}
+function doctorById(id){ return DOCTORS.find(d=>d.id===id)||null; }
+function doctorName(id){ const d=doctorById(id); return d?d.name:""; }
+
+/* =====================================================================
+   Calculation — the same rules as the desktop program
+   ===================================================================== */
+function num(v){
+  if(v===undefined||v===null) return null;
+  let s=String(v).trim(); if(!s) return null;
+  if("<>=".includes(s[0])) s=s.slice(1).trim();
+  const f=parseFloat(s); return isNaN(f)?null:f;
+}
+function roundHalfUp(v,d){
+  const m=Math.pow(10,d);
+  return (Math.round(Math.abs(v)*m+1e-9)/m)*Math.sign(v||1);
+}
+function fmt(v,d){ return roundHalfUp(v,d).toFixed(d); }
+
+/* A calculated test stays BLANK when an input is missing — never 0. */
+function evalFormula(expr,vals){
+  const codes=expr.match(/[A-Z][A-Z0-9_]*/g)||[];
+  let e=expr;
+  for(const c of codes){
+    const v=vals[c];
+    if(v===null||v===undefined||v==="") return null;
+    e=e.replace(new RegExp("\\b"+c+"\\b","g"),"("+v+")");
+  }
+  if(!/^[-+*/(). 0-9]+$/.test(e)) return null;
+  try{ const r=Function('"use strict";return ('+e+")")();
+       return (typeof r==="number"&&isFinite(r))?r:null; }
+  catch(_){ return null; }
+}
+
+function rangeFor(code,sex){
+  const t=TESTS[code];
+  if(t.bySex && sex){ const k=sex[0].toUpperCase(); if(t.bySex[k]) return Object.assign({},t,t.bySex[k]); }
+  return t;
+}
+function flagOf(code,value,sex){
+  const t=rangeFor(code,sex);
+  if(value===null||value==="") return "";
+  if(t.opts){ return String(value).toLowerCase()===String(t.ok||"").toLowerCase()?"N":"A"; }
+  const v=num(value); if(v===null) return "";
+  if(t.lo!==undefined && v<t.lo) return "L";
+  if(t.hi!==undefined && v>t.hi) return "H";
+  if(t.lo===undefined && t.hi===undefined) return "A";
+  return "N";
+}
+
+/* Returns {code:{display,flag,range,calc}} for the whole job. */
+function compute(job){
+  const measured={};
+  job.codes.forEach(c=>{ if(!TESTS[c].f) measured[c]=job.vals[c]!==undefined?job.vals[c]:""; });
+
+  const derived={}; const order=job.codes.filter(c=>TESTS[c].f);
+  for(let pass=0;pass<4;pass++){
+    for(const c of order){
+      const inputs=Object.assign({},measured,derived);
+      const v=evalFormula(TESTS[c].f,inputs);
+      derived[c]= v===null?null:v;
+    }
+  }
+  const out={};
+  for(const c of job.codes){
+    const t=TESTS[c], rr=rangeFor(c,job.sex);
+    let display="", raw=null;
+    if(job.nd[c]){ out[c]={display:"",flag:"",range:"not done",calc:!!t.f,nd:true}; continue; }
+    if(t.f){
+      raw = derived[c];
+      display = raw===null?"":fmt(raw,t.d)+t.u;
+    } else {
+      const typed=(job.vals[c]||"").trim();
+      raw=num(typed);
+      if(t.opts) display=typed;
+      else if(typed && raw===null) display=typed;
+      else if(raw!==null) display=(typed[0]==="<"||typed[0]===">"?typed[0]:"")+fmt(raw,t.d)+t.u;
+    }
+    out[c]={ display, flag: display?flagOf(c, t.opts?display:raw, job.sex):"",
+             range: rr.r||"", calc:!!t.f, nd:false };
+  }
+  return out;
+}
+
+function progress(job){
+  const done=job.codes.filter(c=>job.nd[c] || (job.vals[c]||"").trim()!=="" || TESTS[c].f).length;
+  const filled=job.codes.filter(c=>{
+    if(job.nd[c]) return true;
+    if(TESTS[c].f){ const r=compute(job)[c]; return r && r.display!==""; }
+    return (job.vals[c]||"").trim()!=="";
+  }).length;
+  return {done:filled,total:job.codes.length};
+}
+function isReady(job){ const p=progress(job); return p.total>0 && p.done===p.total; }
+
+/* =====================================================================
+   Rendering
+   ===================================================================== */
+const $=(s,r=document)=>r.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!==undefined)e.innerHTML=h; return e;};
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const dmy=d=>String(d.getDate()).padStart(2,"0")+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+d.getFullYear();
+
+const ALL_TABS=[["job","Job",null],["queue","Work Queue",null],
+                ["patients","Patients",null],["doctors","Doctors",null],
+                ["tests","Tests","tests"],
+                ["billing","Billing","money"],["staff","Staff","staff"],
+                ["settings","Settings","settings"]];
+function TABS(){ return ALL_TABS.filter(t=>!t[2]||can(t[2])).map(t=>[t[0],t[1]]); }
+
+function render(){
+  const tabs=$("#tabs"); tabs.innerHTML="";
+  const list=TABS();
+  if(!list.some(([k])=>k===state.tab)) state.tab=list[0][0];
+  list.forEach(([k,t])=>{
+    const b=el("button","tab"+(state.tab===k?" on":""),esc(t));
+    b.onclick=()=>{state.tab=k;render();};
+    tabs.appendChild(b);
+  });
+  const m=$("#main"); m.innerHTML="";
+  ({job:viewJob,queue:viewQueue,patients:viewPatients,doctors:viewDoctors,
+    tests:viewTests,billing:viewBilling,staff:viewStaff,
+    settings:viewSettings}[state.tab])(m);
+  updateStatus();
+
+  if(state.focusId){
+    const box=document.getElementById(state.focusId);
+    if(box){ box.focus(); box.setSelectionRange(box.value.length,box.value.length); }
+    state.focusId=null;
+  }
+}
+
+function updateStatus(){
+  const today=state.jobs.filter(j=>sameDay(j.date,new Date())).length;
+  $("#s-today").textContent=today;
+  $("#s-pending").textContent=state.jobs.filter(j=>j.status==="draft"||j.status==="in_progress").length;
+  $("#s-ready").textContent=state.jobs.filter(j=>j.status==="ready").length;
+  const u=state.user;
+  $("#s-user").textContent = u ? `${u.name} (${u.role})` : "";
+}
+const sameDay=(a,b)=>a.toDateString()===b.toDateString();
+
+/* ------------------------------- JOB ------------------------------- */
+function viewJob(m){
+  const job=state.job||(state.job=newJob());
+  const res=compute(job), p=progress(job);
+
+  const head=el("div","flexr");
+  head.style.marginBottom="10px";
+  head.innerHTML=`<h1>${job.name?"Job — "+esc(jobName(job)):"New Job"}</h1>
+    <span class="sub">Report No ${job.no}</span>
+    <span class="sub" style="margin-left:auto">${statusLabel(job.status)}</span>`;
+  m.appendChild(head);
+
+  /* patient */
+  const fs=el("fieldset"); fs.appendChild(el("legend",null,"Patient"));
+  const g=el("div"); g.style.cssText="display:grid;grid-template-columns:2fr .5fr 1.2fr .9fr .7fr .8fr 1.8fr;gap:11px";
+  g.innerHTML=`
+    <div><label class="f">Name</label><input type="text" id="p-name" value="${esc(job.name)}" placeholder="Patient name"></div>
+    <div><label class="f">Initial</label><input type="text" id="p-init" value="${esc(job.initial)}" maxlength="4" placeholder="M" title="The letter between the names — FARAS .M. Kutty"></div>
+    <div><label class="f">Mobile</label><input type="text" id="p-phone" value="${esc(job.phone)}" placeholder="Mobile number"></div>
+    <div><label class="f">Sex</label><select id="p-sex">
+      <option value=""${job.sex?"":" selected"}>— choose —</option>
+      <option${job.sex==="Female"?" selected":""}>Female</option>
+      <option${job.sex==="Male"?" selected":""}>Male</option></select></div>
+    <div><label class="f">Age</label><input type="number" id="p-age" value="${esc(job.age)}" min="0" max="130"></div>
+    <div><label class="f">&nbsp;</label><select id="p-unit"><option>Years</option><option>Months</option><option>Days</option></select></div>
+    <div><label class="f">Referred by Dr</label><select id="p-ref">
+      <option value="">— none —</option>
+      ${DOCTORS.filter(d=>d.active).map(d=>`<option value="${d.id}"${job.ref===d.id?" selected":""}>${esc(doctorLabel(d))}</option>`).join("")}
+      <option value="new">Add a new doctor…</option></select></div>`;
+
+  /* What will print, and what is still needed — shown here rather than sprung
+     on the operator after a screenful of results has been typed. */
+  const note=el("div","sub");
+  note.style.gridColumn="1 / 4";
+  /* The foot-of-screen explanation, kept in step with the boxes as they are
+     typed into — a note still asking for a name after the name is filled in
+     reads as broken. */
+  const paintNeed=()=>{
+    const box=document.getElementById("needsnote");
+    if(!box) return;
+    const miss=missingField(job);
+    box.style.display=miss?"":"none";
+    if(!miss) return;
+    box.innerHTML=`This job needs <b>${esc(miss)}</b> before it can be finished. The
+      mobile number is how the report reaches the patient and how they are found next
+      visit; the sex decides which normal range each result is judged against.
+      Anything already typed is kept — it is finishing that waits, not your work.`;
+    const go=document.getElementById("go-btn");
+    if(go){ go.disabled=!isReady(job)||!!miss; go.title="Still needed: "+miss; }
+  };
+
+  const paintNote=()=>{
+    const miss=missingField(job);
+    const printed=job.initial?`Prints as:  ${esc(jobName(job))}`:"";
+    if(miss && job.name.trim()){
+      note.innerHTML=[printed,`Still needed:  ${esc(miss)}`].filter(Boolean).join("&nbsp; · &nbsp;");
+      note.style.color="var(--amber)"; note.style.fontWeight="600";
+    } else {
+      note.innerHTML=printed; note.style.color=""; note.style.fontWeight="";
+    }
+    paintNeed();
+  };
+  const matches=el("div"); matches.id="matches";
+  matches.style.cssText="margin-top:8px;border:1px solid var(--line);border-radius:6px;"
+    +"overflow:hidden;display:none";
+  g.appendChild(note);
+  g.appendChild(matches);
+  matches.style.gridColumn="1 / 4";
+  fs.appendChild(g); m.appendChild(fs);
+  paintNote();
+
+  function showMatches(text){
+    text=(text||"").trim();
+    if(text.length<2){ matches.style.display="none"; return; }
+    const hits=findPatients(text);
+    matches.innerHTML="";
+    hits.forEach(p=>{
+      const r=el("div",null,
+        `<b>${esc(fullName(p.name,p.initial))}</b> <span class="sub">· ${esc(p.phone||"")} · ${esc(p.sex)} `
+        +`· ${esc(p.age)} yrs · ${p.jobs.length} visit${p.jobs.length!==1?"s":""}</span>`);
+      r.style.cssText="padding:8px 11px;cursor:pointer;border-bottom:1px solid var(--line2)";
+      r.onmouseenter=()=>r.style.background="var(--brand-soft)";
+      r.onmouseleave=()=>r.style.background="";
+      r.onclick=()=>{
+        job.name=p.name; job.initial=p.initial||""; job.phone=p.phone;
+        job.sex=p.sex; job.age=p.age;
+        job.prev=p.jobs[p.jobs.length-1];
+        matches.style.display="none";
+        toast("Loaded "+fullName(p.name,p.initial)+" — details filled in");
+        render();
+      };
+      matches.appendChild(r);
+    });
+    matches.style.display=hits.length?"block":"none";
+  }
+
+  const nameBox=g.querySelector("#p-name");
+  nameBox.oninput=e=>{ job.name=e.target.value; paintNote(); showMatches(e.target.value); };
+  nameBox.onfocus=e=>showMatches(e.target.value);
+  g.querySelector("#p-init").oninput=e=>{job.initial=e.target.value;paintNote();};
+  g.querySelector("#p-phone").oninput=e=>{job.phone=e.target.value;paintNote();};
+  g.querySelector("#p-age").oninput=e=>{job.age=e.target.value;};
+  g.querySelector("#p-ref").onchange=e=>{
+    if(e.target.value==="new"){ e.target.value=job.ref||""; editDoctor(null,id=>{
+      job.ref=id; render(); }); return; }
+    job.ref=e.target.value?Number(e.target.value):null;
+  };
+  g.querySelector("#p-sex").onchange=e=>{job.sex=e.target.value;render();};
+
+  /* tests */
+  const ts=el("fieldset"); ts.appendChild(el("legend",null,"Tests"));
+  const bar=el("div","flexr");
+  Object.keys(PANELS).forEach(name=>{
+    const b=el("button","btn panel",esc(name));
+    b.onclick=()=>{ PANELS[name].forEach(c=>{ if(!job.codes.includes(c)) job.codes.push(c); });
+                    toast(name+" added"); render(); };
+    bar.appendChild(b);
+  });
+  ts.appendChild(bar);
+
+  const search=el("input"); search.type="text"; search.placeholder="Type a test name or code, then press Enter to add…";
+  search.style.marginTop="10px";
+  search.onkeydown=e=>{
+    if(e.key!=="Enter") return;
+    const q=search.value.trim().toLowerCase(); if(!q) return;
+    const hit=Object.keys(TESTS).find(c=>!job.codes.includes(c) &&
+      (c.toLowerCase().includes(q)||TESTS[c].n.toLowerCase().includes(q)));
+    if(hit){ job.codes.push(hit); search.value=""; render(); toast(TESTS[hit].n+" added"); }
+    else toast("No test matches “"+search.value.trim()+"”");
+  };
+  if(job.prev && job.prev.codes.length){
+    const rep=el("button","btn","Repeat last visit's tests");
+    rep.style.marginTop="10px";
+    rep.onclick=()=>{
+      let n=0;
+      job.prev.codes.forEach(c=>{ if(!job.codes.includes(c)){ job.codes.push(c); n++; } });
+      toast(n?`Added ${n} test${n!==1?"s":""} from the last visit`:"Already added");
+      render();
+    };
+    ts.appendChild(rep);
+  }
+  ts.appendChild(search); m.appendChild(ts);
+
+  /* bill — before results, because the lab wants it settled at the counter */
+  if(can("bill")){
+    const bs=el("fieldset"); bs.appendChild(el("legend",null,"Bill"));
+    const band=el("div","billband");
+    const total=job.codes.reduce((sum,c)=>sum+(RATES[c]||120),0);
+    if(job.bill){
+      band.innerHTML=`<div><div class="amt" style="color:var(--green)">₹${job.bill.net}`
+        +` &nbsp;·&nbsp; paid ₹${job.bill.paid}</div>`
+        +`<div class="sub">${job.bill.paid>=job.bill.net?"Paid in full.":"Balance outstanding."}</div></div>`;
+    } else {
+      band.innerHTML=`<div><div class="amt" style="color:var(--amber)">Not billed yet`
+        +`${job.codes.length?` &nbsp;·&nbsp; about ₹${total}`:""}</div>`
+        +`<div class="sub">Make the bill before starting work.</div></div>`;
+    }
+    const sp=el("div"); sp.style.marginLeft="auto"; band.appendChild(sp);
+    const bp=el("button","btn","Print bill…");
+    bp.disabled=!job.codes.length;
+    bp.title="Show the receipt, then print, save or send it";
+    bp.onclick=()=>showBill(job);
+    band.appendChild(bp);
+    const bb=el("button","btn p",job.bill?"Open the bill":"Make the bill");
+    bb.onclick=()=>openBill(job,total);
+    band.appendChild(bb);
+    bs.appendChild(band); m.appendChild(bs);
+  }
+
+  /* results */
+  const rs=el("fieldset"); rs.appendChild(el("legend",null,"Results"));
+  if(!job.codes.length){
+    rs.appendChild(el("div","empty","No tests chosen yet.\n\nClick a panel button above, or type a test name — the result boxes appear here."));
+  } else {
+    const grid=el("div","grid"); let lastG=null;
+    job.codes.forEach(code=>{
+      const t=TESTS[code], r=res[code];
+      if(t.g!==lastG){ grid.appendChild(el("div","gh",esc(t.g))); lastG=t.g; }
+
+      grid.appendChild(el("div","nm"+(t.f?" calc":"")+(job.nd[code]?" nd":""),esc(t.n)));
+
+      let input;
+      if(t.f){
+        input=el("input"); input.type="text"; input.readOnly=true; input.value=r.display;
+        input.title="Calculated from: "+t.f;
+      } else if(t.opts){
+        input=el("select");
+        input.appendChild(el("option",null,""));
+        t.opts.forEach(o=>{const op=el("option",null,esc(o)); if(job.vals[code]===o) op.selected=true; input.appendChild(op);});
+        input.onchange=e=>{job.vals[code]=e.target.value;touch(job);render();};
+      } else {
+        input=el("input"); input.type="text"; input.value=job.vals[code]||"";
+        input.onchange=e=>{job.vals[code]=e.target.value;touch(job);render();};
+        input.onkeydown=e=>{ if(e.key==="Enter"){ e.target.blur(); } };
+      }
+      input.disabled=!!job.nd[code];
+      grid.appendChild(input);
+
+      grid.appendChild(el("div","unit",esc(t.u)));
+      grid.appendChild(el("div","rng",esc(r.range)));
+      grid.appendChild(el("div",null,r.flag?`<span class="flag f-${r.flag}">${
+        {H:"HIGH",L:"LOW",N:"N",A:"CHECK"}[r.flag]}</span>`:""));
+
+      const mn=el("button","btn q mn","⋯");
+      mn.title="More for this test";
+      mn.onclick=()=>rowMenu(job,code);
+      grid.appendChild(mn);
+    });
+    rs.appendChild(grid);
+    const bw=el("div","bar",`<i style="width:${p.total?p.done/p.total*100:0}%"></i>`);
+    rs.appendChild(bw);
+  }
+  m.appendChild(rs);
+
+  /* actions */
+  const act=el("div","flexr");
+  const bNew=el("button","btn","New job"); bNew.onclick=()=>{state.job=newJob();render();};
+  const bSave=el("button","btn","Save"); bSave.onclick=()=>saveJob(job);
+  const bPrev=el("button","btn","Preview"); bPrev.onclick=()=>{ if(!job.codes.length){toast("Choose a test first");return;} showReport(job,false); };
+  const bGo=el("button","btn go","Check &amp; make report");
+  bGo.id="go-btn";
+  bGo.disabled=!isReady(job)||!!missingField(job);
+  if(missingField(job)) bGo.title="Still needed: "+missingField(job);
+  bGo.onclick=()=>{
+    saveJob(job,true);
+    if(can("bill") && !job.bill){
+      openSheet("No bill has been made", `
+        <p style="margin-top:0">This job has no bill. The report can still be made,
+        but nothing has been recorded as charged for <b>${esc(jobName(job))}</b>.</p>`,
+        [["Make the bill first","btn p",()=>{closeSheet();
+           openBill(job, job.codes.reduce((s2,c)=>s2+(RATES[c]||120),0));}],
+         ["Continue without a bill","btn",()=>{closeSheet();showReport(job,true);}]], true);
+      return;
+    }
+    showReport(job,true);
+  };
+  act.append(bNew,bSave,bPrev);
+  const sp=el("div"); sp.style.marginLeft="auto";
+  const cnt=el("span","sub",p.total?`${p.done} of ${p.total} entered`:"");
+  cnt.style.marginRight="12px";
+  act.append(sp,cnt,bGo);
+  m.appendChild(act);
+
+  const needNote=el("div","note"); needNote.id="needsnote";
+  m.appendChild(needNote);
+  paintNeed();
+  if(p.total && p.done<p.total){
+    m.appendChild(el("div","note",`Check &amp; make report is off until every test has a result. ${p.total-p.done} still empty — fill them in, or click ⋯ and mark one “not done”.`));
+  }
+}
+
+const RATES={CBC:350,GLU_F:80,GLU_PP:80,HBA1C:450,TSH:250,CHOL:150,TG:150,HDL:150};
+
+function saveTheBill(job,suggested){
+  const d=parseFloat(document.getElementById("bl-disc").value)||0;
+  const net=Math.round(suggested*(1-d/100));
+  const paid=parseFloat(document.getElementById("bl-paid").value)||0;
+  job.bill={net, paid:Math.min(paid,net)};
+  return net;
+}
+
+function openBill(job,suggested){
+  const paidAlready=job.bill?job.bill.paid:0;
+  openSheet("Bill — Report "+job.no, `
+    <table>
+      <thead><tr><th>Item</th><th style="text-align:right">Rate ₹</th></tr></thead>
+      <tbody>${job.codes.map(c=>`<tr><td>${esc(TESTS[c].n)}</td>
+        <td style="text-align:right">${RATES[c]||120}</td></tr>`).join("")}</tbody>
+    </table>
+    <div class="flexr" style="margin-top:14px">
+      <label class="f" style="margin:0">Discount %</label>
+      <input type="number" id="bl-disc" value="0" style="width:90px" min="0" max="100">
+      <label class="f" style="margin:0 0 0 14px">Received ₹</label>
+      <input type="number" id="bl-paid" value="${suggested}" style="width:120px">
+      <b style="margin-left:auto;font-size:15px" id="bl-total">Total ₹${suggested}</b>
+    </div>`,
+    [["Cancel","btn q",closeSheet],
+     ["Save &amp; print…","btn",()=>{
+        saveTheBill(job,suggested); closeSheet(); render(); showBill(job);
+     }],
+     ["Save the bill","btn p",()=>{
+        const net=saveTheBill(job,suggested);
+        closeSheet(); render();
+        toast("Bill saved — ₹"+net);
+     }]], true);
+  setTimeout(()=>{
+    const d=document.getElementById("bl-disc"), t=document.getElementById("bl-total");
+    if(d) d.oninput=()=>{ const v=parseFloat(d.value)||0;
+      t.textContent="Total ₹"+Math.round(suggested*(1-v/100)); };
+  },20);
+}
+
+function touch(job){
+  if(job.status==="draft") job.status="in_progress";
+  if(isReady(job)) job.status="ready";
+  else if(job.status==="ready") job.status="in_progress";
+}
+function saveJob(job,quiet){
+  const miss=missingField(job);
+  if(miss){ toast("Still needed: "+miss); return false; }
+  if(!state.jobs.includes(job)) state.jobs.push(job);
+  touch(job);
+  if(!quiet) toast("Saved");
+  render(); return true;
+}
+function statusLabel(s){
+  return {draft:'<span class="pill p-draft">Registered</span>',
+          in_progress:'<span class="pill p-prog">In progress</span>',
+          ready:'<span class="pill p-ready">Ready to send</span>',
+          sent:'<span class="pill p-sent">Sent ✓</span>'}[s]||"";
+}
+function rowMenu(job,code){
+  const nd=!!job.nd[code];
+  openSheet(TESTS[code].n, `
+    <p style="margin-top:0">What would you like to do with this test?</p>`, [
+    [nd?"Undo — this test was done":"Mark as not done (leave off the report)","btn",
+      ()=>{ job.nd[code]=!nd; if(job.nd[code]) delete job.vals[code]; touch(job); closeSheet(); render(); }],
+    ["Remove from this job","btn",()=>{ job.codes=job.codes.filter(c=>c!==code);
+      delete job.vals[code]; delete job.nd[code]; closeSheet(); render(); }],
+    ["Close","btn q",closeSheet],
+  ], true);
+}
+
+/* ------------------------------ QUEUE ------------------------------ */
+function viewQueue(m){
+  m.appendChild(el("h1",null,"Work Queue"));
+  m.appendChild(el("div","sub","Every job in the lab and what it is waiting for."));
+  const qb=searchBox("queue","Search by name, mobile or report number…");
+  qb.style.margin="10px 0";
+  m.appendChild(qb);
+  const tbl=el("table",null,`<thead><tr>
+    <th>Report No</th><th>Patient</th><th>Tests</th><th>Received</th>
+    <th>Progress</th><th>Status</th></tr></thead>`);
+  const tb=el("tbody");
+  const jobs=state.jobs.slice().reverse().filter(j=>
+    matchesTerm(state.q.queue, jobName(j), j.phone, j.no));
+  if(!jobs.length){
+    tb.appendChild(el("tr",null,`<td colspan="6"><div class="empty">${state.q.queue?"Nothing matches that search.":"No patients registered yet.\n\nOpen the Job tab to start."}</div></td>`));
+  }
+  jobs.forEach(j=>{
+    const p=progress(j);
+    const tr=el("tr",state.selJob===j?"sel":"",`
+      <td><b>${j.no}</b></td>
+      <td>${esc(jobName(j))}<div class="sub">${esc(j.phone)}</div></td>
+      <td>${esc(j.codes.map(c=>TESTS[c].n).join(", ").slice(0,52))}${j.codes.length>3?"…":""}</td>
+      <td>${dmy(j.date)}</td>
+      <td>${p.done}/${p.total}</td>
+      <td>${statusLabel(j.status)}</td>`);
+    tr.onclick=()=>{state.selJob=j;render();};
+    tr.ondblclick=()=>{state.job=j;state.tab="job";render();};
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb); m.appendChild(tbl);
+
+  const act=el("div","flexr"); act.style.marginTop="12px";
+  const j=state.selJob;
+  const bOpen=el("button","btn p","Open"); bOpen.disabled=!j;
+  bOpen.onclick=()=>{state.job=j;state.tab="job";render();};
+  const bPrev=el("button","btn","Preview"); bPrev.disabled=!j;
+  bPrev.onclick=()=>showReport(j,false);
+  const bSend=el("button","btn","Send / reprint"); bSend.disabled=!j;
+  bSend.onclick=()=>{ if(!isReady(j)){toast("This job still has empty tests");return;} showReport(j,true); };
+  act.append(bOpen,bPrev,bSend);
+  m.appendChild(act);
+}
+
+/* ----------------------------- PATIENTS ---------------------------- */
+function viewPatients(m){
+  m.appendChild(el("h1",null,"Patients"));
+  m.appendChild(el("div","sub","Every patient has a folder holding all of their reports."));
+
+  const people={};
+  state.jobs.forEach(j=>{
+    if(!j.name.trim()) return;
+    const key=j.name.trim()+"|"+j.phone.trim();
+    (people[key]=people[key]||{name:j.name,initial:j.initial,phone:j.phone,
+                               sex:j.sex,age:j.age,jobs:[]}).jobs.push(j);
+  });
+  const list=Object.values(people).filter(p=>
+    matchesTerm(state.q.patients, fullName(p.name,p.initial), p.phone));
+
+  const pb=searchBox("patients","Search patients by name, initials or mobile…");
+  pb.style.margin="10px 0";
+  m.appendChild(pb);
+
+  const wrap=el("div"); wrap.style.cssText="display:grid;grid-template-columns:1fr 1.4fr;gap:16px;margin-top:10px";
+
+  const left=el("div");
+  left.appendChild(el("label","f","Patients"));
+  const t1=el("table",null,`<thead><tr><th>Name</th><th>Mobile</th><th>Visits</th></tr></thead>`);
+  const b1=el("tbody");
+  if(!list.length) b1.appendChild(el("tr",null,`<td colspan="3"><div class="empty">No patients yet.</div></td>`));
+  list.forEach(p=>{
+    const tr=el("tr",state.selPatient&&state.selPatient.name===p.name?"sel":"",
+      `<td>${esc(fullName(p.name,p.initial))}</td><td>${esc(p.phone)}</td><td>${p.jobs.length}</td>`);
+    tr.onclick=()=>{state.selPatient=p;render();};
+    b1.appendChild(tr);
+  });
+  t1.appendChild(b1); left.appendChild(t1); wrap.appendChild(left);
+
+  const right=el("div");
+  const p=state.selPatient||list[0];
+  if(p){
+    state.selPatient=p;
+    right.appendChild(el("h1",null,esc(fullName(p.name,p.initial))));
+    right.appendChild(el("div","sub",`${esc(p.phone||"no mobile")} · ${esc(p.sex)} · ${esc(p.age)} Years`));
+
+    right.appendChild(el("label","f","Files in this patient's folder"));
+    const folder=`patients\\${p.name.replace(/[^A-Za-z0-9 ]/g,"")} ${p.phone} #${list.indexOf(p)+1}\\`;
+    const t2=el("table",null,`<thead><tr><th>File</th><th>Saved</th></tr></thead>`);
+    const b2=el("tbody");
+    p.jobs.forEach(j=>{
+      const tr=el("tr",null,`<td>${j.date.toISOString().slice(0,10)}&nbsp; Report ${j.no}.pdf</td><td>${dmy(j.date)}</td>`);
+      tr.onclick=()=>showReport(j,false);
+      b2.appendChild(tr);
+    });
+    b2.appendChild(el("tr",null,`<td>_patient details.txt</td><td>${dmy(new Date())}</td>`));
+    t2.appendChild(b2); right.appendChild(t2);
+    right.appendChild(el("div","note ok",`These files live in a real folder on the lab PC:<br><code>${esc(folder)}</code><br>They can be opened years later without LabSoft, and they are copied to Google Drive automatically.`));
+  } else {
+    right.appendChild(el("div","empty","Select a patient to see their visits and files."));
+  }
+  wrap.appendChild(right);
+  m.appendChild(wrap);
+}
+
+/* ------------------------------ TESTS ------------------------------ */
+let selTest=null;
+
+function viewTests(m){
+  m.appendChild(el("h1",null,"Tests"));
+  m.appendChild(el("div","sub","The lab controls this list — names, specimens, units, normal values and formulas. The full program ships with about 170 tests already set up."));
+
+  const admin=can("tests");
+  const act=el("div","flexr"); act.style.margin="10px 0";
+  const bNew=el("button","btn p","New test"); bNew.onclick=()=>editTest(null);
+  const bEdit=el("button","btn","Edit"); bEdit.disabled=!selTest;
+  bEdit.onclick=()=>editTest(selTest);
+  const bHide=el("button","btn","Hide"); bHide.disabled=!selTest;
+  bHide.onclick=()=>toast("“"+TESTS[selTest].n+"” would stop appearing when choosing tests. Old reports keep it.");
+  if(admin) act.append(bNew,bEdit,bHide);
+  else act.appendChild(el("div","sub","Only an administrator can change the test list."));
+  act.appendChild(searchBox("tests","Search tests by code or name…"));
+  act.lastChild.style.flex="1";
+  m.appendChild(act);
+
+  const tbl=el("table",null,`<thead><tr><th>Code</th><th>Name</th><th>Group</th>
+    <th>Specimen</th><th>Unit</th><th>Normal Value</th><th>Formula</th></tr></thead>`);
+  const tb=el("tbody");
+  Object.keys(TESTS).filter(c=>matchesTerm(state.q.tests,c,TESTS[c].n,TESTS[c].g))
+    .forEach(c=>{
+    const t=TESTS[c];
+    const tr=el("tr",selTest===c?"sel":"",
+      `<td><b>${c}</b></td><td>${esc(t.n)}${DETAIL[c]?' <span class="sub">· detailed PDF</span>':""}</td>
+       <td class="sub">${esc(t.g)}</td><td class="sub">${esc(specimenOf(c))}</td>
+       <td>${esc(t.u)}</td><td>${esc(t.r||"")}</td>
+       <td>${t.f?`<code>${esc(t.f)}</code>`:""}</td>`);
+    tr.onclick=()=>{ selTest=c; render(); };
+    if(admin) tr.ondblclick=()=>editTest(c);
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb); m.appendChild(tbl);
+  m.appendChild(el("div","note","Tests with a formula work themselves out — the operator never types them. A calculated test stays <b>blank</b> rather than wrong if one of its inputs is missing."));
+}
+
+const SPECIMENS=["Serum","Plasma","Whole Blood (EDTA)","Plasma (Citrate)",
+  "Fluoride Plasma","Random Urine","24-hour Urine","Stool","Semen","Swab","Body Fluid"];
+
+function editTest(code){
+  const t=code?TESTS[code]:{n:"",g:"BIO-CHEMISTRY (Routine)",u:"",d:1,r:"",f:""};
+  const groups=[...new Set(Object.keys(TESTS).map(c=>TESTS[c].g))];
+  openSheet(code?"Edit test — "+code:"New test", `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+      <div><label class="f">Code</label>
+        <input type="text" id="t-code" value="${esc(code||"")}" placeholder="GLU_F"></div>
+      <div><label class="f">Name (prints exactly as typed)</label>
+        <input type="text" id="t-name" value="${esc(t.n)}"></div>
+      <div><label class="f">Group heading</label><select id="t-group">
+        ${groups.map(g=>`<option${g===t.g?" selected":""}>${esc(g)}</option>`).join("")}</select></div>
+      <div><label class="f">Specimen</label><select id="t-spec">
+        ${SPECIMENS.map(s=>`<option${code&&s===specimenOf(code)?" selected":""}>${esc(s)}</option>`).join("")}
+        </select></div>
+      <div><label class="f">Unit</label>
+        <input type="text" id="t-unit" value="${esc(t.u)}" placeholder="mg/dl"></div>
+      <div><label class="f">Normal value (prints as)</label>
+        <input type="text" id="t-range" value="${esc(t.r||"")}"></div>
+      <div style="grid-column:1/3"><label class="f">Formula — leave empty for a measured test</label>
+        <input type="text" id="t-formula" value="${esc(t.f||"")}" placeholder="TP - ALB"></div>
+      <div style="grid-column:1/3">
+        <label><input type="checkbox" id="t-detail"${DETAIL[code]?" checked":""}>
+          Also issue this test on its own detailed PDF</label>
+        <div class="sub">For tests handed over with an explanation — HbA1c, TSH, Vitamin D.
+          The result still appears on the main report as usual.</div></div>
+      <div style="grid-column:1/3"><label class="f">Interpretation (printed on the detailed PDF)</label>
+        <textarea id="t-interp" style="width:100%;height:90px;font:inherit;padding:8px;
+          border:1px solid #88929B;border-radius:5px">${esc(DETAIL[code]?DETAIL[code].text:"")}</textarea></div>
+    </div>`,
+    [["Cancel","btn q",closeSheet],
+     ["Save","btn p",()=>{
+        const c=(document.getElementById("t-code").value||"").trim().toUpperCase();
+        const name=document.getElementById("t-name").value.trim();
+        if(!c||!name){ toast("A test needs both a code and a name"); return; }
+        const g=document.getElementById("t-group").value;
+        TESTS[c]=Object.assign({},TESTS[c]||{},{
+          n:name, g:g, u:document.getElementById("t-unit").value.trim(),
+          d:t.d===undefined?1:t.d, r:document.getElementById("t-range").value.trim(),
+          f:document.getElementById("t-formula").value.trim()||undefined});
+        SPECIMEN_OF[c]=document.getElementById("t-spec").value;
+        const text=document.getElementById("t-interp").value.trim();
+        if(document.getElementById("t-detail").checked&&text)
+          DETAIL[c]={title:name, with:[], text:text};
+        else delete DETAIL[c];
+        selTest=c; closeSheet(); render();
+        toast(code?"Test updated":"Test added — "+c);
+     }]], true);
+}
+
+/* ----------------------------- DOCTORS ----------------------------- */
+let selDoctor=null;
+
+function viewDoctors(m){
+  m.appendChild(el("h1",null,"Doctors"));
+  m.appendChild(el("div","sub","Doctors who refer patients here. Choosing one on the job screen puts their name on the report. The contact number is for the lab — it never prints."));
+
+  const act=el("div","flexr"); act.style.margin="10px 0";
+  act.appendChild(searchBox("doctors","Search by name, profession, hospital or number…"));
+  act.lastChild.style.flex="1";
+  const bNew=el("button","btn p","Add doctor");
+  bNew.onclick=()=>editDoctor(null);
+  const bEdit=el("button","btn","Edit"); bEdit.disabled=!selDoctor;
+  bEdit.onclick=()=>editDoctor(selDoctor);
+  const bDel=el("button","btn","Remove"); bDel.disabled=!selDoctor;
+  bDel.style.color="var(--red)";
+  bDel.onclick=()=>{
+    const d=doctorById(selDoctor); if(!d) return;
+    const sent=state.jobs.filter(j=>j.ref===d.id).length;
+    openSheet("Remove this doctor?", `<p style="margin-top:0">${esc(d.name)} will stop
+      appearing when you choose a referring doctor.</p>
+      <p>${sent} job${sent!==1?"s":""} already sent by them keep their record — that is
+      why the doctor is hidden rather than deleted.</p>`,
+      [["Cancel","btn q",closeSheet],
+       ["Remove","btn",()=>{ d.active=false; selDoctor=null; closeSheet(); render();
+                             toast("Doctor hidden"); }]], true);
+  };
+  act.append(bNew,bEdit,bDel);
+  m.appendChild(act);
+
+  const tbl=el("table",null,`<thead><tr><th>Name</th><th>Profession</th>
+    <th>Hospital / clinic</th><th>Contact number</th><th>Qualification</th>
+    <th>Commission</th><th>Patients sent</th></tr></thead>`);
+  const tb=el("tbody");
+  const list=DOCTORS.filter(d=>d.active &&
+    matchesTerm(state.q.doctors,d.name,d.profession,d.hospital,d.phone,d.qualification));
+  if(!list.length){
+    tb.appendChild(el("tr",null,`<td colspan="7"><div class="empty">${state.q.doctors?"Nothing matches that search.":"No doctors yet.\n\nAdd one and it appears in the “Referred by Dr” list on the job screen."}</div></td>`));
+  }
+  list.forEach(d=>{
+    const sent=state.jobs.filter(j=>j.ref===d.id).length;
+    const tr=el("tr",selDoctor===d.id?"sel":"",
+      `<td><b>${esc(d.name)}</b></td><td>${esc(d.profession||"—")}</td>
+       <td>${esc(d.hospital||"—")}</td><td>${esc(d.phone||"—")}</td>
+       <td class="sub">${esc(d.qualification||"—")}</td>
+       <td>${d.pct?d.pct+" %":"—"}</td><td>${sent}</td>`);
+    tr.onclick=()=>{selDoctor=d.id;render();};
+    tr.ondblclick=()=>editDoctor(d.id);
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb); m.appendChild(tbl);
+  m.appendChild(el("div","flexr",
+    `<span class="sub">${list.length} doctor${list.length!==1?"s":""}</span>`));
+}
+
+function editDoctor(id, then){
+  const d=doctorById(id)||{name:"",qualification:"",profession:"",hospital:"",
+                           phone:"",pct:0};
+  openSheet(id?"Edit doctor":"New doctor", `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+      <div><label class="f">Name</label>
+        <input type="text" id="d-name" value="${esc(d.name)}" placeholder="Dr. S. Mehta"></div>
+      <div><label class="f">Qualification</label>
+        <input type="text" id="d-qual" value="${esc(d.qualification)}" placeholder="MBBS, MD"></div>
+      <div><label class="f">Profession</label><select id="d-prof">
+        <option value=""></option>
+        ${PROFESSIONS.map(x=>`<option${x===d.profession?" selected":""}>${esc(x)}</option>`).join("")}
+        </select></div>
+      <div><label class="f">Hospital / clinic</label>
+        <input type="text" id="d-hosp" value="${esc(d.hospital)}" placeholder="Clinic or hospital they work from"></div>
+      <div><label class="f">Contact number</label>
+        <input type="text" id="d-phone" value="${esc(d.phone)}" placeholder="Number to ring them back on"></div>
+      <div><label class="f">Commission %</label>
+        <input type="number" id="d-pct" value="${d.pct||0}" min="0" max="100"></div>
+    </div>
+    <div class="note">The contact number is for the lab, not the patient — it is what
+      you ring when a result needs telling straight away. It never prints on a report.</div>`,
+    [["Cancel","btn q",closeSheet],
+     ["Save","btn p",()=>{
+        const name=document.getElementById("d-name").value.trim();
+        if(!name){ toast("Enter the doctor's name"); return; }
+        const rec={ name,
+          qualification:document.getElementById("d-qual").value.trim(),
+          profession:document.getElementById("d-prof").value,
+          hospital:document.getElementById("d-hosp").value.trim(),
+          phone:document.getElementById("d-phone").value.trim(),
+          pct:parseFloat(document.getElementById("d-pct").value)||0,
+          active:true };
+        let saved=id;
+        if(id) Object.assign(doctorById(id),rec);
+        else { saved=NEXT_DOC++; DOCTORS.push(Object.assign({id:saved},rec)); }
+        selDoctor=saved;
+        closeSheet();
+        if(then) then(saved); else render();
+        toast(id?"Doctor updated":"Doctor added");
+     }]], true);
+}
+
+/* ------------------------------ STAFF ------------------------------ */
+let selStaff=null;
+
+function viewStaff(m){
+  m.appendChild(el("h1",null,"Staff"));
+  m.appendChild(el("div","sub","Everyone who can sign in. Each person gets their own username and PIN, and you tick exactly what they may do — every report, bill and change is recorded against whoever made it."));
+
+  const act=el("div","flexr"); act.style.margin="10px 0";
+  act.appendChild(searchBox("staff","Search staff by name or username…"));
+  act.lastChild.style.flex="1";
+  const bNew=el("button","btn p","Create login");
+  bNew.onclick=()=>editStaff(null);
+  const bEdit=el("button","btn","Edit"); bEdit.disabled=!selStaff;
+  bEdit.onclick=()=>editStaff(selStaff);
+  const bPin=el("button","btn","Set a new PIN"); bPin.disabled=!selStaff;
+  bPin.onclick=()=>toast("A new PIN would be set for "+USERS[selStaff].name);
+  const bOff=el("button","btn","Turn off access"); bOff.disabled=!selStaff;
+  bOff.style.color="var(--red)";
+  bOff.onclick=()=>toast(USERS[selStaff].name+" would no longer be able to sign in");
+  act.append(bNew,bEdit,bPin,bOff);
+  m.appendChild(act);
+
+  const LABELS={results:"Results",send:"Reports",bill:"Billing",money:"Money",
+                tests:"Tests master",settings:"Settings",del:"Delete",staff:"Staff"};
+  const tbl=el("table",null,`<thead><tr><th>Name</th><th>Username</th>
+    <th>Account</th><th>May…</th></tr></thead>`);
+  const tb=el("tbody");
+  Object.keys(USERS).filter(k=>matchesTerm(state.q.staff,USERS[k].name,k))
+    .forEach(k=>{
+      const u=USERS[k];
+      const may=u.can==="*"?"everything"
+        :u.can.map(c=>LABELS[c]||c).join(", ")||"nothing yet";
+      const tr=el("tr",selStaff===k?"sel":"",
+        `<td>${esc(u.name)}</td><td><b>${esc(k)}</b></td>
+         <td>${esc(u.role)}</td><td class="sub">${esc(may)}</td>`);
+      tr.onclick=()=>{selStaff=k;render();};
+      tr.ondblclick=()=>editStaff(k);
+      tb.appendChild(tr);
+    });
+  tbl.appendChild(tb); m.appendChild(tbl);
+  m.appendChild(el("div","note","PINs are stored scrambled: nobody, not even an administrator, can read one back — you can only set a new one. The last administrator cannot be turned off, so the lab can never lock itself out."));
+}
+
+function editStaff(key){
+  const u=key?USERS[key]:{name:"",role:"Staff",can:["results","send","bill"]};
+  const PERMS=[["results","Register patients and enter results"],
+               ["send","Make and send reports"],
+               ["bill","Make bills and take payments"],
+               ["money","See the ledger, dues and commissions"],
+               ["tests","Edit tests, panels and doctors"],
+               ["settings","Change the lab details and report layout"],
+               ["del","Delete jobs and restore backups"],
+               ["staff","Add and edit staff accounts"]];
+  const has=c=>u.can==="*"||u.can.includes(c);
+  openSheet(key?"Edit staff member":"Create a login", `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+      <div><label class="f">Full name</label>
+        <input type="text" id="u-name" value="${esc(u.name)}" placeholder="Full name, as you'd say it"></div>
+      <div><label class="f">Username</label>
+        <input type="text" id="u-user" value="${esc(key||"")}" ${key?"readonly":""} placeholder="short name used to sign in"></div>
+      <div><label class="f">PIN</label>
+        <input type="password" id="u-pin" placeholder="${key?"Leave empty to keep the current PIN":"At least 4 characters"}"></div>
+      <div><label class="f">Account type</label><select id="u-role">
+        <option${u.role!=="Administrator"?" selected":""}>Staff</option>
+        <option${u.role==="Administrator"?" selected":""}>Administrator</option>
+        </select></div>
+    </div>
+    <label class="f" style="margin-top:12px">This person may…</label>
+    <div style="line-height:2">
+      ${PERMS.map(([c,t])=>`<label><input type="checkbox" class="u-perm" value="${c}"${has(c)?" checked":""}> ${esc(t)}</label><br>`).join("")}
+    </div>`,
+    [["Cancel","btn q",closeSheet],
+     ["Save","btn p",()=>{
+        const name=document.getElementById("u-name").value.trim();
+        const user=document.getElementById("u-user").value.trim().toLowerCase();
+        const pin=document.getElementById("u-pin").value.trim();
+        if(!name||!user){ toast("A login needs a name and a username"); return; }
+        if(!key && pin.length<4){ toast("The PIN must be at least 4 characters"); return; }
+        const role=document.getElementById("u-role").value;
+        const can=[...document.querySelectorAll(".u-perm:checked")].map(c=>c.value);
+        USERS[user]={name, role, pin:pin||(key?USERS[key].pin:"0000"),
+                     can:role==="Administrator"?"*":can};
+        selStaff=user;
+        closeSheet(); render();
+        toast(key?"Account updated":name+" can now sign in as “"+user+"”");
+     }]], true);
+}
+
+/* ----------------------------- BILLING ----------------------------- */
+function viewBilling(m){
+  m.appendChild(el("h1",null,"Billing"));
+  m.appendChild(el("div","sub","A ledger, not a wizard. Billing never blocks a report."));
+  const bb=searchBox("billing","Search by patient, mobile, report number or doctor…");
+  bb.style.margin="10px 0";
+  m.appendChild(bb);
+  const tbl=el("table",null,`<thead><tr><th>Report No</th><th>Patient</th><th>Charged</th>
+    <th>Discount</th><th>Paid</th><th>Balance</th><th>Referred by</th></tr></thead>`);
+  const tb=el("tbody"); let net=0,due=0;
+  state.jobs.filter(j=>matchesTerm(state.q.billing, jobName(j), j.phone, j.no,
+                                   doctorName(j.ref))).forEach((j,i)=>{
+    const gross=300+((j.no*37)%700);
+    const disc=i%3===0?Math.round(gross*0.1):0;
+    const n=gross-disc, paid=j.status==="sent"?n:(i%2?n:Math.round(n/2));
+    net+=n; due+=n-paid;
+    const tr=el("tr",state.selJob===j?"sel":"",`<td>${j.no}</td><td>${esc(jobName(j))}</td>
+      <td>₹${gross}</td><td>${disc?"₹"+disc:"—"}</td><td>₹${paid}</td>
+      <td style="color:${n-paid?"var(--amber)":"var(--green)"};font-weight:600">₹${n-paid}</td>
+      <td>${esc(doctorName(j.ref)||"—")}</td>`);
+    tr.onclick=()=>{ state.selJob=j; render(); };
+    tr.ondblclick=()=>showBill(j);
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb); m.appendChild(tbl);
+
+  const act=el("div","flexr"); act.style.marginTop="12px";
+  const bPrint=el("button","btn","Print bill…");
+  bPrint.title="Reprint a bill — usually because the patient needs it for a claim";
+  bPrint.onclick=()=>{
+    const j=state.selJob||state.jobs[state.jobs.length-1];
+    if(!j){ toast("There are no bills yet"); return; }
+    showBill(j);
+  };
+  act.appendChild(bPrint);
+  act.appendChild(el("b",null,`Billed ₹${net} &nbsp;&nbsp; Outstanding ₹${due}`))
+     .style.marginLeft="auto";
+  m.appendChild(act);
+}
+
+/* ----------------------------- SETTINGS ---------------------------- */
+function viewSettings(m){
+  m.appendChild(el("h1",null,"Settings"));
+  m.appendChild(el("div","sub","Everything that appears on a report comes from here — nothing is fixed in the program."));
+  const fs=el("fieldset"); fs.appendChild(el("legend",null,"Laboratory"));
+  const g=el("div"); g.style.cssText="display:grid;grid-template-columns:1fr 1fr;gap:11px";
+  [["Laboratory name",LAB.name],["Subtitle",LAB.sub],["Address",LAB.a1],
+   ["Phone",LAB.ph],["Left signatory",LAB.sl],["Right signatory",LAB.sr]].forEach(([k,v])=>{
+    g.innerHTML+=`<div><label class="f">${esc(k)}</label><input type="text" value="${esc(v)}"></div>`;
+  });
+  const matches=el("div"); matches.id="matches";
+  matches.style.cssText="margin-top:8px;border:1px solid var(--line);border-radius:6px;"
+    +"overflow:hidden;display:none";
+  g.appendChild(note);
+  g.appendChild(matches);
+  matches.style.gridColumn="1 / 4";
+  fs.appendChild(g); m.appendChild(fs);
+  paintNote();
+
+  function showMatches(text){
+    text=(text||"").trim();
+    if(text.length<2){ matches.style.display="none"; return; }
+    const hits=findPatients(text);
+    matches.innerHTML="";
+    hits.forEach(p=>{
+      const r=el("div",null,
+        `<b>${esc(fullName(p.name,p.initial))}</b> <span class="sub">· ${esc(p.phone||"")} · ${esc(p.sex)} `
+        +`· ${esc(p.age)} yrs · ${p.jobs.length} visit${p.jobs.length!==1?"s":""}</span>`);
+      r.style.cssText="padding:8px 11px;cursor:pointer;border-bottom:1px solid var(--line2)";
+      r.onmouseenter=()=>r.style.background="var(--brand-soft)";
+      r.onmouseleave=()=>r.style.background="";
+      r.onclick=()=>{
+        job.name=p.name; job.initial=p.initial||""; job.phone=p.phone;
+        job.sex=p.sex; job.age=p.age;
+        job.prev=p.jobs[p.jobs.length-1];
+        matches.style.display="none";
+        toast("Loaded "+fullName(p.name,p.initial)+" — details filled in");
+        render();
+      };
+      matches.appendChild(r);
+    });
+    matches.style.display=hits.length?"block":"none";
+  }
+
+  const look=el("fieldset"); look.appendChild(el("legend",null,"Appearance &amp; printing"));
+  const lg=el("div"); lg.style.cssText="display:grid;grid-template-columns:1fr 1fr;gap:11px";
+  lg.innerHTML=`
+    <div><label class="f">On-screen theme</label>
+      <select id="st-theme">
+        <option value="light">Daylight — white background</option>
+        <option value="dark">Night — dark background</option></select></div>
+    <div><label class="f">Letterhead design</label>
+      <select id="st-head">
+        <option value="modern">Modern — teal band (new design)</option>
+        <option value="classic">Classic — plain heading (as before)</option></select></div>`;
+  look.appendChild(lg);
+  const ck=el("div");
+  ck.style.lineHeight="2"; ck.style.marginTop="10px";
+  ck.innerHTML=`
+    <label><input type="checkbox" id="st-spec"> Show the specimen under each heading on the report</label><br>
+    <label><input type="checkbox" id="st-det"> Give long-form tests (HbA1c, TSH…) their own detailed PDF</label>`;
+  look.appendChild(ck);
+  look.appendChild(el("div","sub","Reports always print on white — the night theme is for the screen only."));
+  m.appendChild(look);
+
+  setTimeout(()=>{
+    const th=document.getElementById("st-theme"), hd=document.getElementById("st-head"),
+          sp=document.getElementById("st-spec"), dt=document.getElementById("st-det");
+    if(!th) return;
+    th.value=SET.theme; hd.value=SET.header; sp.checked=SET.specimen; dt.checked=SET.details;
+    th.onchange=()=>applyTheme(th.value);
+    hd.onchange=()=>{ SET.header=hd.value;
+      toast("Letterhead set to "+(hd.value==="modern"?"the new design":"the classic heading")); };
+    sp.onchange=()=>{ SET.specimen=sp.checked; };
+    dt.onchange=()=>{ SET.details=dt.checked; };
+  },20);
+
+  const fs2=el("fieldset"); fs2.appendChild(el("legend",null,"WhatsApp &amp; backup"));
+  fs2.innerHTML+=`
+    <div style="line-height:2">
+      <label><input type="checkbox" checked> Attach the report into WhatsApp automatically</label><br>
+      <label><input type="checkbox" checked> Show the report on screen before sending</label><br>
+      <label><input type="checkbox" checked> Copy every backup to Google Drive</label>
+    </div>`;
+  m.appendChild(fs2);
+  m.appendChild(el("div","note ok","<b>Google Drive found.</b> Backups go to <code>G:\\My Drive\\LabSoft Backups - New MITHRA</code> — 14 copies there now, last copied today 09:02."));
+}
+
+/* =====================================================================
+   Report + send
+   ===================================================================== */
+function letterhead(){
+  if(SET.header!=="modern"){
+    return `<div class="lh">
+      <div class="emb">NEW<br>MITHRA<br>LAB</div>
+      <div class="lname"><div class="pre">${LAB.pre}</div><div class="main">${LAB.name}</div>
+        <div class="strip">${LAB.sub}</div></div>
+      <div class="ladr">${LAB.a1}<br>${LAB.a2}<br>${LAB.ph}<br>${LAB.em}</div>
+    </div>`;
+  }
+  return `<div class="lh2">
+    <div class="emb2">✚</div>
+    <div><div class="n1">${LAB.pre} ${LAB.name}</div>
+      <div class="n2">Medical Laboratory</div></div>
+    <div class="a2">${LAB.a1}<br>${LAB.a2}<br>
+      ${LAB.ph.replace("Ph :","")}<br>${LAB.em.replace("e-mail :","")}</div>
+  </div>`;
+}
+
+/* The specimen belongs on the group heading when every test in the group
+   shares one, and against each result when they do not — a heading claiming
+   "Serum" over a whole-blood HbA1c would be plainly wrong. */
+function specimenRows(codes){
+  const byGroup={};
+  codes.forEach(c=>{ (byGroup[TESTS[c].g]=byGroup[TESTS[c].g]||new Set()).add(specimenOf(c)); });
+  return byGroup;
+}
+
+function resultRows(job,res,codes){
+  let rows="", lastG=null, any=false;
+  const groups=specimenRows(codes.filter(c=>res[c]&&res[c].display&&!res[c].nd));
+  codes.forEach(c=>{
+    const r=res[c]; if(!r||!r.display||r.nd) return;
+    any=true;
+    const t=TESTS[c];
+    const kinds=groups[t.g]||new Set();
+    const uniform=kinds.size===1;
+    if(t.g!==lastG){
+      rows+=`<tr class="g"><td colspan="3">${esc(t.g)}</td></tr>`;
+      if(SET.specimen&&uniform)
+        rows+=`<tr class="sp"><td colspan="3">Specimen : ${esc([...kinds][0])}</td></tr>`;
+      lastG=t.g;
+    }
+    rows+=`<tr><td class="c-d">${esc(t.n)}</td><td class="c-o">${esc(r.display)}</td>
+           <td class="c-n">${esc(r.range)}</td></tr>`;
+    if(SET.specimen&&!uniform)
+      rows+=`<tr class="spi"><td colspan="3">Specimen : ${esc(specimenOf(c))}</td></tr>`;
+  });
+  return {rows,any};
+}
+
+function reportHTML(job){
+  const res=compute(job);
+  let {rows,any}=resultRows(job,res,job.codes);
+  if(!any) rows=`<tr><td colspan="3" style="padding:26px 0;text-align:center;color:#777">No results entered yet.</td></tr>`;
+
+  return `<div class="paper">
+    ${letterhead()}
+    <div class="meta">
+      <div class="r"><div class="c1">Report No &nbsp;: <b>${job.no}</b></div><div class="c2"></div>
+        <div class="c3">Date &nbsp;: <b>${dmy(job.date)}</b></div></div>
+      <div class="r"><div class="c1">Name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <b>${esc(jobName(job)||"—")}</b></div>
+        <div class="c2">Sex : <b>${esc(job.sex)}</b></div>
+        <div class="c3">Age &nbsp;: <b>${esc(job.age||"—")} Years</b></div></div>
+      ${job.ref?`<div class="r"><div class="c1">Ref. by Dr : <b>${esc(doctorName(job.ref))}</b></div></div>`:""}
+    </div>
+    <div class="rule"></div>
+    <table class="rt">
+      <thead><tr><th class="c-d">Test Description</th><th class="c-o">Observed Value</th>
+      <th class="c-n">Normal Value</th></tr></thead><tbody>${rows}</tbody>
+    </table>
+    <div class="endr">-End of Report-<br><b>- New MITHRA -</b></div>
+    <div class="wm">NEW MITHRA<br>MEDICAL<br>LABORATORY</div>
+    <div class="sigs">
+      <div><div class="nm2">${LAB.sl}</div><div class="q2">${LAB.slq}</div><div>${LAB.slr}</div></div>
+      <div class="rr"><div class="nm2">${LAB.sr}</div><div class="q2">${LAB.srq}</div><div>${LAB.srr}</div></div>
+    </div>
+  </div>`;
+}
+
+/* Which tests on this job also go out on their own sheet. */
+function detailCodes(job){
+  if(!SET.details) return [];
+  const res=compute(job);
+  return job.codes.filter(c=>DETAIL[c]&&res[c]&&res[c].display&&!res[c].nd);
+}
+
+function detailHTML(job,code){
+  const res=compute(job), d=DETAIL[code];
+  const codes=[code].concat((d.with||[]).filter(c=>job.codes.includes(c)));
+  const {rows}=resultRows(job,res,codes);
+
+  let body="";
+  d.text.split("\n").forEach(line=>{
+    if(!line.trim()) return;
+    if(line.trim()===line.trim().toUpperCase()&&!line.startsWith("    "))
+      body+=`<h4>${esc(line.trim())}</h4>`;
+    else if(line.startsWith("    ")) body+=`<pre>${esc(line)}</pre>`;
+    else body+=`<p style="margin:5px 0">${esc(line.trim())}</p>`;
+  });
+
+  return `<div class="paper">
+    ${letterhead()}
+    <div class="meta">
+      <div class="r"><div class="c1">Report No &nbsp;: <b>${job.no}</b></div><div class="c2"></div>
+        <div class="c3">Date &nbsp;: <b>${dmy(job.date)}</b></div></div>
+      <div class="r"><div class="c1">Name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <b>${esc(jobName(job)||"—")}</b></div>
+        <div class="c2">Sex : <b>${esc(job.sex)}</b></div>
+        <div class="c3">Age &nbsp;: <b>${esc(job.age||"—")} Years</b></div></div>
+    </div>
+    <div class="rule"></div>
+    <div class="rtitle">${esc(d.title.toUpperCase())} — DETAILED REPORT</div>
+    <table class="rt">
+      <thead><tr><th class="c-d">Test Description</th><th class="c-o">Observed Value</th>
+      <th class="c-n">Normal Value</th></tr></thead><tbody>${rows}</tbody>
+    </table>
+    <div class="interp"><h4>INTERPRETATION &amp; NOTES</h4>${body}</div>
+    <div class="endr">-End of Report-<br><b>- New MITHRA -</b></div>
+    <div class="wm">NEW MITHRA<br>MEDICAL<br>LABORATORY</div>
+    <div class="sigs">
+      <div><div class="nm2">${LAB.sl}</div><div class="q2">${LAB.slq}</div><div>${LAB.slr}</div></div>
+      <div class="rr"><div class="nm2">${LAB.sr}</div><div class="q2">${LAB.srq}</div><div>${LAB.srr}</div></div>
+    </div>
+  </div>`;
+}
+
+function showDetail(job,code){
+  openSheet(`${DETAIL[code].title} — detailed sheet`, detailHTML(job,code),
+    [["Print","btn",()=>window.print()],["Close","btn q",closeSheet],
+     ["Back to the report","btn p",()=>{closeSheet();showReport(job,false);}]]);
+}
+
+function showReport(job,thenSend){
+  const extras=detailCodes(job);
+  const buttons=[["Print","btn",()=>window.print()],
+     ["Save a copy","btn",()=>toast("Saved to the patient's folder")]];
+  extras.forEach(c=>buttons.push(
+    [DETAIL[c].title.split(" (")[0]+" sheet","btn",()=>{closeSheet();showDetail(job,c);}]));
+  buttons.push(["Close","btn q",closeSheet]);
+  buttons.push(thenSend?["Looks right — send","btn go",()=>{closeSheet();showSend(job);}]
+                       :["Send this report","btn go",()=>{closeSheet();showSend(job);}]);
+  openSheet(`Report preview — ${job.no} · ${esc(job.name||"")}`, reportHTML(job), buttons);
+}
+
+/* ------------------------------ THE BILL ------------------------------ */
+const ONES=["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten",
+  "Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+const TENS=["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+function two(n){ return n<20?ONES[n]:TENS[(n/10)|0]+(n%10?" "+ONES[n%10]:""); }
+function three(n){
+  const h=(n/100)|0, r=n%100, p=[];
+  if(h) p.push(ONES[h]+" Hundred");
+  if(r) p.push(two(r));
+  return p.join(" ");
+}
+/* Lakh and crore, not million — a receipt reading "one million rupees" is not
+   a receipt anyone here would accept. */
+function inWords(n){
+  n=Math.round(n); if(!n) return "Rupees Zero only";
+  const cr=(n/1e7)|0; n%=1e7; const la=(n/1e5)|0; n%=1e5;
+  const th=(n/1e3)|0; const re=n%1e3; const p=[];
+  if(cr) p.push(three(cr)+" Crore");
+  if(la) p.push(three(la)+" Lakh");
+  if(th) p.push(three(th)+" Thousand");
+  if(re) p.push(three(re));
+  return "Rupees "+p.join(" ")+" only";
+}
+
+function billLines(job){
+  return job.codes.map(c=>({label:TESTS[c].n, rate:RATES[c]||120}));
+}
+
+function billHTML(job){
+  const lines=billLines(job);
+  const gross=lines.reduce((a,l)=>a+l.rate,0);
+  const disc=job.bill?Math.max(0,gross-job.bill.net):0;
+  const net=job.bill?job.bill.net:gross;
+  const paid=job.bill?job.bill.paid:0;
+  const due=net-paid;
+
+  return `<div class="paper rcpt">
+    ${letterhead()}
+    <div class="rtitle" style="margin-top:12px">BILL / RECEIPT</div>
+    <div class="head">
+      <div style="width:55%">Bill No &nbsp;: <b>${job.no}</b><br>
+        Name &nbsp;&nbsp;&nbsp;: <b>${esc(jobName(job)||"—")}</b><br>
+        Mobile &nbsp;: <b>${esc(job.phone||"—")}</b></div>
+      <div>Date &nbsp;: <b>${dmy(job.date)}</b><br>
+        Sex / Age : <b>${esc(job.sex||"—")} / ${esc(job.age||"—")} Years</b>
+        ${job.ref?`<br>Ref. by Dr : <b>${esc(doctorName(job.ref))}</b>`:""}</div>
+    </div>
+    <table>
+      <thead><tr><th style="width:34px">#</th><th>Description</th>
+        <th class="num">Rate</th><th class="num" style="width:52px">Qty</th>
+        <th class="num">Amount</th></tr></thead>
+      <tbody>${lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.label)}</td>
+        <td class="num">${l.rate.toFixed(2)}</td><td class="num">1</td>
+        <td class="num">${l.rate.toFixed(2)}</td></tr>`).join("")}</tbody>
+    </table>
+    <div class="tot">
+      <div class="r2"><span>Total</span><span>₹${gross.toFixed(2)}</span></div>
+      ${disc?`<div class="r2"><span>Discount</span><span>-₹${disc.toFixed(2)}</span></div>`:""}
+      <div class="r2 net"><span>Net payable</span><span>₹${net.toFixed(2)}</span></div>
+      <div class="r2"><span>Paid</span><span>₹${paid.toFixed(2)}</span></div>
+      <div class="r2 ${due>0?"due":""}"><span>${due>0?"Balance due":"Balance"}</span>
+        <span>₹${due.toFixed(2)}</span></div>
+    </div>
+    <div class="words">${inWords(net)}</div>
+    ${due>0?`<div style="color:#B3261E;font-size:12.5px;margin-top:6px">Balance to be settled before the report is issued.</div>`
+           :`<div style="color:#555;font-size:12.5px;margin-top:6px">Paid in full. Thank you.</div>`}
+    <div class="foot"><div>This is a computer-generated receipt.<br>
+      Charges once paid are not refundable after the test has been run.</div>
+      <div class="sig">Authorised signatory</div></div>
+  </div>`;
+}
+
+function showBill(job){
+  openSheet(`Bill — ${job.no} · ${esc(job.name||"")}`, billHTML(job),
+    [["Print…","btn p",()=>window.print()],
+     ["Save as PDF","btn",()=>toast("Bill saved in the patient's folder")],
+     ["Send on WhatsApp","btn",()=>toast("WhatsApp opened with the bill attached")],
+     ["Close","btn q",closeSheet]]);
+}
+
+function showSend(job){
+  const file=`${job.date.toISOString().slice(0,10)}  Report ${job.no}.pdf`;
+  const msg=`Dear ${job.name||"Patient"},\nYour test report from New MITHRA (Report No ${job.no}, ${dmy(job.date)}) is attached.\nFor any query call 81578 87311.\nThank you.`;
+  openSheet("Send report", `
+    <div class="wa">
+      <div class="top"><div class="av">${esc((job.name||"P")[0].toUpperCase())}</div>
+        <div><div style="font-weight:600">${esc(job.name||"Patient")}</div>
+        <div style="font-size:11.5px;color:#8696a0">+91 ${esc(job.phone||"—")}</div></div></div>
+      <div class="chat">
+        <div class="bub">
+          <div class="att"><div class="ic">PDF</div>
+            <div><div class="nm3">${esc(file)}</div><div class="sz">1 page · 36 KB</div></div></div>
+          ${detailCodes(job).map(c=>`<div class="att"><div class="ic">PDF</div>
+            <div><div class="nm3">${esc(file.replace(".pdf"," — "+DETAIL[c].title.split(" (")[0]+".pdf"))}</div>
+            <div class="sz">detailed sheet · 1 page</div></div></div>`).join("")}
+          ${esc(msg)}
+          <div class="tick">now</div>
+        </div>
+      </div>
+      <div class="send"><div class="box">Type a message…</div>
+        <button class="go2" id="wa-send">➤</button></div>
+    </div>
+    <div class="note" id="wa-note">LabSoft opened WhatsApp, typed the message and <b>attached the report for you</b>.<br>
+      The only thing left is to press Send — that stays with you, so nothing reaches a patient without a person deciding.</div>`,
+    [["Close","btn q",closeSheet]], true);
+
+  setTimeout(()=>{
+    const b=document.getElementById("wa-send");
+    if(b) b.onclick=()=>{
+      job.status="sent";
+      document.getElementById("wa-note").className="note ok";
+      document.getElementById("wa-note").innerHTML="<b>Sent.</b> The report is saved in the patient's folder and copied to Google Drive.";
+      b.textContent="✓"; b.disabled=true;
+      toast("Report sent to "+(job.name||"patient"));
+      render();
+    };
+  },30);
+}
+
+/* ------------------------------ modal ------------------------------ */
+function openSheet(title,body,buttons,plain){
+  const s=$("#sheet");
+  s.innerHTML=`<header><h2>${title}</h2></header>
+    <div class="body${plain?" plain":""}">${body}</div><footer></footer>`;
+  const f=s.querySelector("footer");
+  (buttons||[]).forEach((b,i)=>{
+    if(!b) return;
+    const [text,cls,fn]=b;
+    const btn=el("button",cls,text);
+    btn.onclick=fn;
+    if(i===buttons.length-1) btn.classList.add("sp");
+    f.appendChild(btn);
+  });
+  $("#modal").classList.add("show");
+}
+function closeSheet(){ $("#modal").classList.remove("show"); }
+$("#modal").onclick=e=>{ if(e.target.id==="modal") closeSheet(); };
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
+
+let toastTimer=null;
+function toast(text){
+  const t=$("#toast"); t.textContent=text; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),1900);
+}
+
+function signOut(){
+  state.user=null;
+  fillSignInList();
+  $("#login").classList.remove("gone");
+}
+
+function signIn(){
+  const key=$("#lg-user").value, pin=$("#lg-pin").value.trim();
+  const u=USERS[key];
+  if(!u || u.pin!==pin){
+    $("#lg-err").textContent="That username and PIN do not match.";
+    $("#lg-pin").value=""; $("#lg-pin").focus();
+    return;
+  }
+  state.user={key, ...u};
+  $("#login").classList.add("gone");
+  render();
+  toast("Signed in as "+u.name);
+}
+$("#lg-go").onclick=signIn;
+$("#lg-pin").addEventListener("keydown",e=>{ if(e.key==="Enter") signIn(); });
+$("#lg-user").addEventListener("change",()=>{
+  $("#lg-pin").value=USERS[$("#lg-user").value].pin;   // demo convenience
+  $("#lg-err").textContent="";
+});
+
+/* Rebuilt from USERS so a login created on the Staff tab can actually sign in
+   after a sign-out — which is the whole point of creating one. */
+function fillSignInList(){
+  const sel=$("#lg-user"), keep=sel.value;
+  sel.innerHTML=Object.keys(USERS).map(k=>
+    `<option value="${k}">${esc(USERS[k].name)} — ${esc(USERS[k].role)}</option>`).join("");
+  if(USERS[keep]) sel.value=keep;
+  $("#lg-pin").value=USERS[sel.value].pin;
+}
+
+/* Theme. Switches the moment it is picked — a theme you have to save before
+   you can see is a theme nobody tries. */
+function applyTheme(name){
+  SET.theme = name==="dark" ? "dark" : "light";
+  document.body.classList.toggle("dark", SET.theme==="dark");
+  const b=$("#themebtn");
+  if(b) b.textContent = SET.theme==="dark" ? "☀ Daylight" : "☾ Night";
+  const sel=document.getElementById("st-theme");
+  if(sel) sel.value=SET.theme;
+}
+$("#themebtn").onclick=()=>applyTheme(SET.theme==="dark"?"light":"dark");
+$("#s-out").onclick=e=>{ e.preventDefault(); signOut(); };
+
+seed();
+render();
+</script>
+</body>
+</html>

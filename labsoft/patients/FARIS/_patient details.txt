@@ -1,0 +1,15 @@
+New MITHRA
+
+Name        : FARIS
+Mobile      : 6282378262
+Sex         : Male
+Age         : 45 Years
+
+Visits: 1
+------------------------------------------------------------------
+Report No   Date          Tests   Status
+------------------------------------------------------------------
+51371       21-08-2026    8       Ready to send
+
+Every report for this patient is a PDF in this folder.
+Updated 21-08-2026 14:56

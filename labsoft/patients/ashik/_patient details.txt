@@ -1,0 +1,15 @@
+New MITHRA
+
+Name        : ashik
+Mobile      : 6282378262
+Sex         : Male
+Age         : 41 Years
+
+Visits: 1
+------------------------------------------------------------------
+Report No   Date          Tests   Status
+------------------------------------------------------------------
+51367       21-08-2026    2       Ready to send
+
+Every report for this patient is a PDF in this folder.
+Updated 21-08-2026 14:32

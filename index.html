@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LabSoft — New Mithra Medical Laboratory (by RANDOM_GTV)</title>
+<style>
+  :root {
+    --brand: #0E4D92;
+    --brand-dark: #0A3668;
+    --brand-accent: #0080B8;
+    --brand-cyan: #00A3E0;
+    --brand-soft: #F0F6FC;
+    --brand-edge: #CCDDF0;
+    --brand-div: #A9C7E8;
+    --red: #C1121F;
+    --green: #16703F;
+    --amber: #8A5A00;
+    --blue: #0E4D92;
+    --ink: #141719;
+    --ink2: #4A5157;
+    --ink3: #616A72;
+    --line: #C3CBD2;
+    --line2: #EDF0F3;
+    --bg: #F4F6F8;
+    --panel: #FFFFFF;
+  }
+
+  body.dark {
+    --brand: #48CAE4;
+    --brand-dark: #0080B8;
+    --brand-accent: #00A3E0;
+    --brand-cyan: #48CAE4;
+    --brand-soft: #102438;
+    --brand-edge: #1C3E60;
+    --brand-div: #2C5680;
+    --red: #FF8A8A;
+    --green: #6FD79B;
+    --amber: #F0C066;
+    --blue: #8AB6F5;
+    --ink: #EEF2F5;
+    --ink2: #C3CBD2;
+    --ink3: #A6B0B9;
+    --line: #2F3D48;
+    --line2: #1E2830;
+    --bg: #10161B;
+    --panel: #172027;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.5 "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  }
+
+  button, input, select, textarea { font: inherit; color: var(--ink); }
+  button { cursor: pointer; }
+
+  .app {
+    max-width: 1380px;
+    margin: 0 auto;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Titlebar */
+  .titlebar {
+    background: #072242;
+    color: #E8EAED;
+    padding: 9px 18px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 2px solid var(--brand-accent);
+  }
+  .titlebar .dot { width: 10px; height: 10px; border-radius: 50%; background: #00A3E0; }
+  .titlebar b { color: #FFFFFF; font-weight: 700; }
+  .titlebar .author-badge {
+    background: #0E4D92;
+    color: #48CAE4;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: .06em;
+    padding: 3px 10px;
+    border-radius: 14px;
+    border: 1px solid #1E5C9A;
+    cursor: pointer;
+  }
+  .titlebar .author-badge:hover { background: #0A3668; color: #FFF; }
+  .titlebar .online-test-tag {
+    margin-left: auto;
+    background: #16703F;
+    color: #FFF;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 14px;
+  }
+
+  /* Tabs Navigation */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 8px 14px 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  .tab {
+    padding: 10px 22px;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    border-radius: 6px 6px 0 0;
+    color: var(--ink2);
+    font-weight: 600;
+    background: none;
+    transition: all .15s ease;
+  }
+  .tab.on {
+    background: var(--panel);
+    border-color: var(--line);
+    color: var(--brand);
+    margin-bottom: -1px;
+    padding-bottom: 11px;
+    font-weight: 700;
+  }
+  .tab:hover:not(.on) { background: var(--line2); }
+
+  main {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-top: 0;
+    margin: 0 14px;
+    border-radius: 0 0 8px 8px;
+    padding: 18px 20px 14px;
+    overflow: auto;
+  }
+
+  .statusbar {
+    display: flex;
+    gap: 20px;
+    padding: 9px 22px;
+    color: var(--ink3);
+    font-size: 12px;
+    background: var(--bg);
+    align-items: center;
+  }
+  .statusbar b { color: var(--ink); }
+  .statusbar .right { margin-left: auto; display: flex; gap: 14px; align-items: center; }
+  .statusbar a { color: var(--brand); text-decoration: none; font-weight: 600; cursor: pointer; }
+  .statusbar a:hover { text-decoration: underline; }
+
+  /* Fieldsets & Forms */
+  fieldset {
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    margin: 0 0 14px;
+    padding: 14px 16px 12px;
+    background: var(--panel);
+  }
+  legend {
+    color: var(--brand);
+    font-weight: 700;
+    font-size: 12px;
+    padding: 0 6px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  label.f {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 5px;
+  }
+  .req-star { color: #E5484D; font-weight: bold; font-size: 13px; }
+
+  input[type=text], input[type=number], select {
+    background: var(--panel);
+    border: 1px solid #88929B;
+    border-radius: 5px;
+    padding: 7px 10px;
+    width: 100%;
+    color: var(--ink);
+  }
+  input:focus, select:focus {
+    outline: 0;
+    border: 2px solid var(--brand);
+    padding: 6px 9px;
+  }
+  input[readonly] { background: var(--line2); color: var(--ink2); border-style: dashed; }
+
+  /* Buttons */
+  .btn {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 600;
+    color: var(--ink);
+    transition: all .15s ease;
+  }
+  .btn:hover { background: var(--line2); }
+  .btn:disabled { background: var(--line2); color: var(--ink3); cursor: not-allowed; opacity: .6; }
+  .btn.p { background: var(--brand); border-color: var(--brand); color: #FFFFFF; }
+  .btn.p:hover { background: var(--brand-dark); }
+  .btn.go { background: var(--green); border-color: var(--green); color: #FFFFFF; font-weight: 700; }
+  .btn.go:hover { background: #115932; }
+  .btn.q { background: none; border-color: transparent; color: var(--brand); padding: 6px 10px; }
+  .btn.q:hover { background: var(--brand-soft); }
+  .btn.panel {
+    background: var(--brand-soft);
+    border: 1px solid var(--brand-edge);
+    color: var(--brand-dark);
+    padding: 9px 14px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+  body.dark .btn.panel { color: var(--brand); }
+  .btn.panel:hover { background: var(--brand-edge); }
+
+  .flexr { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .rowg { display: grid; gap: 12px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink3);
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    background: var(--brand-soft);
+    font-weight: 700;
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--line2); font-size: 13.5px; }
+  tbody tr:hover { background: var(--brand-soft); cursor: pointer; }
+  tbody tr.sel { background: var(--brand-soft); font-weight: 600; }
+
+  /* Flags */
+  .flag { font-weight: 800; font-size: 11px; padding: 3px 8px; border-radius: 4px; display: inline-block; min-width: 50px; text-align: center; }
+  .f-H { background: #FDECEB; color: var(--red); border: 1px solid #F8B4B4; }
+  .f-L { background: #EAF1FC; color: var(--blue); border: 1px solid #B6D2FB; }
+  .f-N { background: #EAF5EE; color: var(--green); border: 1px solid #B0E2C2; }
+
+  /* Status Pills */
+  .pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; }
+  .p-draft { background: var(--line2); color: var(--ink2); }
+  .p-prog { background: #FDF5E3; color: var(--amber); }
+  .p-ready { background: #EAF5EE; color: var(--green); }
+  .p-sent { background: var(--brand-soft); color: var(--brand); }
+
+  /* Results Grid */
+  .results-grid {
+    display: grid;
+    grid-template-columns: minmax(240px, 1.4fr) 140px 70px 180px 80px 40px;
+    gap: 6px 14px;
+    align-items: center;
+  }
+  .results-grid .gh {
+    grid-column: 1 / -1;
+    color: var(--brand);
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 14px 0 4px;
+    border-bottom: 1px solid var(--brand-div);
+  }
+  .results-grid .nm { font-size: 13.5px; font-weight: 500; }
+  .results-grid .nm.calc { font-style: italic; color: var(--ink2); }
+  .results-grid .unit, .results-grid .rng { color: var(--ink3); font-size: 12.5px; }
+
+  /* Modal */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 25, 45, .7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .modal.show { display: flex; }
+  .sheet {
+    background: var(--panel);
+    border-radius: 10px;
+    max-width: 960px;
+    width: 100%;
+    max-height: 94vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .4);
+    border: 1px solid var(--line);
+  }
+  .sheet header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--brand-soft);
+    border-radius: 10px 10px 0 0;
+  }
+  .sheet header h2 { margin: 0; font-size: 16px; color: var(--brand-dark); }
+  body.dark .sheet header h2 { color: var(--brand); }
+  .sheet .body {
+    padding: 20px;
+    overflow: auto;
+    background: #6E7781;
+  }
+  .sheet .body.plain { background: var(--panel); }
+  .sheet footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--bg);
+    border-radius: 0 0 10px 10px;
+  }
+
+  /* Printable Report Page Simulation (A4) */
+  .report-page {
+    width: 210mm;
+    min-height: 297mm;
+    background: #FFFFFF;
+    color: #141719;
+    margin: 0 auto;
+    padding: 14mm 14mm 14mm 14mm;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .25);
+    display: flex;
+    flex-direction: column;
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+
+  /* Letterhead Classic */
+  .letterhead-classic {
+    background: #F0F6FC;
+    border: 1px solid #CCDDF0;
+    border-radius: 4px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 16px;
+  }
+  .lh-logo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .15);
+  }
+  .lh-title-block { flex: 1; }
+  .lh-pre { color: #0080B8; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+  .lh-main { color: #0E4D92; font-size: 26px; font-weight: 900; line-height: 1.1; margin: 2px 0; }
+  .lh-sub-badge {
+    display: inline-block;
+    background: #0E4D92;
+    color: #FFFFFF;
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .lh-tagline { color: #0080B8; font-size: 8.5px; font-weight: 800; letter-spacing: 1.5px; margin-left: 8px; }
+  .lh-contact {
+    text-align: right;
+    font-size: 10px;
+    color: #4A5157;
+    line-height: 1.4;
+    border-left: 1px solid #A9C7E8;
+    padding-left: 14px;
+  }
+
+  /* Letterhead Modern */
+  .letterhead-modern {
+    background: #0A3668;
+    color: #FFFFFF;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 16px;
+    border-bottom: 3px solid #0080B8;
+  }
+  .letterhead-modern .lh-main { color: #FFFFFF; }
+  .letterhead-modern .lh-pre { color: #48CAE4; }
+  .letterhead-modern .lh-contact { color: #D4E7FA; border-left-color: #1E5C9A; }
+
+  /* Metadata Table */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 1fr;
+    gap: 6px 14px;
+    font-size: 11px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #141719;
+    margin-bottom: 14px;
+  }
+  .meta-row { display: flex; gap: 6px; }
+  .meta-k { font-weight: 700; width: 110px; color: #4A5157; }
+  .meta-v { font-weight: 700; color: #141719; flex: 1; }
+
+  /* Clinical Note Box */
+  .clinical-box {
+    background: #F0F6FC;
+    border: 1px solid #CCDDF0;
+    border-left: 4px solid #0E4D92;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 10px;
+    line-height: 1.45;
+    color: #141719;
+    margin-top: 14px;
+    text-align: justify;
+  }
+
+  /* Signatures */
+  .sign-row {
+    margin-top: auto;
+    padding-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+    font-size: 10.5px;
+  }
+  .sign-person { width: 180px; }
+  .sign-name { font-weight: 800; color: #141719; }
+  .sign-qual { font-size: 9.5px; color: #4A5157; }
+  .sign-role { font-size: 10px; color: #0E4D92; font-weight: 700; }
+
+  /* Disclaimer Strip */
+  .disclaimer-strip {
+    margin-top: 14px;
+    background: #0E4D92;
+    color: #FFFFFF;
+    font-size: 8px;
+    line-height: 1.35;
+    padding: 6px 10px;
+    text-align: center;
+    border-radius: 2px;
+  }
+
+  @media print {
+    body { background: #FFF !important; color: #000 !important; }
+    .titlebar, .tabs, .statusbar, main, .sheet header, .sheet footer { display: none !important; }
+    .modal { position: static !important; background: none !important; padding: 0 !important; display: block !important; }
+    .sheet { box-shadow: none !important; border: none !important; max-width: none !important; }
+    .sheet .body { background: none !important; padding: 0 !important; }
+    .report-page { box-shadow: none !important; margin: 0 !important; width: 100% !important; padding: 10mm !important; page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Titlebar with Author Credit & Online Tester Tag -->
+  <div class="titlebar">
+    <div class="dot"></div>
+    <b>LabSoft</b> — New Mithra Medical Laboratory
+    <span class="author-badge" onclick="showAbout()">Author: RANDOM_GTV ⓘ</span>
+    <span class="online-test-tag">Online Client Testing Edition</span>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    <button class="tab on" id="tab-btn-job" onclick="setTab('job')">Job</button>
+    <button class="tab" id="tab-btn-queue" onclick="setTab('queue')">Work Queue</button>
+    <button class="tab" id="tab-btn-patients" onclick="setTab('patients')">Patients</button>
+    <button class="tab" id="tab-btn-doctors" onclick="setTab('doctors')">Doctors</button>
+    <button class="tab" id="tab-btn-tests" onclick="setTab('tests')">Tests Catalog</button>
+    <button class="tab" id="tab-btn-billing" onclick="setTab('billing')">Billing</button>
+    <button class="tab" id="tab-btn-settings" onclick="setTab('settings')">Settings</button>
+  </div>
+
+  <!-- Main Screen Container -->
+  <main id="app-main">
+    <!-- Dynamic Tab Content Rendered via JS -->
+  </main>
+
+  <!-- Status Bar -->
+  <div class="statusbar">
+    <span id="st-counts">Today: <b>4</b> &nbsp;·&nbsp; Pending results: <b>0</b> &nbsp;·&nbsp; Ready to send: <b>4</b></span>
+    <div class="right">
+      <span>Database: <b>Client Test Mode (Active)</b> ✓</span>
+      <a onclick="showAbout()">ⓘ About LabSoft</a>
+      <a onclick="toggleTheme()" id="theme-btn">🌙 Dark Mode</a>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Dialog (For Report Preview, Billing Receipt, About Dialog) -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet" id="modal-sheet">
+    <header>
+      <h2 id="modal-title">Dialog</h2>
+      <button class="btn q" style="margin-left:auto" onclick="closeModal()">✕ Close</button>
+    </header>
+    <div class="body" id="modal-body"></div>
+    <footer id="modal-footer">
+      <button class="btn" onclick="closeModal()">Close</button>
+    </footer>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   LabSoft Web App Engine — by RANDOM_GTV
+   ========================================================================== */
+
+const AUTHOR = "RANDOM_GTV";
+const APP_VERSION = "1.0.0 (Production Release)";
+
+const TESTS = {
+  HBA1C: { n: "HbA1c (Glycated Haemoglobin)", g: "BIO-CHEMISTRY (Routine)", u: "%", d: 1, hi: 5.7, r: "< 5.7%", rate: 350 },
+  EAG: { n: "Mean Blood Glucose", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, hi: 117, r: "< 117mg/dl", f: "28.7 * HBA1C - 46.7", rate: 100 },
+  GLU_F: { n: "Blood Glucose [Fasting]", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, lo: 70, hi: 110, r: "70 - 110 mg/dl", rate: 60 },
+  GLU_PP: { n: "Blood Glucose [P P 2 hrs]", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, lo: 70, hi: 140, r: "70 - 140 mg/dl", rate: 60 },
+  HB: { n: "Haemoglobin", g: "HAEMATOLOGY", u: "g/dl", d: 1, lo: 13.0, hi: 17.0, r: "13.0 - 17.0 g/dl", rate: 80 },
+  TC: { n: "Total WBC Count", g: "HAEMATOLOGY", u: "cells/cumm", d: 0, lo: 4000, hi: 11000, r: "4,000 - 11,000", rate: 90 },
+  PLT: { n: "Platelet Count", g: "HAEMATOLOGY", u: "lakhs/cumm", d: 2, lo: 1.5, hi: 4.5, r: "1.50 - 4.50", rate: 90 },
+  CHOL: { n: "Total Cholesterol", g: "LIPID PROFILE", u: "mg/dl", d: 0, hi: 200, r: "< 200 mg/dl", rate: 120 },
+  TG: { n: "Triglycerides", g: "LIPID PROFILE", u: "mg/dl", d: 0, hi: 150, r: "< 150 mg/dl", rate: 140 },
+  HDL: { n: "HDL Cholesterol", g: "LIPID PROFILE", u: "mg/dl", d: 0, lo: 40, hi: 60, r: "40 - 60 mg/dl", rate: 140 },
+  LDL: { n: "LDL Cholesterol", g: "LIPID PROFILE", u: "mg/dl", d: 0, hi: 100, r: "< 100 mg/dl", f: "CHOL - HDL - (TG / 5)", rate: 140 },
+  UREA: { n: "Blood Urea", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 0, lo: 15, hi: 45, r: "15 - 45 mg/dl", rate: 90 },
+  CREAT: { n: "Serum Creatinine", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 1, lo: 0.6, hi: 1.2, r: "0.6 - 1.2 mg/dl", rate: 90 },
+  TSH: { n: "TSH (Ultrasensitive)", g: "THYROID PROFILE", u: "µIU/ml", d: 2, lo: 0.35, hi: 4.94, r: "0.35 - 4.94 µIU/ml", rate: 250 },
+  T3: { n: "Total Triiodothyronine (T3)", g: "THYROID PROFILE", u: "ng/ml", d: 2, lo: 0.8, hi: 2.0, r: "0.80 - 2.00 ng/ml", rate: 180 },
+  T4: { n: "Total Thyroxine (T4)", g: "THYROID PROFILE", u: "µg/dl", d: 2, lo: 5.1, hi: 14.1, r: "5.10 - 14.10 µg/dl", rate: 180 },
+};
+
+const PANELS = {
+  "HbA1c (with Mean Blood Glucose)": ["HBA1C", "EAG"],
+  "Blood Sugar F & PP": ["GLU_F", "GLU_PP"],
+  "CBC": ["HB", "TC", "PLT"],
+  "Lipid Profile": ["CHOL", "TG", "HDL", "LDL"],
+  "Renal Function Test": ["UREA", "CREAT"],
+  "Thyroid Profile": ["T3", "T4", "TSH"]
+};
+
+// Initial state
+let currentTab = "job";
+let currentTheme = localStorage.getItem("labsoft_theme") || "light";
+let letterheadStyle = localStorage.getItem("labsoft_lh") || "classic";
+
+let jobs = JSON.parse(localStorage.getItem("labsoft_jobs") || "null") || [
+  {
+    id: 1,
+    report_no: "51365",
+    date: "21-08-2026",
+    collected_at: "21-08-2026 01:11 PM",
+    reported_at: "21-08-2026 01:11 PM",
+    name: "ashik",
+    initial: "H",
+    mobile: "6282378262",
+    sex: "Male",
+    age: 30,
+    age_unit: "Years",
+    referrer: "Self",
+    tests: ["GLU_F", "GLU_PP"],
+    results: { GLU_F: "105", GLU_PP: "128" },
+    status: "ready",
+    bill_paid: 120
+  },
+  {
+    id: 2,
+    report_no: "51367",
+    date: "21-08-2026",
+    collected_at: "21-08-2026 02:30 PM",
+    reported_at: "21-08-2026 02:35 PM",
+    name: "ashik",
+    initial: "G",
+    mobile: "6282378262",
+    sex: "Male",
+    age: 41,
+    age_unit: "Years",
+    referrer: "Self",
+    tests: ["HBA1C", "EAG"],
+    results: { HBA1C: "10.5", EAG: "255" },
+    status: "ready",
+    bill_paid: 450
+  }
+];
+
+let activeJob = {
+  id: Date.now(),
+  report_no: "51368",
+  date: "21-08-2026",
+  collected_at: "21-08-2026 02:40 PM",
+  reported_at: "21-08-2026 02:45 PM",
+  name: "FARAS",
+  initial: "M",
+  mobile: "9526677311",
+  sex: "Male",
+  age: 28,
+  age_unit: "Years",
+  referrer: "Self",
+  tests: ["HBA1C", "EAG"],
+  results: { HBA1C: "6.8", EAG: "148" },
+  status: "draft"
+};
+
+function saveState() {
+  localStorage.setItem("labsoft_jobs", JSON.stringify(jobs));
+  localStorage.setItem("labsoft_theme", currentTheme);
+  localStorage.setItem("labsoft_lh", letterheadStyle);
+}
+
+function applyTheme() {
+  if (currentTheme === "dark") {
+    document.body.classList.add("dark");
+    document.getElementById("theme-btn").textContent = "☀️ Light Mode";
+  } else {
+    document.body.classList.remove("dark");
+    document.getElementById("theme-btn").textContent = "🌙 Dark Mode";
+  }
+}
+
+function toggleTheme() {
+  currentTheme = currentTheme === "dark" ? "light" : "dark";
+  applyTheme();
+  saveState();
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("on"));
+  const btn = document.getElementById("tab-btn-" + tab);
+  if (btn) btn.classList.add("on");
+  render();
+}
+
+function getLogoSVG() {
+  return `<svg class="lh-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="48" fill="#0A3668" stroke="#00A3E0" stroke-width="3"/>
+    <circle cx="50" cy="50" r="42" fill="#0E4D92" stroke="#FFFFFF" stroke-width="1.5"/>
+    <path d="M30 65 L40 38 L50 52 L60 38 L70 65 Z" fill="#48CAE4" opacity="0.9"/>
+    <circle cx="50" cy="36" r="6" fill="#FFFFFF"/>
+    <rect x="47" y="44" width="6" height="24" rx="3" fill="#FFFFFF"/>
+    <rect x="38" y="53" width="24" height="6" rx="3" fill="#FFFFFF"/>
+    <text x="50" y="82" font-size="8" font-weight="900" fill="#FFFFFF" text-anchor="middle" font-family="Arial">MITHRA</text>
+  </svg>`;
+}
+
+/* --------------------------------------------------------------------------
+   Render Functions
+   -------------------------------------------------------------------------- */
+
+function render() {
+  const main = document.getElementById("app-main");
+  if (currentTab === "job") renderJobScreen(main);
+  else if (currentTab === "queue") renderQueueScreen(main);
+  else if (currentTab === "patients") renderPatientsScreen(main);
+  else if (currentTab === "doctors") renderDoctorsScreen(main);
+  else if (currentTab === "tests") renderTestsScreen(main);
+  else if (currentTab === "billing") renderBillingScreen(main);
+  else if (currentTab === "settings") renderSettingsScreen(main);
+}
+
+function renderJobScreen(container) {
+  let testsHTML = activeJob.tests.map(code => {
+    const t = TESTS[code];
+    if (!t) return "";
+    const val = activeJob.results[code] || "";
+    let flagHTML = "";
+    if (val && !isNaN(val) && (t.hi || t.lo)) {
+      const num = parseFloat(val);
+      if (t.hi && num > t.hi) flagHTML = '<span class="flag f-H">HIGH</span>';
+      else if (t.lo && num < t.lo) flagHTML = '<span class="flag f-L">LOW</span>';
+      else flagHTML = '<span class="flag f-N">NORMAL</span>';
+    }
+    const isCalc = Boolean(t.f);
+    return `
+      <div class="nm ${isCalc?'calc':''}">${t.n}</div>
+      <div>
+        <input type="text" value="${val}" ${isCalc?'readonly':''} oninput="onResultInput('${code}', this.value)" style="width:120px; font-weight:700;">
+      </div>
+      <div class="unit">${t.u}</div>
+      <div class="rng">${t.r}</div>
+      <div>${flagHTML}</div>
+      <div><button class="btn q" onclick="removeTest('${code}')" title="Remove test">✕</button></div>
+    `;
+  }).join("");
+
+  const total = activeJob.tests.length;
+  const done = activeJob.tests.filter(c => activeJob.results[c]).length;
+  const ready = total > 0 && done === total;
+
+  container.innerHTML = `
+    <div style="display:flex; align-items:center; margin-bottom:14px;">
+      <h1 style="font-size:18px; margin:0;">Job — ${activeJob.name} .${activeJob.initial}.</h1>
+      <span style="color:var(--ink3); margin-left:14px; font-size:12px;">Report No: <b>${activeJob.report_no}</b></span>
+      <span class="pill ${ready?'p-ready':'p-draft'}" style="margin-left:auto;">${ready?'Ready to send':'Draft / In Progress'}</span>
+    </div>
+
+    <!-- Patient Details Form -->
+    <fieldset>
+      <legend>Patient Details</legend>
+      <div style="display:grid; grid-template-columns: 2fr 70px 1.5fr 120px 90px 100px 1.5fr; gap:12px; align-items:flex-end;">
+        <div>
+          <label class="f">Name <span class="req-star">*</span></label>
+          <input type="text" id="p-name" value="${activeJob.name}" placeholder="Patient name (Required)" oninput="activeJob.name=this.value; updateValidation();">
+        </div>
+        <div>
+          <label class="f">Initial</label>
+          <input type="text" id="p-initial" value="${activeJob.initial}" placeholder="M" maxlength="4" oninput="activeJob.initial=this.value;">
+        </div>
+        <div>
+          <label class="f">Mobile <span class="req-star">*</span></label>
+          <input type="text" id="p-mobile" value="${activeJob.mobile}" placeholder="Mobile (Required)" oninput="activeJob.mobile=this.value; updateValidation();">
+        </div>
+        <div>
+          <label class="f">Sex <span class="req-star">*</span></label>
+          <select id="p-sex" onchange="activeJob.sex=this.value; updateValidation();">
+            <option value="Male" ${activeJob.sex==='Male'?'selected':''}>Male</option>
+            <option value="Female" ${activeJob.sex==='Female'?'selected':''}>Female</option>
+            <option value="Other" ${activeJob.sex==='Other'?'selected':''}>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="f">Age</label>
+          <input type="number" id="p-age" value="${activeJob.age}" oninput="activeJob.age=parseInt(this.value)||0;">
+        </div>
+        <div>
+          <label class="f">Unit</label>
+          <select id="p-age-unit" onchange="activeJob.age_unit=this.value;">
+            <option value="Years" ${activeJob.age_unit==='Years'?'selected':''}>Years</option>
+            <option value="Months" ${activeJob.age_unit==='Months'?'selected':''}>Months</option>
+            <option value="Days" ${activeJob.age_unit==='Days'?'selected':''}>Days</option>
+          </select>
+        </div>
+        <div>
+          <label class="f">Referred by Dr</label>
+          <select id="p-ref" onchange="activeJob.referrer=this.value;">
+            <option value="Self">Self</option>
+            <option value="Dr. S. Mehta (Cardiologist)">Dr. S. Mehta</option>
+            <option value="Dr. A. Iyer (Paediatrician)">Dr. A. Iyer</option>
+            <option value="Dr. Reena Thomas (Gynaecologist)">Dr. Reena Thomas</option>
+          </select>
+        </div>
+      </div>
+      <div id="val-warning" style="margin-top:8px; font-size:12px; font-weight:600; color:var(--amber);"></div>
+    </fieldset>
+
+    <!-- Tests & Quick Panels -->
+    <fieldset>
+      <legend>Tests & Panels</legend>
+      <div class="flexr" style="margin-bottom:10px;">
+        ${Object.keys(PANELS).map(p => `
+          <button class="btn panel" onclick="addPanel('${p}')">+ ${p}</button>
+        `).join("")}
+      </div>
+      <div style="display:flex; gap:10px;">
+        <input type="text" id="test-search-inp" placeholder="Type a test code or name (e.g. HBA1C, Fasting, CBC, Lipid)..." oninput="searchTestQuick(this.value)">
+      </div>
+      <div id="search-quick-res" style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;"></div>
+    </fieldset>
+
+    <!-- Results Grid -->
+    <fieldset>
+      <legend>Test Results</legend>
+      ${total === 0 ? '<div style="text-align:center; padding:30px; color:var(--ink3);">No tests chosen yet. Click a panel above or search a test.</div>' : `
+        <div class="results-grid">
+          <div style="font-weight:700; font-size:11px; text-transform:uppercase; color:var(--ink3);">Test Description</div>
+          <div style="font-weight:700; font-size:11px; text-transform:uppercase; color:var(--ink3);">Observed Value</div>
+          <div style="font-weight:700; font-size:11px; text-transform:uppercase; color:var(--ink3);">Unit</div>
+          <div style="font-weight:700; font-size:11px; text-transform:uppercase; color:var(--ink3);">Reference Range</div>
+          <div style="font-weight:700; font-size:11px; text-transform:uppercase; color:var(--ink3);">Flag</div>
+          <div></div>
+          ${testsHTML}
+        </div>
+      `}
+    </fieldset>
+
+    <!-- Bottom Actions -->
+    <div style="display:flex; align-items:center; gap:10px; margin-top:16px;">
+      <button class="btn" onclick="newJob()">New Job</button>
+      <button class="btn" onclick="saveJobLocal()">Save</button>
+      <button class="btn" onclick="openBillModal()">Bill (F4)</button>
+      <button class="btn" onclick="openReportPreview(activeJob)">Preview (F8)</button>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:12px;">
+        <span style="font-weight:700; color:${ready?'var(--green)':'var(--ink3)'};">${done} of ${total} entered</span>
+        <button class="btn go" ${ready?'':'disabled'} onclick="verifyAndCompleteJob()">Check & Make Report</button>
+      </div>
+    </div>
+  `;
+  updateValidation();
+}
+
+function updateValidation() {
+  const w = document.getElementById("val-warning");
+  if (!w) return;
+  let missing = [];
+  if (!activeJob.name.trim()) missing.push("patient name");
+  if (!activeJob.mobile.trim()) missing.push("mobile number");
+  if (!activeJob.sex.trim()) missing.push("sex");
+  if (missing.length) {
+    w.textContent = "Still needed: " + missing.join(", ");
+    w.style.color = "var(--amber)";
+  } else {
+    w.textContent = `Prints as: ${activeJob.name} .${activeJob.initial}. (Ready)`;
+    w.style.color = "var(--green)";
+  }
+}
+
+function onResultInput(code, val) {
+  activeJob.results[code] = val;
+  // Recalculate derived formulas
+  if (code === "HBA1C" && !isNaN(val) && val) {
+    const h = parseFloat(val);
+    const eag = Math.round(28.7 * h - 46.7);
+    activeJob.results["EAG"] = String(eag);
+  }
+  if ((code === "CHOL" || code === "HDL" || code === "TG") && activeJob.tests.includes("LDL")) {
+    const c = parseFloat(activeJob.results["CHOL"] || 0);
+    const h = parseFloat(activeJob.results["HDL"] || 0);
+    const tg = parseFloat(activeJob.results["TG"] || 0);
+    if (c && h && tg) {
+      activeJob.results["LDL"] = String(Math.round(c - h - tg / 5));
+    }
+  }
+  render();
+}
+
+function addPanel(name) {
+  const list = PANELS[name] || [];
+  list.forEach(code => {
+    if (!activeJob.tests.includes(code)) activeJob.tests.push(code);
+  });
+  render();
+}
+
+function removeTest(code) {
+  activeJob.tests = activeJob.tests.filter(c => c !== code);
+  delete activeJob.results[code];
+  render();
+}
+
+function searchTestQuick(term) {
+  term = term.trim().toUpperCase();
+  const box = document.getElementById("search-quick-res");
+  if (!term || term.length < 2) { box.innerHTML = ""; return; }
+  const matches = Object.keys(TESTS).filter(k => k.includes(term) || TESTS[k].n.toUpperCase().includes(term));
+  box.innerHTML = matches.slice(0, 6).map(k => `
+    <button class="btn panel" onclick="if(!activeJob.tests.includes('${k}')){activeJob.tests.push('${k}'); render();}">+ ${TESTS[k].n}</button>
+  `).join("");
+}
+
+function newJob() {
+  activeJob = {
+    id: Date.now(),
+    report_no: String(parseInt(jobs[jobs.length - 1]?.report_no || "51368") + 1),
+    date: "21-08-2026",
+    collected_at: "21-08-2026 03:00 PM",
+    reported_at: "21-08-2026 03:05 PM",
+    name: "",
+    initial: "M",
+    mobile: "",
+    sex: "Male",
+    age: 30,
+    age_unit: "Years",
+    referrer: "Self",
+    tests: ["GLU_F", "GLU_PP"],
+    results: {},
+    status: "draft"
+  };
+  render();
+}
+
+function saveJobLocal() {
+  let idx = jobs.findIndex(j => j.id === activeJob.id);
+  if (idx >= 0) jobs[idx] = JSON.parse(JSON.stringify(activeJob));
+  else jobs.push(JSON.parse(JSON.stringify(activeJob)));
+  saveState();
+  alert("Job #" + activeJob.report_no + " saved successfully!");
+}
+
+function verifyAndCompleteJob() {
+  activeJob.status = "ready";
+  saveJobLocal();
+  openReportPreview(activeJob);
+}
+
+/* --------------------------------------------------------------------------
+   Report Preview & Printable A4 Rendering
+   -------------------------------------------------------------------------- */
+
+function openReportPreview(job) {
+  const isHbA1c = job.tests.includes("HBA1C");
+
+  let rowsHTML = job.tests.map(code => {
+    const t = TESTS[code];
+    if (!t) return "";
+    const val = job.results[code] || "—";
+    return `
+      <tr>
+        <td style="font-weight:600; padding:8px 0;">${t.n}</td>
+        <td style="font-weight:800; font-size:14px; text-align:center; padding:8px 0;">${val} ${t.u}</td>
+        <td style="color:#4A5157; text-align:right; padding:8px 0;">${t.r}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const letterheadHTML = letterheadStyle === "modern" ? `
+    <div class="letterhead-modern">
+      ${getLogoSVG()}
+      <div class="lh-title-block">
+        <div class="lh-pre">NEW</div>
+        <div class="lh-main">MITHRA</div>
+        <div>
+          <span class="lh-sub-badge" style="background:#48CAE4; color:#0A3668;">MEDICAL LABORATORY</span>
+          <span class="lh-tagline" style="color:#D4E7FA;">ACCURACY • CARE • TRUST</span>
+        </div>
+      </div>
+      <div class="lh-contact">
+        Chettiyankinar Road, Kuttippala,<br>
+        Opp. Govt. Ayurveda Dispensary<br>
+        Ph: +91 81578 87311, 95266 77311<br>
+        e-mail: mithralab12020@gmail.com
+      </div>
+    </div>
+  ` : `
+    <div class="letterhead-classic">
+      ${getLogoSVG()}
+      <div class="lh-title-block">
+        <div class="lh-pre">NEW</div>
+        <div class="lh-main">MITHRA</div>
+        <div>
+          <span class="lh-sub-badge">MEDICAL LABORATORY</span>
+          <span class="lh-tagline">ACCURACY • CARE • TRUST</span>
+        </div>
+      </div>
+      <div class="lh-contact">
+        Chettiyankinar Road, Kuttippala,<br>
+        Opp. Govt. Ayurveda Dispensary<br>
+        Ph: +91 81578 87311, 95266 77311<br>
+        e-mail: mithralab12020@gmail.com
+      </div>
+    </div>
+  `;
+
+  const hba1cParagraph = `
+    <div class="clinical-box">
+      <b>Clinical Significance of Glycosylated Hemoglobin (HbA1c):</b><br>
+      Glycosylated hemoglobin values are used to assess long-term glucose control in diabetes, especially in insulin-dependent diabetics whose glucose levels are labile, and in whom blood and urine glucose measurements exhibit significant daily variation. GHb measurements reflect the level of control present over the preceding 100-120 days. In such patients, whose fasting glucose concentrations are fairly consistent from day to day, there is a correlation between glycosylated hemoglobin and single fasting glucose levels. Continued high levels of blood glucose are reflected in high GHb concentrations. Glycosylated hemoglobin predicts the progression of retinopathy.<br><br>
+      Chronic blood loss, hemolytic anemia, or other setting for decrease in RBC life span, results in a decrease in the glycosylated hemoglobin level. Pregnancy may lower glycosylated hemoglobin.
+    </div>
+  `;
+
+  const content = `
+    <div class="report-page">
+      ${letterheadHTML}
+
+      <!-- Metadata Header Block -->
+      <div class="meta-grid">
+        <div class="meta-row"><span class="meta-k">Report No:</span><span class="meta-v">${job.report_no}</span></div>
+        <div class="meta-row"><span class="meta-k">Sample Collected:</span><span class="meta-v">${job.collected_at || job.date}</span></div>
+        <div class="meta-row"><span class="meta-k">Date:</span><span class="meta-v">${job.date}</span></div>
+
+        <div class="meta-row"><span class="meta-k">Name:</span><span class="meta-v">${job.name} .${job.initial}.</span></div>
+        <div class="meta-row"><span class="meta-k">Age / Sex:</span><span class="meta-v">${job.age} ${job.age_unit} / ${job.sex}</span></div>
+        <div class="meta-row"><span class="meta-k">Reported:</span><span class="meta-v">${job.reported_at || job.date}</span></div>
+
+        <div class="meta-row"><span class="meta-k">Ref. by Dr:</span><span class="meta-v">${job.referrer || 'Self'}</span></div>
+      </div>
+
+      <!-- Results Table -->
+      <table style="margin-top:10px;">
+        <thead>
+          <tr style="border-bottom:2px solid #0E4D92;">
+            <th style="background:none; color:#0E4D92; font-size:12px; font-weight:800; padding:8px 0;">Test Description</th>
+            <th style="background:none; color:#0E4D92; font-size:12px; font-weight:800; text-align:center; padding:8px 0;">Observed Value</th>
+            <th style="background:none; color:#0E4D92; font-size:12px; font-weight:800; text-align:right; padding:8px 0;">Reference Range</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="3" style="font-weight:800; color:#0E4D92; padding:12px 0 6px; font-size:12px; text-transform:uppercase;">
+              BIO-CHEMISTRY (Routine)
+            </td>
+          </tr>
+          ${rowsHTML}
+        </tbody>
+      </table>
+
+      <!-- End of Report Mark -->
+      <div style="text-align:center; font-weight:700; font-size:11px; margin:18px 0; color:#616A72;">** End Of Report **</div>
+
+      ${isHbA1c ? hba1cParagraph : ''}
+
+      <!-- Signatures Row -->
+      <div class="sign-row">
+        <div class="sign-person">
+          <div class="sign-name">SAHEED MOHAMED. P.</div>
+          <div class="sign-qual">BScMLT</div>
+          <div class="sign-role">Technologist</div>
+        </div>
+        <div class="sign-person">
+          <div class="sign-name">FATTIMATH SAKIRA.M.</div>
+          <div class="sign-qual">MScMicrobiology</div>
+          <div class="sign-role">Microbiologist</div>
+        </div>
+        <div class="sign-person">
+          <div class="sign-name">ABDUNNASER MAYYERI</div>
+          <div class="sign-qual">DMLT BScMLT</div>
+          <div class="sign-role">Lab Incharge</div>
+        </div>
+      </div>
+
+      <!-- Bottom Disclaimer Strip -->
+      <div class="disclaimer-strip">
+        The result of the investigations depends upon the quality of the specimen received. Isolated laboratory investigations never confirm the final diagnosis of diseases. The reported results are only for the information of the referring doctor. In case of doubts, referring doctors can request a free recheck.
+      </div>
+    </div>
+  `;
+
+  document.getElementById("modal-title").textContent = `Report Preview — No ${job.report_no} (${job.name} .${job.initial}.)`;
+  document.getElementById("modal-body").innerHTML = content;
+  document.getElementById("modal-footer").innerHTML = `
+    <button class="btn p" onclick="window.print()">🖨️ Print / Save PDF</button>
+    <button class="btn" onclick="sendWhatsAppDemo('${job.mobile}', '${job.report_no}', '${job.name}')">📱 WhatsApp Dispatch</button>
+    <button class="btn" style="margin-left:auto;" onclick="closeModal()">Close</button>
+  `;
+  document.getElementById("modal").classList.add("show");
+}
+
+function sendWhatsAppDemo(phone, repNo, name) {
+  const msg = `Dear ${name},\nYour test report from New Mithra Medical Laboratory (Report No ${repNo}) is ready.\nThank you!`;
+  const url = `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`;
+  window.open(url, "_blank");
+}
+
+function openBillModal() {
+  const total = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate || 100), 0);
+  const content = `
+    <div style="padding:10px 14px;">
+      <h3 style="margin-top:0;">Receipt / Bill Calculator</h3>
+      <table style="margin-bottom:14px;">
+        <thead><tr><th>Test</th><th>Rate (₹)</th></tr></thead>
+        <tbody>
+          ${activeJob.tests.map(c => `<tr><td>${TESTS[c]?.n||c}</td><td>₹ ${TESTS[c]?.rate||100}.00</td></tr>`).join("")}
+          <tr style="font-weight:800; border-top:2px solid var(--brand);"><td>Total Amount</td><td>₹ ${total}.00</td></tr>
+        </tbody>
+      </table>
+      <div style="background:var(--brand-soft); padding:12px; border-radius:6px;">
+        <div><b>Patient:</b> ${activeJob.name} .${activeJob.initial}. (Mob: ${activeJob.mobile})</div>
+        <div><b>Status:</b> Paid in Full (₹ ${total}.00)</div>
+      </div>
+    </div>
+  `;
+  document.getElementById("modal-title").textContent = `Bill for Job #${activeJob.report_no}`;
+  document.getElementById("modal-body").innerHTML = content;
+  document.getElementById("modal-footer").innerHTML = `
+    <button class="btn p" onclick="alert('Receipt printed!'); closeModal();">Print Receipt</button>
+    <button class="btn" style="margin-left:auto;" onclick="closeModal()">Close</button>
+  `;
+  document.getElementById("modal").classList.add("show");
+}
+
+/* --------------------------------------------------------------------------
+   About Dialog (Author Credit: RANDOM_GTV)
+   -------------------------------------------------------------------------- */
+
+function showAbout() {
+  const content = `
+    <div style="padding:10px;">
+      <div style="background:#0A3668; color:#FFF; padding:18px; border-radius:8px; margin-bottom:16px;">
+        <h2 style="margin:0; font-size:24px; color:#FFF;">LabSoft</h2>
+        <div style="color:#48CAE4; font-size:13px; font-weight:600; margin:4px 0;">Medical Diagnostic Laboratory Information & Reporting System</div>
+        <div style="color:#D4E7FA; font-size:11px; font-weight:700; letter-spacing:1.5px;">ACCURACY • CARE • TRUST</div>
+      </div>
+
+      <div style="background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line2);">
+          <span style="color:var(--ink2); font-weight:600;">Author / Developer:</span>
+          <span style="color:#0E4D92; font-weight:800; font-size:15px;">${AUTHOR}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line2);">
+          <span style="color:var(--ink2); font-weight:600;">Version:</span>
+          <span style="font-weight:700;">${APP_VERSION}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:6px 0;">
+          <span style="color:var(--ink2); font-weight:600;">Platform:</span>
+          <span style="color:var(--ink3);">Desktop (PyQt6 / Python) & Online Web Client (HTML5 / SPA)</span>
+        </div>
+      </div>
+
+      <div style="font-size:12px; color:var(--ink2); line-height:1.6;">
+        <b>Key Capabilities:</b>
+        <ul style="margin:6px 0 0 18px; padding:0;">
+          <li>Automated Clinical Engine with Real-Time Derived Formulas & Flags</li>
+          <li>High-Resolution Letterhead Report Generator with Single-Sheet HbA1c</li>
+          <li>WhatsApp PDF Dispatch, Thermal Receipt Printing, & Audit Trail</li>
+          <li>Full Client Testing Simulation & Instant In-Browser PDF Generation</li>
+        </ul>
+      </div>
+    </div>
+  `;
+  document.getElementById("modal-title").textContent = "About LabSoft & Credits";
+  document.getElementById("modal-body").innerHTML = content;
+  document.getElementById("modal-footer").innerHTML = `
+    <button class="btn p" style="margin-left:auto;" onclick="closeModal()">Close</button>
+  `;
+  document.getElementById("modal").classList.add("show");
+}
+
+function closeModal() {
+  document.getElementById("modal").classList.remove("show");
+}
+
+/* --------------------------------------------------------------------------
+   Other Screens: Work Queue, Patients, Doctors, Tests, Billing, Settings
+   -------------------------------------------------------------------------- */
+
+function renderQueueScreen(container) {
+  container.innerHTML = `
+    <h1 style="font-size:18px; margin-bottom:14px;">Work Queue</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Report No</th>
+          <th>Patient Name</th>
+          <th>Mobile</th>
+          <th>Date</th>
+          <th>Tests</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${jobs.map(j => `
+          <tr>
+            <td><b>${j.report_no}</b></td>
+            <td><b>${j.name} .${j.initial}.</b></td>
+            <td>${j.mobile}</td>
+            <td>${j.date}</td>
+            <td>${j.tests.join(", ")}</td>
+            <td><span class="pill p-${j.status}">${j.status}</span></td>
+            <td>
+              <button class="btn q" onclick="openReportPreview(jobs.find(x=>x.id===${j.id}))">👁️ Preview</button>
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderPatientsScreen(container) {
+  container.innerHTML = `
+    <h1 style="font-size:18px; margin-bottom:14px;">Patients Registry</h1>
+    <table>
+      <thead><tr><th>Name</th><th>Mobile</th><th>Sex</th><th>Age</th><th>Visits</th></tr></thead>
+      <tbody>
+        ${jobs.map(j => `<tr><td><b>${j.name} .${j.initial}.</b></td><td>${j.mobile}</td><td>${j.sex}</td><td>${j.age} ${j.age_unit}</td><td>1 visit</td></tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderDoctorsScreen(container) {
+  container.innerHTML = `
+    <h1 style="font-size:18px; margin-bottom:14px;">Referring Doctors Master</h1>
+    <table>
+      <thead><tr><th>Doctor Name</th><th>Specialty</th><th>Hospital</th><th>Commission</th></tr></thead>
+      <tbody>
+        <tr><td><b>Dr. S. Mehta</b></td><td>Cardiologist</td><td>City Heart Centre</td><td>10%</td></tr>
+        <tr><td><b>Dr. A. Iyer</b></td><td>Paediatrician</td><td>Kuttippala Clinic</td><td>8%</td></tr>
+        <tr><td><b>Dr. Reena Thomas</b></td><td>Gynaecologist</td><td>Mother Care Hospital</td><td>12%</td></tr>
+      </tbody>
+    </table>
+  `;
+}
+
+function renderTestsScreen(container) {
+  container.innerHTML = `
+    <h1 style="font-size:18px; margin-bottom:14px;">Clinical Tests Catalog</h1>
+    <table>
+      <thead><tr><th>Code</th><th>Test Name</th><th>Group</th><th>Unit</th><th>Reference Range</th><th>Rate (₹)</th></tr></thead>
+      <tbody>
+        ${Object.keys(TESTS).map(k => `
+          <tr>
+            <td><b>${k}</b></td>
+            <td>${TESTS[k].n}</td>
+            <td>${TESTS[k].g}</td>
+            <td>${TESTS[k].u}</td>
+            <td>${TESTS[k].r}</td>
+            <td>₹ ${TESTS[k].rate}.00</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderBillingScreen(container) {
+  container.innerHTML = `
+    <h1 style="font-size:18px; margin-bottom:14px;">Billing & Counter Summary</h1>
+    <table>
+      <thead><tr><th>Report No</th><th>Patient</th><th>Total Charged</th><th>Status</th></tr></thead>
+      <tbody>
+        ${jobs.map(j => `<tr><td><b>${j.report_no}</b></td><td>${j.name} .${j.initial}.</td><td>₹ ${j.bill_paid || 150}.00</td><td><span class="pill p-ready">Paid</span></td></tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderSettingsScreen(container) {
+  container.innerHTML = `
+    <h1 style="font-size:18px; margin-bottom:14px;">Settings & Customization</h1>
+    <fieldset>
+      <legend>Letterhead Style</legend>
+      <div style="display:flex; gap:16px;">
+        <label><input type="radio" name="lh_style" value="classic" ${letterheadStyle==='classic'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> Classic (Icy Blue Card)</label>
+        <label><input type="radio" name="lh_style" value="modern" ${letterheadStyle==='modern'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> Modern (Deep Navy Band)</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>About & Credits</legend>
+      <p style="margin:0 0 10px; color:var(--ink2);">
+        <b>LabSoft</b> v1.0.0 — Medical Diagnostic Laboratory Information System.<br>
+        <b>Author / Developer:</b> <span style="color:#0E4D92; font-weight:800;">RANDOM_GTV</span>
+      </p>
+      <button class="btn p" onclick="showAbout()">View About & Credits Dialog</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Testing Data Reset</legend>
+      <button class="btn" style="color:var(--red);" onclick="if(confirm('Reset test data to defaults?')){localStorage.clear(); location.reload();}">Reset Demo Data</button>
+    </fieldset>
+  `;
+}
+
+// Initial boot
+applyTheme();
+render();
+</script>
+</body>
+</html>
