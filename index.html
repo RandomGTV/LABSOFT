@@ -59,7 +59,7 @@
   button { cursor: pointer; }
 
   .app {
-    max-width: 1400px;
+    max-width: 1440px;
     margin: 0 auto;
     min-height: 100%;
     display: flex;
@@ -108,9 +108,10 @@
     padding: 8px 14px 0;
     background: var(--bg);
     border-bottom: 1px solid var(--line);
+    overflow-x: auto;
   }
   .tab {
-    padding: 10px 20px;
+    padding: 10px 18px;
     border: 1px solid transparent;
     border-bottom: 0;
     border-radius: 6px 6px 0 0;
@@ -118,6 +119,7 @@
     font-weight: 600;
     background: none;
     transition: all .15s ease;
+    white-space: nowrap;
   }
   .tab.on {
     background: var(--panel);
@@ -181,7 +183,7 @@
   }
   .req-star { color: #E5484D; font-weight: bold; font-size: 13px; }
 
-  input[type=text], input[type=number], input[type=password], select, textarea {
+  input[type=text], input[type=number], input[type=password], input[type=date], select, textarea {
     background: var(--panel);
     border: 1px solid #88929B;
     border-radius: 5px;
@@ -227,7 +229,6 @@
   .btn.panel:hover { background: var(--brand-edge); }
 
   .flexr { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .rowg { display: grid; gap: 12px; }
 
   /* Tables */
   table { width: 100%; border-collapse: collapse; }
@@ -430,6 +431,12 @@
   .letterhead-modern .lh-pre { color: #48CAE4; }
   .letterhead-modern .lh-contact { color: #D4E7FA; border-left-color: #1E5C9A; }
 
+  /* Letterhead Preprinted (Blank top margin) */
+  .letterhead-preprinted {
+    height: 36mm;
+    margin-bottom: 8mm;
+  }
+
   /* Metadata Table */
   .meta-grid {
     display: grid;
@@ -484,6 +491,19 @@
     border-radius: 2px;
   }
 
+  /* POS Receipt */
+  .pos-receipt {
+    width: 80mm;
+    background: #FFF;
+    color: #000;
+    padding: 10mm 6mm;
+    margin: 0 auto;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
+
   @media print {
     body { background: #FFF !important; color: #000 !important; }
     .titlebar, .tabs, .statusbar, main, .sheet header, .sheet footer { display: none !important; }
@@ -500,7 +520,7 @@
   <!-- Dynamic App / Login Layout -->
 </div>
 
-<!-- Modal Dialog (For Report Preview, Billing Receipt, About Dialog) -->
+<!-- Modal Dialog (For Report Preview, Billing Receipt, Summaries, About Dialog) -->
 <div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="sheet" id="modal-sheet">
     <header>
@@ -516,67 +536,85 @@
 
 <script>
 /* ==========================================================================
-   LabSoft Full Web App Engine — by RANDOM_GTV (100% Full Feature Edition)
+   LabSoft Complete Diagnostic Engine — by RANDOM_GTV (100% Complete Suite)
    ========================================================================== */
 
 const AUTHOR = "RANDOM_GTV";
 const APP_VERSION = "1.0.0 (Production Release)";
 
-/* Full 50+ Tests Catalog */
+/* Full 50+ Tests Library from Pathology Master */
 const TESTS = {
   // Bio-chemistry
-  GLU_F:{n:"Blood Glucose [Fasting]",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:110,r:"70 - 110 mg/dl",rate:60},
-  GLU_PP:{n:"Blood Glucose [P P 2 hrs]",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:140,r:"70 - 140 mg/dl",rate:60},
-  HBA1C:{n:"HbA1c (Glycated Haemoglobin)",g:"BIO-CHEMISTRY (Routine)",u:"%",d:1,hi:5.7,r:"< 5.7%",rate:350},
-  EAG:{n:"Mean Blood Glucose",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,hi:117,r:"< 117mg/dl",f:"28.7 * HBA1C - 46.7",rate:100},
-  UREA:{n:"Blood Urea",g:"RENAL FUNCTION TEST",u:"mg/dl",d:0,lo:15,hi:45,r:"15 - 45 mg/dl",rate:90},
-  CREAT:{n:"Serum Creatinine",g:"RENAL FUNCTION TEST",u:"mg/dl",d:2,lo:0.6,hi:1.3,r:"0.6 - 1.3 mg/dl",rate:90},
-  URIC:{n:"Serum Uric Acid",g:"RENAL FUNCTION TEST",u:"mg/dl",d:1,lo:3.5,hi:7.2,r:"3.5 - 7.2 mg/dl",rate:100},
+  GLU_F:{n:"Blood Glucose [Fasting]",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:110,r:"70 - 110 mg/dl",rate:80},
+  GLU_PP:{n:"Blood Glucose [P P 2 hrs]",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:140,r:"70 - 140 mg/dl",rate:80},
+  GLU_R:{n:"Blood Glucose [Random]",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:140,r:"70 - 140 mg/dl",rate:80},
+  HBA1C:{n:"HbA1c (Glycated Haemoglobin)",g:"BIO-CHEMISTRY (Routine)",u:"%",d:1,hi:5.7,r:"< 5.7%",rate:450},
+  EAG:{n:"Mean Blood Glucose",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,hi:117,r:"< 117mg/dl",f:"28.7 * HBA1C - 46.7",rate:0},
+  UREA:{n:"Blood Urea",g:"RENAL FUNCTION TEST",u:"mg/dl",d:0,lo:15,hi:45,r:"15 - 45 mg/dl",rate:100},
+  BUN:{n:"Blood Urea Nitrogen",g:"RENAL FUNCTION TEST",u:"mg/dl",d:1,lo:7,hi:21,r:"7 - 21 mg/dl",f:"UREA / 2.14",rate:0},
+  CREAT:{n:"Serum Creatinine",g:"RENAL FUNCTION TEST",u:"mg/dl",d:2,lo:0.6,hi:1.3,r:"0.6 - 1.3 mg/dl",rate:120},
+  UA:{n:"Serum Uric Acid",g:"RENAL FUNCTION TEST",u:"mg/dl",d:1,lo:3.5,hi:7.2,r:"3.5 - 7.2 mg/dl",rate:120},
+  CA:{n:"Serum Calcium",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:1,lo:8.5,hi:10.5,r:"8.5 - 10.5 mg/dl",rate:150},
+  PHOS:{n:"Serum Phosphorus",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:1,lo:2.5,hi:4.5,r:"2.5 - 4.5 mg/dl",rate:150},
 
   // Haematology
   HB:{n:"Haemoglobin",g:"HAEMATOLOGY",u:"g/dl",d:1,lo:12,hi:15,r:"12 - 15 g/dl",bySex:{M:{lo:13,hi:17,r:"13 - 17 g/dl"},F:{lo:12,hi:15,r:"12 - 15 g/dl"}},rate:80},
-  TC:{n:"Total WBC Count",g:"HAEMATOLOGY",u:"cells/cumm",d:0,lo:4000,hi:11000,r:"4,000 - 11,000",rate:90},
-  PLT:{n:"Platelet Count",g:"HAEMATOLOGY",u:"lakhs/cumm",d:2,lo:1.5,hi:4.5,r:"1.5 - 4.5 lakhs/cumm",rate:90},
+  TC:{n:"Total WBC Count",g:"HAEMATOLOGY",u:"cells/cumm",d:0,lo:4000,hi:11000,r:"4,000 - 11,000",rate:80},
+  RBC:{n:"Total RBC Count",g:"HAEMATOLOGY",u:"million/cumm",d:2,lo:4.1,hi:5.9,r:"4.1 - 5.9",rate:80},
+  PLT:{n:"Platelet Count",g:"HAEMATOLOGY",u:"lakhs/cumm",d:2,lo:1.5,hi:4.5,r:"1.5 - 4.5 lakhs/cumm",rate:100},
   PCV:{n:"PCV / Haematocrit",g:"HAEMATOLOGY",u:"%",d:1,lo:36,hi:46,r:"36 - 46%",rate:80},
+  MCV:{n:"MCV",g:"HAEMATOLOGY",u:"fl",d:1,lo:80,hi:100,r:"80 - 100 fl",rate:0},
+  MCH:{n:"MCH",g:"HAEMATOLOGY",u:"pg",d:1,lo:27,hi:32,r:"27 - 32 pg",rate:0},
+  MCHC:{n:"MCHC",g:"HAEMATOLOGY",u:"g/dl",d:1,lo:32,hi:36,r:"32 - 36 g/dl",rate:0},
+  RDW:{n:"RDW-CV",g:"HAEMATOLOGY",u:"%",d:1,lo:11.5,hi:14.5,r:"11.5 - 14.5 %",rate:0},
+  NEU:{n:"Neutrophils",g:"HAEMATOLOGY",u:"%",d:0,lo:40,hi:75,r:"40 - 75%",rate:0},
+  LYM:{n:"Lymphocytes",g:"HAEMATOLOGY",u:"%",d:0,lo:20,hi:45,r:"20 - 45%",rate:0},
+  EOS:{n:"Eosinophils",g:"HAEMATOLOGY",u:"%",d:0,lo:1,hi:6,r:"1 - 6%",rate:0},
+  MON:{n:"Monocytes",g:"HAEMATOLOGY",u:"%",d:0,lo:2,hi:10,r:"2 - 10%",rate:0},
+  BAS:{n:"Basophils",g:"HAEMATOLOGY",u:"%",d:0,hi:1,r:"0 - 1%",rate:0},
   ESR:{n:"ESR (Westergren)",g:"HAEMATOLOGY",u:"mm/hr",d:0,hi:20,r:"0 - 20 mm/hr",rate:60},
-  NEU:{n:"Neutrophils",g:"HAEMATOLOGY",u:"%",d:0,lo:40,hi:75,r:"40 - 75%",rate:60},
-  LYM:{n:"Lymphocytes",g:"HAEMATOLOGY",u:"%",d:0,lo:20,hi:45,r:"20 - 45%",rate:60},
-  EOS:{n:"Eosinophils",g:"HAEMATOLOGY",u:"%",d:0,lo:1,hi:6,r:"1 - 6%",rate:60},
-  MONO:{n:"Monocytes",g:"HAEMATOLOGY",u:"%",d:0,lo:2,hi:8,r:"2 - 8%",rate:60},
 
   // Liver Function
   TBIL:{n:"Total Bilirubin",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,lo:0.2,hi:1.2,r:"0.2 - 1.2 mg/dl",rate:100},
   DBIL:{n:"Direct Bilirubin",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,hi:0.3,r:"< 0.3 mg/dl",rate:100},
-  IBIL:{n:"Indirect Bilirubin",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,lo:0.2,hi:0.9,r:"0.2 - 0.9 mg/dl",f:"TBIL - DBIL",rate:60},
-  SGPT:{n:"SGPT (ALT)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,hi:34,r:"< 34 U/L",rate:110},
-  SGOT:{n:"SGOT (AST)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,hi:32,r:"< 32 U/L",rate:110},
-  ALP:{n:"Alkaline Phosphatase (ALP)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,lo:30,hi:120,r:"30 - 120 U/L",rate:120},
+  IBIL:{n:"Indirect Bilirubin",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,lo:0.2,hi:0.9,r:"0.2 - 0.9 mg/dl",f:"TBIL - DBIL",rate:0},
+  SGPT:{n:"SGPT (ALT)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,hi:34,r:"< 34 U/L",rate:120},
+  SGOT:{n:"SGOT (AST)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,hi:32,r:"< 32 U/L",rate:120},
+  ALP:{n:"Alkaline Phosphatase (ALP)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,lo:44,hi:147,r:"44 - 147 U/L",rate:120},
   TP:{n:"Total Protein",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:6.0,hi:8.3,r:"6.0 - 8.3 g/dl",rate:100},
   ALB:{n:"Albumin",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:3.5,hi:5.2,r:"3.5 - 5.2 g/dl",rate:100},
-  GLOB:{n:"Globulin",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:2.0,hi:3.5,r:"2.0 - 3.5 g/dl",f:"TP - ALB",rate:60},
-  AGR:{n:"A / G Ratio",g:"LIVER FUNCTION TEST",u:"",d:2,lo:1.0,hi:2.1,r:"1.0 - 2.1",f:"ALB / GLOB",rate:60},
+  GLOB:{n:"Globulin",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:2.0,hi:3.5,r:"2.0 - 3.5 g/dl",f:"TP - ALB",rate:0},
+  AGR:{n:"A / G Ratio",g:"LIVER FUNCTION TEST",u:"",d:2,lo:1.0,hi:2.1,r:"1.0 - 2.1",f:"ALB / GLOB",rate:0},
 
   // Lipid Profile
-  CHOL:{n:"Total Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:200,r:"< 200 mg/dl",rate:120},
-  TG:{n:"Triglycerides",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:150,r:"< 150 mg/dl",rate:140},
-  HDL:{n:"HDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,lo:40,hi:60,r:"40 - 60 mg/dl",rate:140},
-  LDL:{n:"LDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:100,r:"< 100 mg/dl",f:"CHOL - HDL - TG/5",rate:140},
-  VLDL:{n:"VLDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,lo:5,hi:40,r:"5 - 40 mg/dl",f:"TG / 5",rate:60},
-  CHR:{n:"Total Cholesterol / HDL Ratio",g:"LIPID PROFILE",u:"",d:2,hi:4.5,r:"< 4.5",f:"CHOL / HDL",rate:60},
+  CHOL:{n:"Total Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:200,r:"< 200 mg/dl",rate:150},
+  TG:{n:"Triglycerides",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:150,r:"< 150 mg/dl",rate:150},
+  HDL:{n:"HDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,lo:40,hi:60,r:"40 - 60 mg/dl",rate:150},
+  LDL:{n:"LDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:100,r:"< 100 mg/dl",f:"CHOL - HDL - TG/5",rate:0},
+  VLDL:{n:"VLDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,lo:5,hi:40,r:"5 - 40 mg/dl",f:"TG / 5",rate:0},
+  CHOLHDL:{n:"Total Cholesterol / HDL Ratio",g:"LIPID PROFILE",u:"",d:2,hi:4.5,r:"< 4.5",f:"CHOL / HDL",rate:0},
 
   // Thyroid Profile
-  T3:{n:"Total T3",g:"THYROID PROFILE",u:"ng/dl",d:0,lo:80,hi:200,r:"80 - 200 ng/dl",rate:180},
-  T4:{n:"Total T4",g:"THYROID PROFILE",u:"µg/dl",d:1,lo:5.1,hi:14.1,r:"5.1 - 14.1 µg/dl",rate:180},
+  T3:{n:"Total T3",g:"THYROID PROFILE",u:"ng/dl",d:0,lo:80,hi:200,r:"80 - 200 ng/dl",rate:200},
+  T4:{n:"Total T4",g:"THYROID PROFILE",u:"µg/dl",d:1,lo:5.1,hi:14.1,r:"5.1 - 14.1 µg/dl",rate:200},
   TSH:{n:"TSH (Ultrasensitive)",g:"THYROID PROFILE",u:"µIU/ml",d:2,lo:0.27,hi:4.2,r:"0.27 - 4.2 µIU/ml",rate:250},
 
   // Electrolytes
-  NA:{n:"Serum Sodium",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:135,hi:145,r:"135 - 145 mmol/L",rate:120},
-  K:{n:"Serum Potassium",g:"ELECTROLYTES",u:"mmol/L",d:1,lo:3.5,hi:5.1,r:"3.5 - 5.1 mmol/L",rate:120},
-  CL:{n:"Serum Chloride",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:98,hi:107,r:"98 - 107 mmol/L",rate:120},
+  NA:{n:"Serum Sodium",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:135,hi:145,r:"135 - 145 mmol/L",rate:150},
+  K:{n:"Serum Potassium",g:"ELECTROLYTES",u:"mmol/L",d:1,lo:3.5,hi:5.1,r:"3.5 - 5.1 mmol/L",rate:150},
+  CL:{n:"Serum Chloride",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:98,hi:107,r:"98 - 107 mmol/L",rate:150},
+  BICARB:{n:"Serum Bicarbonate",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:22,hi:29,r:"22 - 29 mmol/L",rate:150},
+
+  // Urine Routine
+  U_ALB:{n:"Urine Albumin",g:"URINE ROUTINE EXAMINATION",u:"",d:0,opts:["Nil","Trace","+","++","+++"],ok:"Nil",r:"Nil",rate:50},
+  U_SUG:{n:"Urine Sugar",g:"URINE ROUTINE EXAMINATION",u:"",d:0,opts:["Nil","Trace","+","++","+++"],ok:"Nil",r:"Nil",rate:50},
+  U_PUS:{n:"Pus Cells",g:"URINE ROUTINE EXAMINATION",u:"/hpf",d:0,r:"0 - 2 /hpf",rate:50},
+  U_EPI:{n:"Epithelial Cells",g:"URINE ROUTINE EXAMINATION",u:"/hpf",d:0,r:"0 - 2 /hpf",rate:50},
 
   // Serology & Others
-  HBSAG:{n:"HBsAg (Rapid)",g:"SEROLOGY",u:"",d:0,opts:["Non Reactive","Reactive"],ok:"Non Reactive",r:"Non Reactive",rate:150},
-  CRP:{n:"CRP (Quantitative)",g:"SEROLOGY",u:"mg/L",d:1,hi:6,r:"< 6 mg/L",rate:180},
+  HBSAG:{n:"HBsAg (Rapid)",g:"SEROLOGY",u:"",d:0,opts:["Non Reactive","Reactive"],ok:"Non Reactive",r:"Non Reactive",rate:200},
+  CRP:{n:"CRP (Quantitative)",g:"SEROLOGY",u:"mg/L",d:1,hi:6,r:"< 6 mg/L",rate:300},
+  WIDAL:{n:"Widal Reaction",g:"SEROLOGY",u:"",d:0,r:"Negative (< 1:80)",rate:150},
   VITD:{n:"Vitamin D (25-OH)",g:"BIO-CHEMISTRY (Routine)",u:"ng/ml",d:1,lo:30,hi:100,r:"30 - 100 ng/ml",rate:800},
   B12:{n:"Vitamin B12",g:"BIO-CHEMISTRY (Routine)",u:"pg/ml",d:0,lo:211,hi:911,r:"211 - 911 pg/ml",rate:750},
 };
@@ -584,12 +622,13 @@ const TESTS = {
 const PANELS = {
   "HbA1c (with Mean Blood Glucose)": ["HBA1C", "EAG"],
   "Blood Sugar F & PP": ["GLU_F", "GLU_PP"],
-  "CBC": ["HB", "TC", "PLT", "PCV", "ESR"],
-  "Lipid Profile": ["CHOL", "TG", "HDL", "LDL", "VLDL", "CHR"],
-  "Liver Function Test": ["TBIL", "DBIL", "IBIL", "SGPT", "SGOT", "ALP", "TP", "ALB", "GLOB", "AGR"],
-  "Renal Function Test": ["UREA", "CREAT", "URIC"],
+  "CBC (Complete Blood Count)": ["HB", "TC", "PLT", "PCV", "ESR", "NEU", "LYM", "EOS", "MON"],
+  "Lipid Profile": ["CHOL", "TG", "HDL", "LDL", "VLDL", "CHOLHDL"],
+  "Liver Function Test (LFT)": ["TBIL", "DBIL", "IBIL", "SGPT", "SGOT", "ALP", "TP", "ALB", "GLOB", "AGR"],
+  "Renal Function Test (RFT)": ["UREA", "BUN", "CREAT", "UA"],
   "Thyroid Profile": ["T3", "T4", "TSH"],
-  "Electrolytes": ["NA", "K", "CL"],
+  "Electrolytes": ["NA", "K", "CL", "BICARB"],
+  "Urine Routine": ["U_ALB", "U_SUG", "U_PUS", "U_EPI"],
   "Full Body Checkup": ["HB", "TC", "PLT", "GLU_F", "HBA1C", "UREA", "CREAT", "CHOL", "TG", "HDL", "LDL", "TBIL", "SGPT", "SGOT", "TSH"]
 };
 
@@ -636,7 +675,10 @@ function createEmptyJob() {
     referrer: "Self",
     tests: ["HBA1C", "EAG"],
     results: {},
-    status: "draft"
+    status: "draft",
+    bill_paid: 450,
+    bill_mode: "Cash",
+    bill_disc: 0
   };
 }
 
@@ -765,6 +807,7 @@ function render() {
       <button class="tab ${currentTab==='doctors'?'on':''}" onclick="setTab('doctors')">Doctors</button>
       <button class="tab ${currentTab==='tests'?'on':''}" onclick="setTab('tests')">Tests Catalog</button>
       <button class="tab ${currentTab==='billing'?'on':''}" onclick="setTab('billing')">Billing</button>
+      <button class="tab ${currentTab==='summaries'?'on':''}" onclick="setTab('summaries')">Summaries & Sheets</button>
       <button class="tab ${currentTab==='staff'?'on':''}" onclick="setTab('staff')">Staff</button>
       <button class="tab ${currentTab==='settings'?'on':''}" onclick="setTab('settings')">Settings</button>
     </div>
@@ -791,6 +834,7 @@ function render() {
   else if (currentTab === "doctors") renderDoctorsScreen(main);
   else if (currentTab === "tests") renderTestsScreen(main);
   else if (currentTab === "billing") renderBillingScreen(main);
+  else if (currentTab === "summaries") renderSummariesScreen(main);
   else if (currentTab === "staff") renderStaffScreen(main);
   else if (currentTab === "settings") renderSettingsScreen(main);
 }
@@ -854,13 +898,23 @@ function renderJobScreen(container) {
       if (t.hi && num > t.hi) flagHTML = '<span class="flag f-H">HIGH</span>';
       else if (t.lo && num < t.lo) flagHTML = '<span class="flag f-L">LOW</span>';
       else flagHTML = '<span class="flag f-N">NORMAL</span>';
+    } else if (t.opts && val) {
+      flagHTML = val === t.ok ? '<span class="flag f-N">NORMAL</span>' : '<span class="flag f-H">ABNORMAL</span>';
     }
     const isCalc = Boolean(t.f);
+    let inputControl = "";
+    if (t.opts) {
+      inputControl = `<select onchange="onResultInput('${code}', this.value)" style="width:130px; font-weight:700;">
+        <option value="">— Select —</option>
+        ${t.opts.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join("")}
+      </select>`;
+    } else {
+      inputControl = `<input type="text" value="${val}" ${isCalc?'readonly':''} oninput="onResultInput('${code}', this.value)" style="width:130px; font-weight:700;">`;
+    }
+
     return `
       <div class="nm ${isCalc?'calc':''}">${t.n}</div>
-      <div>
-        <input type="text" value="${val}" ${isCalc?'readonly':''} oninput="onResultInput('${code}', this.value)" style="width:120px; font-weight:700;">
-      </div>
+      <div>${inputControl}</div>
       <div class="unit">${t.u}</div>
       <div class="rng">${t.r}</div>
       <div>${flagHTML}</div>
@@ -885,11 +939,12 @@ function renderJobScreen(container) {
       <div style="display:grid; grid-template-columns: 2fr 70px 1.5fr 120px 90px 100px 1.5fr; gap:12px; align-items:flex-end;">
         <div>
           <label class="f">Name <span class="req-star">*</span></label>
-          <input type="text" id="p-name" value="${activeJob.name}" placeholder="Patient name (Required)" oninput="activeJob.name=this.value; updateValidation();">
+          <input type="text" id="p-name" value="${activeJob.name}" placeholder="Patient name (Required)" oninput="activeJob.name=this.value; searchPatientAutocomplete(this.value); updateValidation();">
+          <div id="patient-hits" style="position:relative; z-index:20;"></div>
         </div>
         <div>
           <label class="f">Initial</label>
-          <input type="text" id="p-initial" value="${activeJob.initial}" placeholder="M" maxlength="4" oninput="activeJob.initial=this.value;">
+          <input type="text" id="p-initial" value="${activeJob.initial}" placeholder="M" maxlength="4" oninput="activeJob.initial=this.value; updateValidation();">
         </div>
         <div>
           <label class="f">Mobile <span class="req-star">*</span></label>
@@ -935,7 +990,7 @@ function renderJobScreen(container) {
         `).join("")}
       </div>
       <div style="display:flex; gap:10px;">
-        <input type="text" id="test-search-inp" placeholder="Type a test code or name (e.g. HBA1C, Fasting, CBC, Lipid, LFT, RFT, Thyroid)..." oninput="searchTestQuick(this.value)">
+        <input type="text" id="test-search-inp" placeholder="Type a test code or name (e.g. HBA1C, Fasting, CBC, Lipid, LFT, RFT, Thyroid, Urine)..." oninput="searchTestQuick(this.value)">
       </div>
       <div id="search-quick-res" style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;"></div>
     </fieldset>
@@ -960,8 +1015,8 @@ function renderJobScreen(container) {
     <div style="display:flex; align-items:center; gap:10px; margin-top:16px;">
       <button class="btn" onclick="newJob()">New Job</button>
       <button class="btn" onclick="saveJobLocal()">Save</button>
-      <button class="btn" onclick="openBillModal()">Bill (F4)</button>
-      <button class="btn" onclick="openReportPreview(activeJob)">Preview (F8)</button>
+      <button class="btn" onclick="openBillModal()">Bill & Receipt (F4)</button>
+      <button class="btn" onclick="openReportPreview(activeJob)">Preview Report (F8)</button>
       <div style="margin-left:auto; display:flex; align-items:center; gap:12px;">
         <span style="font-weight:700; color:${ready?'var(--green)':'var(--ink3)'};">${done} of ${total} entered</span>
         <button class="btn go" ${ready?'':'disabled'} onclick="verifyAndCompleteJob()">Check & Make Report</button>
@@ -969,6 +1024,38 @@ function renderJobScreen(container) {
     </div>
   `;
   updateValidation();
+}
+
+function searchPatientAutocomplete(query) {
+  const box = document.getElementById("patient-hits");
+  if (!box) return;
+  query = query.trim().toLowerCase();
+  if (query.length < 2) { box.innerHTML = ""; return; }
+  const matches = jobs.filter(j => j.name.toLowerCase().includes(query) || j.mobile.includes(query));
+  if (!matches.length) { box.innerHTML = ""; return; }
+  box.innerHTML = `
+    <div style="position:absolute; top:4px; left:0; right:0; background:var(--panel); border:1px solid var(--line); border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.2); max-height:160px; overflow:auto;">
+      ${matches.map(m => `
+        <div style="padding:8px 12px; border-bottom:1px solid var(--line2); cursor:pointer;" onclick="fillPatientFromPrev('${m.id}')">
+          <b>${m.name} .${m.initial}.</b> &nbsp;·&nbsp; <span style="color:var(--ink3);">${m.mobile}</span> &nbsp;·&nbsp; ${m.sex} (${m.age} ${m.age_unit})
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function fillPatientFromPrev(id) {
+  const p = jobs.find(j => String(j.id) === String(id));
+  if (p) {
+    activeJob.name = p.name;
+    activeJob.initial = p.initial;
+    activeJob.mobile = p.mobile;
+    activeJob.sex = p.sex;
+    activeJob.age = p.age;
+    activeJob.age_unit = p.age_unit;
+    activeJob.referrer = p.referrer;
+    render();
+  }
 }
 
 function updateValidation() {
@@ -995,6 +1082,9 @@ function onResultInput(code, val) {
     const eag = Math.round(28.7 * h - 46.7);
     activeJob.results["EAG"] = String(eag);
   }
+  if (code === "UREA" && !isNaN(val) && val) {
+    activeJob.results["BUN"] = (parseFloat(val) / 2.14).toFixed(1);
+  }
   if ((code === "CHOL" || code === "HDL" || code === "TG") && activeJob.tests.includes("LDL")) {
     const c = parseFloat(activeJob.results["CHOL"] || 0);
     const h = parseFloat(activeJob.results["HDL"] || 0);
@@ -1002,7 +1092,7 @@ function onResultInput(code, val) {
     if (c && h && tg) {
       activeJob.results["LDL"] = String(Math.round(c - h - tg / 5));
       activeJob.results["VLDL"] = String(Math.round(tg / 5));
-      activeJob.results["CHR"] = (c / h).toFixed(2);
+      activeJob.results["CHOLHDL"] = (c / h).toFixed(2);
     }
   }
   if ((code === "TBIL" || code === "DBIL") && activeJob.tests.includes("IBIL")) {
@@ -1092,43 +1182,50 @@ function openReportPreview(job) {
     `;
   }).join("");
 
-  const letterheadHTML = letterheadStyle === "modern" ? `
-    <div class="letterhead-modern">
-      ${getLogoSVG()}
-      <div class="lh-title-block">
-        <div class="lh-pre">NEW</div>
-        <div class="lh-main">MITHRA</div>
-        <div>
-          <span class="lh-sub-badge" style="background:#48CAE4; color:#0A3668;">MEDICAL LABORATORY</span>
-          <span class="lh-tagline" style="color:#D4E7FA;">ACCURACY • CARE • TRUST</span>
+  let letterheadHTML = "";
+  if (letterheadStyle === "modern") {
+    letterheadHTML = `
+      <div class="letterhead-modern">
+        ${getLogoSVG()}
+        <div class="lh-title-block">
+          <div class="lh-pre">NEW</div>
+          <div class="lh-main">MITHRA</div>
+          <div>
+            <span class="lh-sub-badge" style="background:#48CAE4; color:#0A3668;">MEDICAL LABORATORY</span>
+            <span class="lh-tagline" style="color:#D4E7FA;">ACCURACY • CARE • TRUST</span>
+          </div>
+        </div>
+        <div class="lh-contact">
+          Chettiyankinar Road, Kuttippala,<br>
+          Opp. Govt. Ayurveda Dispensary<br>
+          Ph: +91 81578 87311, 95266 77311<br>
+          e-mail: mithralab12020@gmail.com
         </div>
       </div>
-      <div class="lh-contact">
-        Chettiyankinar Road, Kuttippala,<br>
-        Opp. Govt. Ayurveda Dispensary<br>
-        Ph: +91 81578 87311, 95266 77311<br>
-        e-mail: mithralab12020@gmail.com
-      </div>
-    </div>
-  ` : `
-    <div class="letterhead-classic">
-      ${getLogoSVG()}
-      <div class="lh-title-block">
-        <div class="lh-pre">NEW</div>
-        <div class="lh-main">MITHRA</div>
-        <div>
-          <span class="lh-sub-badge">MEDICAL LABORATORY</span>
-          <span class="lh-tagline">ACCURACY • CARE • TRUST</span>
+    `;
+  } else if (letterheadStyle === "preprinted") {
+    letterheadHTML = `<div class="letterhead-preprinted"></div>`;
+  } else {
+    letterheadHTML = `
+      <div class="letterhead-classic">
+        ${getLogoSVG()}
+        <div class="lh-title-block">
+          <div class="lh-pre">NEW</div>
+          <div class="lh-main">MITHRA</div>
+          <div>
+            <span class="lh-sub-badge">MEDICAL LABORATORY</span>
+            <span class="lh-tagline">ACCURACY • CARE • TRUST</span>
+          </div>
+        </div>
+        <div class="lh-contact">
+          Chettiyankinar Road, Kuttippala,<br>
+          Opp. Govt. Ayurveda Dispensary<br>
+          Ph: +91 81578 87311, 95266 77311<br>
+          e-mail: mithralab12020@gmail.com
         </div>
       </div>
-      <div class="lh-contact">
-        Chettiyankinar Road, Kuttippala,<br>
-        Opp. Govt. Ayurveda Dispensary<br>
-        Ph: +91 81578 87311, 95266 77311<br>
-        e-mail: mithralab12020@gmail.com
-      </div>
-    </div>
-  `;
+    `;
+  }
 
   const hba1cParagraph = `
     <div class="clinical-box">
@@ -1216,36 +1313,208 @@ function openReportPreview(job) {
 }
 
 function sendWhatsAppDemo(phone, repNo, name) {
-  const msg = `Dear ${name},\nYour test report from New Mithra Medical Laboratory (Report No ${repNo}) is ready.\nThank you!`;
+  const msg = `Dear ${name},\nYour clinical test report from New Mithra Medical Laboratory (Report No: ${repNo}) is ready for download.\nThank you for choosing New Mithra Laboratory!`;
   const url = `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`;
   window.open(url, "_blank");
 }
 
 function openBillModal() {
-  const total = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate || 100), 0);
+  const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate || 100), 0);
+  const total = Math.max(0, subtotal - (activeJob.bill_disc || 0));
+
   const content = `
     <div style="padding:10px 14px;">
-      <h3 style="margin-top:0;">Receipt / Bill Calculator</h3>
+      <h3 style="margin-top:0;">Payment Settlement & Receipt — Job #${activeJob.report_no}</h3>
       <table style="margin-bottom:14px;">
-        <thead><tr><th>Test</th><th>Rate (₹)</th></tr></thead>
+        <thead><tr><th>Test Description</th><th>Rate (₹)</th></tr></thead>
         <tbody>
           ${activeJob.tests.map(c => `<tr><td>${TESTS[c]?.n||c}</td><td>₹ ${TESTS[c]?.rate||100}.00</td></tr>`).join("")}
-          <tr style="font-weight:800; border-top:2px solid var(--brand);"><td>Total Amount</td><td>₹ ${total}.00</td></tr>
+          <tr><td>Subtotal</td><td><b>₹ ${subtotal}.00</b></td></tr>
+          <tr>
+            <td>Discount (₹)</td>
+            <td><input type="number" value="${activeJob.bill_disc||0}" min="0" max="${subtotal}" style="width:100px;" oninput="activeJob.bill_disc=parseInt(this.value)||0; openBillModal();"></td>
+          </tr>
+          <tr style="font-weight:800; font-size:15px; border-top:2px solid var(--brand); color:var(--brand);">
+            <td>Net Payable Amount</td><td>₹ ${total}.00</td>
+          </tr>
         </tbody>
       </table>
-      <div style="background:var(--brand-soft); padding:12px; border-radius:6px;">
-        <div><b>Patient:</b> ${activeJob.name} .${activeJob.initial}. (Mob: ${activeJob.mobile})</div>
-        <div><b>Status:</b> Paid in Full (₹ ${total}.00)</div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; background:var(--brand-soft); padding:14px; border-radius:6px; margin-bottom:14px;">
+        <div>
+          <label class="f">Payment Mode</label>
+          <select onchange="activeJob.bill_mode=this.value;">
+            <option value="Cash" ${activeJob.bill_mode==='Cash'?'selected':''}>Cash</option>
+            <option value="UPI / GPay" ${activeJob.bill_mode==='UPI / GPay'?'selected':''}>UPI / GPay</option>
+            <option value="Card" ${activeJob.bill_mode==='Card'?'selected':''}>Debit / Credit Card</option>
+          </select>
+        </div>
+        <div>
+          <label class="f">Amount Paid (₹)</label>
+          <input type="number" value="${total}" style="font-weight:800;">
+        </div>
       </div>
     </div>
   `;
-  document.getElementById("modal-title").textContent = `Bill for Job #${activeJob.report_no}`;
+  document.getElementById("modal-title").textContent = `Billing Settlement #${activeJob.report_no}`;
   document.getElementById("modal-body").innerHTML = content;
   document.getElementById("modal-footer").innerHTML = `
-    <button class="btn p" onclick="alert('Receipt printed!'); closeModal();">Print Receipt</button>
+    <button class="btn p" onclick="activeJob.bill_paid=${total}; saveJobLocal(); printPOSReceipt();">🖨️ Print POS Thermal Receipt</button>
     <button class="btn" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
   document.getElementById("modal").classList.add("show");
+}
+
+function printPOSReceipt() {
+  const content = `
+    <div class="pos-receipt">
+      <div style="text-align:center;">
+        <b>NEW MITHRA MEDICAL LABORATORY</b><br>
+        Kuttippala, Opp. Ayurveda Dispensary<br>
+        Ph: 8157887311, 9526677311<br>
+        ----------------------------------------<br>
+        <b>CASH RECEIPT</b><br>
+        ----------------------------------------
+      </div>
+      <div>Receipt No: #${activeJob.report_no}</div>
+      <div>Date: ${activeJob.date}</div>
+      <div>Patient: ${activeJob.name} .${activeJob.initial}.</div>
+      <div>Mobile: ${activeJob.mobile}</div>
+      ----------------------------------------<br>
+      ${activeJob.tests.map(c => `<div>${(TESTS[c]?.n||c).slice(0,22).padEnd(22, ' ')} ₹${TESTS[c]?.rate||100}.00</div>`).join("")}
+      ----------------------------------------<br>
+      <div><b>TOTAL PAID: ₹ ${activeJob.bill_paid}.00</b></div>
+      <div>Payment Mode: ${activeJob.bill_mode || 'Cash'}</div>
+      ----------------------------------------<br>
+      <div style="text-align:center; font-size:11px; margin-top:6px;">
+        Thank you for trusting New Mithra!<br>
+        Reports ready same day evening.
+      </div>
+    </div>
+  `;
+  document.getElementById("modal-title").textContent = "Thermal POS Receipt (80mm)";
+  document.getElementById("modal-body").innerHTML = content;
+  document.getElementById("modal-footer").innerHTML = `
+    <button class="btn p" onclick="window.print()">Print Receipt</button>
+    <button class="btn" style="margin-left:auto;" onclick="closeModal()">Close</button>
+  `;
+}
+
+/* --------------------------------------------------------------------------
+   Summaries & Financial Sheets Screen
+   -------------------------------------------------------------------------- */
+
+let summaryMode = "day"; // "day" or "month"
+
+function renderSummariesScreen(container) {
+  const todayStr = new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
+  const totalBilled = jobs.reduce((acc, j) => acc + (j.bill_paid || 150), 0);
+  const totalReportsSent = jobs.filter(j => j.status === 'ready' || j.status === 'sent').length;
+
+  // Test volume counts
+  const testCounts = {};
+  jobs.forEach(j => {
+    j.tests.forEach(c => {
+      testCounts[c] = (testCounts[c] || 0) + 1;
+    });
+  });
+
+  // Doctor referral commissions
+  const docComms = {};
+  DOCTORS.forEach(d => { docComms[d.name] = { count: 0, comm: 0, pct: d.pct }; });
+  jobs.forEach(j => {
+    if (j.referrer && j.referrer !== 'Self') {
+      const doc = DOCTORS.find(d => j.referrer.includes(d.name));
+      if (doc) {
+        docComms[doc.name].count++;
+        docComms[doc.name].comm += Math.round((j.bill_paid || 150) * (doc.pct / 100));
+      }
+    }
+  });
+
+  container.innerHTML = `
+    <div style="display:flex; align-items:center; margin-bottom:14px;">
+      <h1 style="font-size:18px; margin:0;">Daily Cash & Monthly Financial Summaries</h1>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <select onchange="summaryMode=this.value; renderSummariesScreen(document.getElementById('app-main'));">
+          <option value="day" ${summaryMode==='day'?'selected':''}>Day Sheet (${todayStr})</option>
+          <option value="month" ${summaryMode==='month'?'selected':''}>Monthly Doctor Referral Statement</option>
+        </select>
+        <button class="btn" onclick="exportSummaryCSV()">📥 Export CSV</button>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:18px;">
+      <div style="background:var(--brand-soft); border:1px solid var(--brand-edge); padding:14px; border-radius:8px;">
+        <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--brand);">Patients Registered</div>
+        <div style="font-size:24px; font-weight:800; color:var(--brand-dark);">${jobs.length}</div>
+      </div>
+      <div style="background:var(--brand-soft); border:1px solid var(--brand-edge); padding:14px; border-radius:8px;">
+        <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--green);">Total Collections</div>
+        <div style="font-size:24px; font-weight:800; color:var(--green);">₹ ${totalBilled}.00</div>
+      </div>
+      <div style="background:var(--brand-soft); border:1px solid var(--brand-edge); padding:14px; border-radius:8px;">
+        <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--brand-accent);">Reports Completed</div>
+        <div style="font-size:24px; font-weight:800; color:var(--brand-accent);">${totalReportsSent}</div>
+      </div>
+      <div style="background:var(--brand-soft); border:1px solid var(--brand-edge); padding:14px; border-radius:8px;">
+        <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--amber);">Active Tests</div>
+        <div style="font-size:24px; font-weight:800; color:var(--amber);">${Object.keys(testCounts).length}</div>
+      </div>
+    </div>
+
+    ${summaryMode === 'day' ? `
+      <fieldset>
+        <legend>Day Sheet Test Volumes (${todayStr})</legend>
+        <table>
+          <thead><tr><th>Test Description</th><th>Department / Group</th><th>Count Ordered</th><th>Revenue (₹)</th></tr></thead>
+          <tbody>
+            ${Object.keys(testCounts).length === 0 ? '<tr><td colspan="4" style="text-align:center; color:var(--ink3);">No tests conducted today.</td></tr>' :
+              Object.keys(testCounts).map(c => `
+                <tr>
+                  <td><b>${TESTS[c]?.n || c}</b></td>
+                  <td>${TESTS[c]?.g || 'General'}</td>
+                  <td><b>${testCounts[c]}</b></td>
+                  <td>₹ ${(TESTS[c]?.rate || 100) * testCounts[c]}.00</td>
+                </tr>
+              `).join("")
+            }
+          </tbody>
+        </table>
+      </fieldset>
+    ` : `
+      <fieldset>
+        <legend>Referring Doctor Commission Statement</legend>
+        <table>
+          <thead><tr><th>Doctor Name</th><th>Patients Referred</th><th>Commission Rate</th><th>Commission Due (₹)</th></tr></thead>
+          <tbody>
+            ${DOCTORS.map(d => `
+              <tr>
+                <td><b>${d.name}</b> <span style="color:var(--ink3); font-size:12px;">(${d.spec})</span></td>
+                <td><b>${docComms[d.name]?.count || 0}</b></td>
+                <td>${d.pct}%</td>
+                <td><b style="color:var(--green);">₹ ${docComms[d.name]?.comm || 0}.00</b></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </fieldset>
+    `}
+  `;
+}
+
+function exportSummaryCSV() {
+  let csv = "Report No,Date,Patient,Mobile,Sex,Tests,Amount,Status\n";
+  jobs.forEach(j => {
+    csv += `"${j.report_no}","${j.date}","${j.name} .${j.initial}.","${j.mobile}","${j.sex}","${j.tests.join(';')}","${j.bill_paid || 150}","${j.status}"\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `LabSoft_Summary_${Date.now()}.csv`;
+  a.click();
 }
 
 /* --------------------------------------------------------------------------
@@ -1282,6 +1551,7 @@ function showAbout() {
           <li>Automated Clinical Engine with Real-Time Derived Formulas & Flags</li>
           <li>High-Resolution Letterhead Report Generator with Single-Sheet HbA1c</li>
           <li>WhatsApp PDF Dispatch, Thermal Receipt Printing, & Audit Trail</li>
+          <li>Day & Month Sheets, Doctor Referral Statements & CSV Export</li>
           <li>Full Client Testing Simulation & Instant In-Browser PDF Generation</li>
         </ul>
       </div>
@@ -1480,7 +1750,7 @@ function renderBillingScreen(container) {
       <span style="margin-left:auto; font-weight:700; font-size:16px; color:var(--green);">Total Collections: ₹ ${totalRev}.00</span>
     </div>
     <table>
-      <thead><tr><th>Report No</th><th>Patient</th><th>Tests Count</th><th>Total Charged</th><th>Payment Status</th></tr></thead>
+      <thead><tr><th>Report No</th><th>Patient</th><th>Tests Count</th><th>Total Charged</th><th>Payment Mode</th><th>Status</th></tr></thead>
       <tbody>
         ${jobs.map(j => `
           <tr>
@@ -1488,6 +1758,7 @@ function renderBillingScreen(container) {
             <td>${j.name} .${j.initial}.</td>
             <td>${j.tests.length} tests</td>
             <td><b>₹ ${j.bill_paid || 150}.00</b></td>
+            <td>${j.bill_mode || 'Cash'}</td>
             <td><span class="pill p-ready">Paid</span></td>
           </tr>`).join("")}
       </tbody>
@@ -1566,9 +1837,10 @@ function renderSettingsScreen(container) {
     <h1 style="font-size:18px; margin-bottom:14px;">Settings & Customization</h1>
     <fieldset>
       <legend>Letterhead Design Style</legend>
-      <div style="display:flex; gap:20px; align-items:center;">
+      <div style="display:flex; flex-direction:column; gap:10px;">
         <label><input type="radio" name="lh_style" value="classic" ${letterheadStyle==='classic'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Classic</b> (Icy Blue Card with circular badge logo)</label>
         <label><input type="radio" name="lh_style" value="modern" ${letterheadStyle==='modern'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Modern</b> (Deep Medical Navy full band)</label>
+        <label><input type="radio" name="lh_style" value="preprinted" ${letterheadStyle==='preprinted'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Preprinted Stationery Mode</b> (36mm blank top margin for physical letterhead)</label>
       </div>
     </fieldset>
 
@@ -1605,11 +1877,12 @@ function loadSampleData() {
       sex: "Male",
       age: 30,
       age_unit: "Years",
-      referrer: "Self",
+      referrer: "Dr. S. Mehta (Cardiologist)",
       tests: ["GLU_F", "GLU_PP"],
       results: { GLU_F: "105", GLU_PP: "128" },
       status: "ready",
-      bill_paid: 120
+      bill_paid: 160,
+      bill_mode: "Cash"
     },
     {
       id: 2,
@@ -1627,7 +1900,8 @@ function loadSampleData() {
       tests: ["HBA1C", "EAG"],
       results: { HBA1C: "10.5", EAG: "255" },
       status: "ready",
-      bill_paid: 450
+      bill_paid: 450,
+      bill_mode: "UPI / GPay"
     }
   ];
   saveState();
