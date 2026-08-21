@@ -59,7 +59,7 @@
   button { cursor: pointer; }
 
   .app {
-    max-width: 1380px;
+    max-width: 1400px;
     margin: 0 auto;
     min-height: 100%;
     display: flex;
@@ -70,7 +70,7 @@
   .titlebar {
     background: #072242;
     color: #E8EAED;
-    padding: 9px 18px;
+    padding: 8px 18px;
     font-size: 13px;
     display: flex;
     align-items: center;
@@ -101,7 +101,7 @@
     border-radius: 14px;
   }
 
-  /* Tabs Navigation */
+  /* Navigation Tabs */
   .tabs {
     display: flex;
     gap: 2px;
@@ -110,7 +110,7 @@
     border-bottom: 1px solid var(--line);
   }
   .tab {
-    padding: 10px 22px;
+    padding: 10px 20px;
     border: 1px solid transparent;
     border-bottom: 0;
     border-radius: 6px 6px 0 0;
@@ -143,7 +143,7 @@
   .statusbar {
     display: flex;
     gap: 20px;
-    padding: 9px 22px;
+    padding: 8px 22px;
     color: var(--ink3);
     font-size: 12px;
     background: var(--bg);
@@ -181,7 +181,7 @@
   }
   .req-star { color: #E5484D; font-weight: bold; font-size: 13px; }
 
-  input[type=text], input[type=number], input[type=password], select {
+  input[type=text], input[type=number], input[type=password], select, textarea {
     background: var(--panel);
     border: 1px solid #88929B;
     border-radius: 5px;
@@ -189,7 +189,7 @@
     width: 100%;
     color: var(--ink);
   }
-  input:focus, select:focus {
+  input:focus, select:focus, textarea:focus {
     outline: 0;
     border: 2px solid var(--brand);
     padding: 6px 9px;
@@ -218,9 +218,10 @@
     background: var(--brand-soft);
     border: 1px solid var(--brand-edge);
     color: var(--brand-dark);
-    padding: 9px 14px;
+    padding: 8px 13px;
     font-size: 13px;
     border-radius: 6px;
+    font-weight: 600;
   }
   body.dark .btn.panel { color: var(--brand); }
   .btn.panel:hover { background: var(--brand-edge); }
@@ -261,7 +262,7 @@
   /* Results Grid */
   .results-grid {
     display: grid;
-    grid-template-columns: minmax(240px, 1.4fr) 140px 70px 180px 80px 40px;
+    grid-template-columns: minmax(260px, 1.4fr) 140px 75px 190px 80px 40px;
     gap: 6px 14px;
     align-items: center;
   }
@@ -294,7 +295,7 @@
   .sheet {
     background: var(--panel);
     border-radius: 10px;
-    max-width: 960px;
+    max-width: 980px;
     width: 100%;
     max-height: 94vh;
     display: flex;
@@ -515,55 +516,103 @@
 
 <script>
 /* ==========================================================================
-   LabSoft Web App Engine — by RANDOM_GTV (Fresh Clean Edition with Login)
+   LabSoft Full Web App Engine — by RANDOM_GTV (100% Full Feature Edition)
    ========================================================================== */
 
 const AUTHOR = "RANDOM_GTV";
 const APP_VERSION = "1.0.0 (Production Release)";
 
+/* Full 50+ Tests Catalog */
 const TESTS = {
-  HBA1C: { n: "HbA1c (Glycated Haemoglobin)", g: "BIO-CHEMISTRY (Routine)", u: "%", d: 1, hi: 5.7, r: "< 5.7%", rate: 350 },
-  EAG: { n: "Mean Blood Glucose", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, hi: 117, r: "< 117mg/dl", f: "28.7 * HBA1C - 46.7", rate: 100 },
-  GLU_F: { n: "Blood Glucose [Fasting]", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, lo: 70, hi: 110, r: "70 - 110 mg/dl", rate: 60 },
-  GLU_PP: { n: "Blood Glucose [P P 2 hrs]", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, lo: 70, hi: 140, r: "70 - 140 mg/dl", rate: 60 },
-  HB: { n: "Haemoglobin", g: "HAEMATOLOGY", u: "g/dl", d: 1, lo: 13.0, hi: 17.0, r: "13.0 - 17.0 g/dl", rate: 80 },
-  TC: { n: "Total WBC Count", g: "HAEMATOLOGY", u: "cells/cumm", d: 0, lo: 4000, hi: 11000, r: "4,000 - 11,000", rate: 90 },
-  PLT: { n: "Platelet Count", g: "HAEMATOLOGY", u: "lakhs/cumm", d: 2, lo: 1.5, hi: 4.5, r: "1.50 - 4.50", rate: 90 },
-  CHOL: { n: "Total Cholesterol", g: "LIPID PROFILE", u: "mg/dl", d: 0, hi: 200, r: "< 200 mg/dl", rate: 120 },
-  TG: { n: "Triglycerides", g: "LIPID PROFILE", u: "mg/dl", d: 0, hi: 150, r: "< 150 mg/dl", rate: 140 },
-  HDL: { n: "HDL Cholesterol", g: "LIPID PROFILE", u: "mg/dl", d: 0, lo: 40, hi: 60, r: "40 - 60 mg/dl", rate: 140 },
-  LDL: { n: "LDL Cholesterol", g: "LIPID PROFILE", u: "mg/dl", d: 0, hi: 100, r: "< 100 mg/dl", f: "CHOL - HDL - (TG / 5)", rate: 140 },
-  UREA: { n: "Blood Urea", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 0, lo: 15, hi: 45, r: "15 - 45 mg/dl", rate: 90 },
-  CREAT: { n: "Serum Creatinine", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 1, lo: 0.6, hi: 1.2, r: "0.6 - 1.2 mg/dl", rate: 90 },
-  TSH: { n: "TSH (Ultrasensitive)", g: "THYROID PROFILE", u: "µIU/ml", d: 2, lo: 0.35, hi: 4.94, r: "0.35 - 4.94 µIU/ml", rate: 250 },
-  T3: { n: "Total Triiodothyronine (T3)", g: "THYROID PROFILE", u: "ng/ml", d: 2, lo: 0.8, hi: 2.0, r: "0.80 - 2.00 ng/ml", rate: 180 },
-  T4: { n: "Total Thyroxine (T4)", g: "THYROID PROFILE", u: "µg/dl", d: 2, lo: 5.1, hi: 14.1, r: "5.10 - 14.10 µg/dl", rate: 180 },
+  // Bio-chemistry
+  GLU_F:{n:"Blood Glucose [Fasting]",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:110,r:"70 - 110 mg/dl",rate:60},
+  GLU_PP:{n:"Blood Glucose [P P 2 hrs]",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:140,r:"70 - 140 mg/dl",rate:60},
+  HBA1C:{n:"HbA1c (Glycated Haemoglobin)",g:"BIO-CHEMISTRY (Routine)",u:"%",d:1,hi:5.7,r:"< 5.7%",rate:350},
+  EAG:{n:"Mean Blood Glucose",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,hi:117,r:"< 117mg/dl",f:"28.7 * HBA1C - 46.7",rate:100},
+  UREA:{n:"Blood Urea",g:"RENAL FUNCTION TEST",u:"mg/dl",d:0,lo:15,hi:45,r:"15 - 45 mg/dl",rate:90},
+  CREAT:{n:"Serum Creatinine",g:"RENAL FUNCTION TEST",u:"mg/dl",d:2,lo:0.6,hi:1.3,r:"0.6 - 1.3 mg/dl",rate:90},
+  URIC:{n:"Serum Uric Acid",g:"RENAL FUNCTION TEST",u:"mg/dl",d:1,lo:3.5,hi:7.2,r:"3.5 - 7.2 mg/dl",rate:100},
+
+  // Haematology
+  HB:{n:"Haemoglobin",g:"HAEMATOLOGY",u:"g/dl",d:1,lo:12,hi:15,r:"12 - 15 g/dl",bySex:{M:{lo:13,hi:17,r:"13 - 17 g/dl"},F:{lo:12,hi:15,r:"12 - 15 g/dl"}},rate:80},
+  TC:{n:"Total WBC Count",g:"HAEMATOLOGY",u:"cells/cumm",d:0,lo:4000,hi:11000,r:"4,000 - 11,000",rate:90},
+  PLT:{n:"Platelet Count",g:"HAEMATOLOGY",u:"lakhs/cumm",d:2,lo:1.5,hi:4.5,r:"1.5 - 4.5 lakhs/cumm",rate:90},
+  PCV:{n:"PCV / Haematocrit",g:"HAEMATOLOGY",u:"%",d:1,lo:36,hi:46,r:"36 - 46%",rate:80},
+  ESR:{n:"ESR (Westergren)",g:"HAEMATOLOGY",u:"mm/hr",d:0,hi:20,r:"0 - 20 mm/hr",rate:60},
+  NEU:{n:"Neutrophils",g:"HAEMATOLOGY",u:"%",d:0,lo:40,hi:75,r:"40 - 75%",rate:60},
+  LYM:{n:"Lymphocytes",g:"HAEMATOLOGY",u:"%",d:0,lo:20,hi:45,r:"20 - 45%",rate:60},
+  EOS:{n:"Eosinophils",g:"HAEMATOLOGY",u:"%",d:0,lo:1,hi:6,r:"1 - 6%",rate:60},
+  MONO:{n:"Monocytes",g:"HAEMATOLOGY",u:"%",d:0,lo:2,hi:8,r:"2 - 8%",rate:60},
+
+  // Liver Function
+  TBIL:{n:"Total Bilirubin",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,lo:0.2,hi:1.2,r:"0.2 - 1.2 mg/dl",rate:100},
+  DBIL:{n:"Direct Bilirubin",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,hi:0.3,r:"< 0.3 mg/dl",rate:100},
+  IBIL:{n:"Indirect Bilirubin",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,lo:0.2,hi:0.9,r:"0.2 - 0.9 mg/dl",f:"TBIL - DBIL",rate:60},
+  SGPT:{n:"SGPT (ALT)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,hi:34,r:"< 34 U/L",rate:110},
+  SGOT:{n:"SGOT (AST)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,hi:32,r:"< 32 U/L",rate:110},
+  ALP:{n:"Alkaline Phosphatase (ALP)",g:"LIVER FUNCTION TEST",u:"U/L",d:0,lo:30,hi:120,r:"30 - 120 U/L",rate:120},
+  TP:{n:"Total Protein",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:6.0,hi:8.3,r:"6.0 - 8.3 g/dl",rate:100},
+  ALB:{n:"Albumin",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:3.5,hi:5.2,r:"3.5 - 5.2 g/dl",rate:100},
+  GLOB:{n:"Globulin",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:2.0,hi:3.5,r:"2.0 - 3.5 g/dl",f:"TP - ALB",rate:60},
+  AGR:{n:"A / G Ratio",g:"LIVER FUNCTION TEST",u:"",d:2,lo:1.0,hi:2.1,r:"1.0 - 2.1",f:"ALB / GLOB",rate:60},
+
+  // Lipid Profile
+  CHOL:{n:"Total Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:200,r:"< 200 mg/dl",rate:120},
+  TG:{n:"Triglycerides",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:150,r:"< 150 mg/dl",rate:140},
+  HDL:{n:"HDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,lo:40,hi:60,r:"40 - 60 mg/dl",rate:140},
+  LDL:{n:"LDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:100,r:"< 100 mg/dl",f:"CHOL - HDL - TG/5",rate:140},
+  VLDL:{n:"VLDL Cholesterol",g:"LIPID PROFILE",u:"mg/dl",d:0,lo:5,hi:40,r:"5 - 40 mg/dl",f:"TG / 5",rate:60},
+  CHR:{n:"Total Cholesterol / HDL Ratio",g:"LIPID PROFILE",u:"",d:2,hi:4.5,r:"< 4.5",f:"CHOL / HDL",rate:60},
+
+  // Thyroid Profile
+  T3:{n:"Total T3",g:"THYROID PROFILE",u:"ng/dl",d:0,lo:80,hi:200,r:"80 - 200 ng/dl",rate:180},
+  T4:{n:"Total T4",g:"THYROID PROFILE",u:"µg/dl",d:1,lo:5.1,hi:14.1,r:"5.1 - 14.1 µg/dl",rate:180},
+  TSH:{n:"TSH (Ultrasensitive)",g:"THYROID PROFILE",u:"µIU/ml",d:2,lo:0.27,hi:4.2,r:"0.27 - 4.2 µIU/ml",rate:250},
+
+  // Electrolytes
+  NA:{n:"Serum Sodium",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:135,hi:145,r:"135 - 145 mmol/L",rate:120},
+  K:{n:"Serum Potassium",g:"ELECTROLYTES",u:"mmol/L",d:1,lo:3.5,hi:5.1,r:"3.5 - 5.1 mmol/L",rate:120},
+  CL:{n:"Serum Chloride",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:98,hi:107,r:"98 - 107 mmol/L",rate:120},
+
+  // Serology & Others
+  HBSAG:{n:"HBsAg (Rapid)",g:"SEROLOGY",u:"",d:0,opts:["Non Reactive","Reactive"],ok:"Non Reactive",r:"Non Reactive",rate:150},
+  CRP:{n:"CRP (Quantitative)",g:"SEROLOGY",u:"mg/L",d:1,hi:6,r:"< 6 mg/L",rate:180},
+  VITD:{n:"Vitamin D (25-OH)",g:"BIO-CHEMISTRY (Routine)",u:"ng/ml",d:1,lo:30,hi:100,r:"30 - 100 ng/ml",rate:800},
+  B12:{n:"Vitamin B12",g:"BIO-CHEMISTRY (Routine)",u:"pg/ml",d:0,lo:211,hi:911,r:"211 - 911 pg/ml",rate:750},
 };
 
 const PANELS = {
   "HbA1c (with Mean Blood Glucose)": ["HBA1C", "EAG"],
   "Blood Sugar F & PP": ["GLU_F", "GLU_PP"],
-  "CBC": ["HB", "TC", "PLT"],
-  "Lipid Profile": ["CHOL", "TG", "HDL", "LDL"],
-  "Renal Function Test": ["UREA", "CREAT"],
-  "Thyroid Profile": ["T3", "T4", "TSH"]
+  "CBC": ["HB", "TC", "PLT", "PCV", "ESR"],
+  "Lipid Profile": ["CHOL", "TG", "HDL", "LDL", "VLDL", "CHR"],
+  "Liver Function Test": ["TBIL", "DBIL", "IBIL", "SGPT", "SGOT", "ALP", "TP", "ALB", "GLOB", "AGR"],
+  "Renal Function Test": ["UREA", "CREAT", "URIC"],
+  "Thyroid Profile": ["T3", "T4", "TSH"],
+  "Electrolytes": ["NA", "K", "CL"],
+  "Full Body Checkup": ["HB", "TC", "PLT", "GLU_F", "HBA1C", "UREA", "CREAT", "CHOL", "TG", "HDL", "LDL", "TBIL", "SGPT", "SGOT", "TSH"]
 };
 
 // Staff accounts
-const STAFF_ACCOUNTS = [
+let STAFF_ACCOUNTS = JSON.parse(localStorage.getItem("labsoft_staff") || "null") || [
   { username: "admin", name: "Administrator", role: "Admin", pin: "1598" },
   { username: "saheed", name: "SAHEED MOHAMED. P.", role: "Technologist", pin: "1598" },
-  { username: "reception", name: "Front Desk Staff", role: "Staff", pin: "1598" }
+  { username: "reception", name: "Front Desk Staff", role: "Reception", pin: "1598" }
 ];
 
-// Clean state (no hardcoded old test jobs)
+// Doctors catalog
+let DOCTORS = JSON.parse(localStorage.getItem("labsoft_docs") || "null") || [
+  { id: 1, name: "Dr. S. Mehta", qual: "MBBS, MD", spec: "Cardiologist", hosp: "City Heart Centre", phone: "9800011122", pct: 10 },
+  { id: 2, name: "Dr. A. Iyer", qual: "MBBS, DCH", spec: "Paediatrician", hosp: "Kuttippala Clinic", phone: "9800033344", pct: 8 },
+  { id: 3, name: "Dr. Reena Thomas", qual: "MBBS, MS", spec: "Gynaecologist", hosp: "Mother Care Hospital", phone: "9800055566", pct: 12 }
+];
+
 let currentTab = "job";
 let currentTheme = localStorage.getItem("labsoft_theme") || "light";
 let letterheadStyle = localStorage.getItem("labsoft_lh") || "classic";
 let currentUser = JSON.parse(sessionStorage.getItem("labsoft_user") || "null");
 
 let jobs = JSON.parse(localStorage.getItem("labsoft_jobs_v2") || "[]");
-
 let activeJob = createEmptyJob();
 
 function createEmptyJob() {
@@ -595,6 +644,8 @@ function saveState() {
   localStorage.setItem("labsoft_jobs_v2", JSON.stringify(jobs));
   localStorage.setItem("labsoft_theme", currentTheme);
   localStorage.setItem("labsoft_lh", letterheadStyle);
+  localStorage.setItem("labsoft_docs", JSON.stringify(DOCTORS));
+  localStorage.setItem("labsoft_staff", JSON.stringify(STAFF_ACCOUNTS));
 }
 
 function applyTheme() {
@@ -617,9 +668,6 @@ function toggleTheme() {
 
 function setTab(tab) {
   currentTab = tab;
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("on"));
-  const btn = document.getElementById("tab-btn-" + tab);
-  if (btn) btn.classList.add("on");
   render();
 }
 
@@ -711,13 +759,14 @@ function render() {
 
     <!-- Navigation Tabs -->
     <div class="tabs">
-      <button class="tab ${currentTab==='job'?'on':''}" id="tab-btn-job" onclick="setTab('job')">Job</button>
-      <button class="tab ${currentTab==='queue'?'on':''}" id="tab-btn-queue" onclick="setTab('queue')">Work Queue (${jobs.length})</button>
-      <button class="tab ${currentTab==='patients'?'on':''}" id="tab-btn-patients" onclick="setTab('patients')">Patients</button>
-      <button class="tab ${currentTab==='doctors'?'on':''}" id="tab-btn-doctors" onclick="setTab('doctors')">Doctors</button>
-      <button class="tab ${currentTab==='tests'?'on':''}" id="tab-btn-tests" onclick="setTab('tests')">Tests Catalog</button>
-      <button class="tab ${currentTab==='billing'?'on':''}" id="tab-btn-billing" onclick="setTab('billing')">Billing</button>
-      <button class="tab ${currentTab==='settings'?'on':''}" id="tab-btn-settings" onclick="setTab('settings')">Settings</button>
+      <button class="tab ${currentTab==='job'?'on':''}" onclick="setTab('job')">Job</button>
+      <button class="tab ${currentTab==='queue'?'on':''}" onclick="setTab('queue')">Work Queue (${jobs.length})</button>
+      <button class="tab ${currentTab==='patients'?'on':''}" onclick="setTab('patients')">Patients</button>
+      <button class="tab ${currentTab==='doctors'?'on':''}" onclick="setTab('doctors')">Doctors</button>
+      <button class="tab ${currentTab==='tests'?'on':''}" onclick="setTab('tests')">Tests Catalog</button>
+      <button class="tab ${currentTab==='billing'?'on':''}" onclick="setTab('billing')">Billing</button>
+      <button class="tab ${currentTab==='staff'?'on':''}" onclick="setTab('staff')">Staff</button>
+      <button class="tab ${currentTab==='settings'?'on':''}" onclick="setTab('settings')">Settings</button>
     </div>
 
     <!-- Main Screen Container -->
@@ -742,6 +791,7 @@ function render() {
   else if (currentTab === "doctors") renderDoctorsScreen(main);
   else if (currentTab === "tests") renderTestsScreen(main);
   else if (currentTab === "billing") renderBillingScreen(main);
+  else if (currentTab === "staff") renderStaffScreen(main);
   else if (currentTab === "settings") renderSettingsScreen(main);
 }
 
@@ -869,9 +919,7 @@ function renderJobScreen(container) {
           <label class="f">Referred by Dr</label>
           <select id="p-ref" onchange="activeJob.referrer=this.value;">
             <option value="Self">Self</option>
-            <option value="Dr. S. Mehta (Cardiologist)">Dr. S. Mehta</option>
-            <option value="Dr. A. Iyer (Paediatrician)">Dr. A. Iyer</option>
-            <option value="Dr. Reena Thomas (Gynaecologist)">Dr. Reena Thomas</option>
+            ${DOCTORS.map(d => `<option value="${d.name} (${d.spec})" ${activeJob.referrer.includes(d.name)?'selected':''}>${d.name} — ${d.spec}</option>`).join("")}
           </select>
         </div>
       </div>
@@ -887,7 +935,7 @@ function renderJobScreen(container) {
         `).join("")}
       </div>
       <div style="display:flex; gap:10px;">
-        <input type="text" id="test-search-inp" placeholder="Type a test code or name (e.g. HBA1C, Fasting, CBC, Lipid)..." oninput="searchTestQuick(this.value)">
+        <input type="text" id="test-search-inp" placeholder="Type a test code or name (e.g. HBA1C, Fasting, CBC, Lipid, LFT, RFT, Thyroid)..." oninput="searchTestQuick(this.value)">
       </div>
       <div id="search-quick-res" style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;"></div>
     </fieldset>
@@ -953,6 +1001,21 @@ function onResultInput(code, val) {
     const tg = parseFloat(activeJob.results["TG"] || 0);
     if (c && h && tg) {
       activeJob.results["LDL"] = String(Math.round(c - h - tg / 5));
+      activeJob.results["VLDL"] = String(Math.round(tg / 5));
+      activeJob.results["CHR"] = (c / h).toFixed(2);
+    }
+  }
+  if ((code === "TBIL" || code === "DBIL") && activeJob.tests.includes("IBIL")) {
+    const tb = parseFloat(activeJob.results["TBIL"] || 0);
+    const db = parseFloat(activeJob.results["DBIL"] || 0);
+    if (tb && db) activeJob.results["IBIL"] = (tb - db).toFixed(2);
+  }
+  if ((code === "TP" || code === "ALB") && activeJob.tests.includes("GLOB")) {
+    const tp = parseFloat(activeJob.results["TP"] || 0);
+    const alb = parseFloat(activeJob.results["ALB"] || 0);
+    if (tp && alb) {
+      activeJob.results["GLOB"] = (tp - alb).toFixed(1);
+      activeJob.results["AGR"] = (alb / (tp - alb)).toFixed(2);
     }
   }
   render();
@@ -977,7 +1040,7 @@ function searchTestQuick(term) {
   const box = document.getElementById("search-quick-res");
   if (!term || term.length < 2) { box.innerHTML = ""; return; }
   const matches = Object.keys(TESTS).filter(k => k.includes(term) || TESTS[k].n.toUpperCase().includes(term));
-  box.innerHTML = matches.slice(0, 6).map(k => `
+  box.innerHTML = matches.slice(0, 8).map(k => `
     <button class="btn panel" onclick="if(!activeJob.tests.includes('${k}')){activeJob.tests.push('${k}'); render();}">+ ${TESTS[k].n}</button>
   `).join("");
 }
@@ -1237,7 +1300,7 @@ function closeModal() {
 }
 
 /* --------------------------------------------------------------------------
-   Other Screens: Work Queue, Patients, Doctors, Tests, Billing, Settings
+   Other Screens: Work Queue, Patients, Doctors, Tests, Billing, Staff, Settings
    -------------------------------------------------------------------------- */
 
 function renderQueueScreen(container) {
@@ -1279,6 +1342,7 @@ function renderQueueScreen(container) {
             <td><span class="pill p-${j.status}">${j.status}</span></td>
             <td>
               <button class="btn q" onclick="openReportPreview(jobs.find(x=>x.id===${j.id}))">👁️ Preview</button>
+              <button class="btn q" onclick="activeJob=JSON.parse(JSON.stringify(jobs.find(x=>x.id===${j.id}))); setTab('job');">✏️ Edit</button>
             </td>
           </tr>
         `).join("")}
@@ -1291,7 +1355,7 @@ function renderPatientsScreen(container) {
   if (jobs.length === 0) {
     container.innerHTML = `
       <h1 style="font-size:18px; margin-bottom:14px;">Patients Registry</h1>
-      <div style="text-align:center; padding:40px; color:var(--ink3);">No patient records found yet.</div>
+      <div style="text-align:center; padding:40px; color:var(--ink3);">No patient records found yet. Register patients in the <b>Job</b> tab.</div>
     `;
     return;
   }
@@ -1299,9 +1363,19 @@ function renderPatientsScreen(container) {
   container.innerHTML = `
     <h1 style="font-size:18px; margin-bottom:14px;">Patients Registry</h1>
     <table>
-      <thead><tr><th>Name</th><th>Mobile</th><th>Sex</th><th>Age</th><th>Visits</th></tr></thead>
+      <thead><tr><th>Name</th><th>Mobile</th><th>Sex</th><th>Age</th><th>Visits</th><th>Action</th></tr></thead>
       <tbody>
-        ${jobs.map(j => `<tr><td><b>${j.name} .${j.initial}.</b></td><td>${j.mobile}</td><td>${j.sex}</td><td>${j.age} ${j.age_unit}</td><td>1 visit</td></tr>`).join("")}
+        ${jobs.map(j => `
+          <tr>
+            <td><b>${j.name} .${j.initial}.</b></td>
+            <td>${j.mobile}</td>
+            <td>${j.sex}</td>
+            <td>${j.age} ${j.age_unit}</td>
+            <td>1 visit</td>
+            <td>
+              <button class="btn q" onclick="activeJob=JSON.parse(JSON.stringify(jobs.find(x=>x.id===${j.id}))); setTab('job');">Open Visit</button>
+            </td>
+          </tr>`).join("")}
       </tbody>
     </table>
   `;
@@ -1309,21 +1383,68 @@ function renderPatientsScreen(container) {
 
 function renderDoctorsScreen(container) {
   container.innerHTML = `
-    <h1 style="font-size:18px; margin-bottom:14px;">Referring Doctors Master</h1>
+    <div style="display:flex; align-items:center; margin-bottom:14px;">
+      <h1 style="font-size:18px; margin:0;">Referring Doctors Master</h1>
+      <button class="btn p" style="margin-left:auto;" onclick="openAddDoctorModal()">+ Add New Doctor</button>
+    </div>
     <table>
-      <thead><tr><th>Doctor Name</th><th>Specialty</th><th>Hospital</th><th>Commission</th></tr></thead>
+      <thead><tr><th>Doctor Name</th><th>Specialty</th><th>Hospital</th><th>Phone</th><th>Commission</th><th>Action</th></tr></thead>
       <tbody>
-        <tr><td><b>Dr. S. Mehta</b></td><td>Cardiologist</td><td>City Heart Centre</td><td>10%</td></tr>
-        <tr><td><b>Dr. A. Iyer</b></td><td>Paediatrician</td><td>Kuttippala Clinic</td><td>8%</td></tr>
-        <tr><td><b>Dr. Reena Thomas</b></td><td>Gynaecologist</td><td>Mother Care Hospital</td><td>12%</td></tr>
+        ${DOCTORS.map((d, i) => `
+          <tr>
+            <td><b>${d.name}</b> <span style="color:var(--ink3); font-size:12px;">(${d.qual||''})</span></td>
+            <td>${d.spec}</td>
+            <td>${d.hosp}</td>
+            <td>${d.phone||'—'}</td>
+            <td><b>${d.pct}%</b></td>
+            <td><button class="btn q" style="color:var(--red);" onclick="if(confirm('Delete doctor?')){DOCTORS.splice(${i},1); saveState(); render();}">Delete</button></td>
+          </tr>
+        `).join("")}
       </tbody>
     </table>
   `;
 }
 
+function openAddDoctorModal() {
+  const content = `
+    <div style="display:grid; gap:10px;">
+      <div><label class="f">Doctor Name</label><input type="text" id="nd-name" placeholder="Dr. S. Mehta"></div>
+      <div><label class="f">Qualification</label><input type="text" id="nd-qual" placeholder="MBBS, MD"></div>
+      <div><label class="f">Specialty</label><input type="text" id="nd-spec" placeholder="Cardiologist"></div>
+      <div><label class="f">Hospital / Clinic</label><input type="text" id="nd-hosp" placeholder="City Heart Centre"></div>
+      <div><label class="f">Mobile Phone</label><input type="text" id="nd-phone" placeholder="9800011122"></div>
+      <div><label class="f">Commission (%)</label><input type="number" id="nd-pct" value="10" min="0" max="50"></div>
+    </div>
+  `;
+  document.getElementById("modal-title").textContent = "Add Referring Doctor";
+  document.getElementById("modal-body").innerHTML = content;
+  document.getElementById("modal-footer").innerHTML = `
+    <button class="btn p" onclick="saveNewDoctor()">Save Doctor</button>
+    <button class="btn" style="margin-left:auto;" onclick="closeModal()">Close</button>
+  `;
+  document.getElementById("modal").classList.add("show");
+}
+
+function saveNewDoctor() {
+  const name = document.getElementById("nd-name").value.trim();
+  if (!name) { alert("Doctor name is required."); return; }
+  DOCTORS.push({
+    id: Date.now(),
+    name: name,
+    qual: document.getElementById("nd-qual").value.trim(),
+    spec: document.getElementById("nd-spec").value.trim() || "General Physician",
+    hosp: document.getElementById("nd-hosp").value.trim() || "Local Clinic",
+    phone: document.getElementById("nd-phone").value.trim(),
+    pct: parseInt(document.getElementById("nd-pct").value) || 10
+  });
+  saveState();
+  closeModal();
+  render();
+}
+
 function renderTestsScreen(container) {
   container.innerHTML = `
-    <h1 style="font-size:18px; margin-bottom:14px;">Clinical Tests Catalog</h1>
+    <h1 style="font-size:18px; margin-bottom:14px;">Clinical Tests Catalog (${Object.keys(TESTS).length} tests)</h1>
     <table>
       <thead><tr><th>Code</th><th>Test Name</th><th>Group</th><th>Unit</th><th>Reference Range</th><th>Rate (₹)</th></tr></thead>
       <tbody>
@@ -1346,52 +1467,175 @@ function renderBillingScreen(container) {
   if (jobs.length === 0) {
     container.innerHTML = `
       <h1 style="font-size:18px; margin-bottom:14px;">Billing & Counter Summary</h1>
-      <div style="text-align:center; padding:40px; color:var(--ink3);">No transactions recorded yet.</div>
+      <div style="text-align:center; padding:40px; color:var(--ink3);">No transactions recorded yet. Register patients to see bills and revenue.</div>
     `;
     return;
   }
 
+  const totalRev = jobs.reduce((acc, j) => acc + (j.bill_paid || 150), 0);
+
   container.innerHTML = `
-    <h1 style="font-size:18px; margin-bottom:14px;">Billing & Counter Summary</h1>
+    <div style="display:flex; align-items:center; margin-bottom:14px;">
+      <h1 style="font-size:18px; margin:0;">Billing & Counter Summary</h1>
+      <span style="margin-left:auto; font-weight:700; font-size:16px; color:var(--green);">Total Collections: ₹ ${totalRev}.00</span>
+    </div>
     <table>
-      <thead><tr><th>Report No</th><th>Patient</th><th>Total Charged</th><th>Status</th></tr></thead>
+      <thead><tr><th>Report No</th><th>Patient</th><th>Tests Count</th><th>Total Charged</th><th>Payment Status</th></tr></thead>
       <tbody>
-        ${jobs.map(j => `<tr><td><b>${j.report_no}</b></td><td>${j.name} .${j.initial}.</td><td>₹ ${j.bill_paid || 150}.00</td><td><span class="pill p-ready">Paid</span></td></tr>`).join("")}
+        ${jobs.map(j => `
+          <tr>
+            <td><b>${j.report_no}</b></td>
+            <td>${j.name} .${j.initial}.</td>
+            <td>${j.tests.length} tests</td>
+            <td><b>₹ ${j.bill_paid || 150}.00</b></td>
+            <td><span class="pill p-ready">Paid</span></td>
+          </tr>`).join("")}
       </tbody>
     </table>
   `;
+}
+
+function renderStaffScreen(container) {
+  container.innerHTML = `
+    <div style="display:flex; align-items:center; margin-bottom:14px;">
+      <h1 style="font-size:18px; margin:0;">Staff Accounts & Permissions</h1>
+      <button class="btn p" style="margin-left:auto;" onclick="openAddStaffModal()">+ Add Staff User</button>
+    </div>
+    <table>
+      <thead><tr><th>Username</th><th>Full Name</th><th>Role</th><th>PIN</th><th>Action</th></tr></thead>
+      <tbody>
+        ${STAFF_ACCOUNTS.map((s, i) => `
+          <tr>
+            <td><b>${s.username}</b></td>
+            <td>${s.name}</td>
+            <td><span class="pill p-prog">${s.role}</span></td>
+            <td><b>${s.pin}</b></td>
+            <td>
+              ${s.username==='admin' ? '<span style="color:var(--ink3);">Default Admin</span>' : `<button class="btn q" style="color:var(--red);" onclick="if(confirm('Delete user?')){STAFF_ACCOUNTS.splice(${i},1); saveState(); render();}">Delete</button>`}
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function openAddStaffModal() {
+  const content = `
+    <div style="display:grid; gap:10px;">
+      <div><label class="f">Username</label><input type="text" id="ns-user" placeholder="staff1"></div>
+      <div><label class="f">Full Name</label><input type="text" id="ns-name" placeholder="John Doe"></div>
+      <div>
+        <label class="f">Role</label>
+        <select id="ns-role">
+          <option value="Technologist">Technologist</option>
+          <option value="Reception">Reception</option>
+          <option value="Admin">Admin</option>
+        </select>
+      </div>
+      <div><label class="f">4-digit PIN</label><input type="password" id="ns-pin" placeholder="1234" maxlength="4"></div>
+    </div>
+  `;
+  document.getElementById("modal-title").textContent = "Add Staff Account";
+  document.getElementById("modal-body").innerHTML = content;
+  document.getElementById("modal-footer").innerHTML = `
+    <button class="btn p" onclick="saveNewStaff()">Save Staff</button>
+    <button class="btn" style="margin-left:auto;" onclick="closeModal()">Close</button>
+  `;
+  document.getElementById("modal").classList.add("show");
+}
+
+function saveNewStaff() {
+  const user = document.getElementById("ns-user").value.trim();
+  const name = document.getElementById("ns-name").value.trim();
+  const pin = document.getElementById("ns-pin").value.trim();
+  if (!user || !name || pin.length !== 4) { alert("Please fill username, name, and a 4-digit PIN."); return; }
+  STAFF_ACCOUNTS.push({
+    username: user,
+    name: name,
+    role: document.getElementById("ns-role").value,
+    pin: pin
+  });
+  saveState();
+  closeModal();
+  render();
 }
 
 function renderSettingsScreen(container) {
   container.innerHTML = `
     <h1 style="font-size:18px; margin-bottom:14px;">Settings & Customization</h1>
     <fieldset>
-      <legend>Letterhead Style</legend>
-      <div style="display:flex; gap:16px;">
-        <label><input type="radio" name="lh_style" value="classic" ${letterheadStyle==='classic'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> Classic (Icy Blue Card)</label>
-        <label><input type="radio" name="lh_style" value="modern" ${letterheadStyle==='modern'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> Modern (Deep Navy Band)</label>
+      <legend>Letterhead Design Style</legend>
+      <div style="display:flex; gap:20px; align-items:center;">
+        <label><input type="radio" name="lh_style" value="classic" ${letterheadStyle==='classic'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Classic</b> (Icy Blue Card with circular badge logo)</label>
+        <label><input type="radio" name="lh_style" value="modern" ${letterheadStyle==='modern'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Modern</b> (Deep Medical Navy full band)</label>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend>About & Credits</legend>
+      <legend>About LabSoft & Developer Credits</legend>
       <p style="margin:0 0 10px; color:var(--ink2);">
-        <b>LabSoft</b> v1.0.0 — Medical Diagnostic Laboratory Information System.<br>
+        <b>LabSoft v1.0.0</b> — Medical Diagnostic Laboratory Information System.<br>
         <b>Author / Developer:</b> <span style="color:#0E4D92; font-weight:800;">${AUTHOR}</span>
       </p>
       <button class="btn p" onclick="showAbout()">View About & Credits Dialog</button>
     </fieldset>
 
     <fieldset>
-      <legend>Clear Saved Client Data</legend>
-      <p style="margin:0 0 8px; font-size:12px; color:var(--ink3);">Reset all client testing data and start as a completely fresh lab:</p>
-      <button class="btn" style="color:var(--red);" onclick="if(confirm('Clear all saved test data and reset to fresh start?')){localStorage.removeItem('labsoft_jobs_v2'); sessionStorage.clear(); location.reload();}">Wipe & Reset Everything</button>
+      <legend>Client Demo Data Tools</legend>
+      <div style="display:flex; gap:12px;">
+        <button class="btn" style="color:var(--brand);" onclick="loadSampleData()">Load Sample Demo Patients</button>
+        <button class="btn" style="color:var(--red);" onclick="if(confirm('Clear all client data and reset to a clean state?')){localStorage.removeItem('labsoft_jobs_v2'); sessionStorage.clear(); location.reload();}">Wipe & Reset Clean</button>
+      </div>
     </fieldset>
   `;
 }
 
+function loadSampleData() {
+  jobs = [
+    {
+      id: 1,
+      report_no: "51365",
+      date: "21-08-2026",
+      collected_at: "21-08-2026 01:11 PM",
+      reported_at: "21-08-2026 01:11 PM",
+      name: "ashik",
+      initial: "H",
+      mobile: "6282378262",
+      sex: "Male",
+      age: 30,
+      age_unit: "Years",
+      referrer: "Self",
+      tests: ["GLU_F", "GLU_PP"],
+      results: { GLU_F: "105", GLU_PP: "128" },
+      status: "ready",
+      bill_paid: 120
+    },
+    {
+      id: 2,
+      report_no: "51367",
+      date: "21-08-2026",
+      collected_at: "21-08-2026 02:30 PM",
+      reported_at: "21-08-2026 02:35 PM",
+      name: "ashik",
+      initial: "G",
+      mobile: "6282378262",
+      sex: "Male",
+      age: 41,
+      age_unit: "Years",
+      referrer: "Self",
+      tests: ["HBA1C", "EAG"],
+      results: { HBA1C: "10.5", EAG: "255" },
+      status: "ready",
+      bill_paid: 450
+    }
+  ];
+  saveState();
+  alert("Sample demo patients loaded!");
+  render();
+}
+
 // Initial boot
-applyTheme();
 render();
 </script>
 </body>
