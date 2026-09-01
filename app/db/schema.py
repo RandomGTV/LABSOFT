@@ -125,6 +125,7 @@ CREATE TABLE IF NOT EXISTS job_tests (
     UNIQUE (job_id, test_id)
 );
 CREATE INDEX IF NOT EXISTS idx_jobtests_job ON job_tests(job_id);
+CREATE INDEX IF NOT EXISTS idx_jobtests_test ON job_tests(test_id);
 
 CREATE TABLE IF NOT EXISTS results (
     job_test_id     INTEGER PRIMARY KEY REFERENCES job_tests(id) ON DELETE CASCADE,

@@ -214,7 +214,7 @@ class Table(QTableWidget):
         header.setHighlightSections(False)
         from PyQt6.QtWidgets import QHeaderView
 
-        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         if 0 <= stretch_column < len(headers):
             header.setSectionResizeMode(stretch_column, QHeaderView.ResizeMode.Stretch)
 
@@ -250,6 +250,7 @@ class Table(QTableWidget):
         """rows: iterable of cell values. colours: {row_index: QColor} for text."""
         data = [list(r) for r in rows]
         self.setUpdatesEnabled(False)
+        self.blockSignals(True)
         try:
             self.setRowCount(len(data))
             for r, cells in enumerate(data):
@@ -260,6 +261,7 @@ class Table(QTableWidget):
                     self.setItem(r, c, item)
             self._refresh_empty()
         finally:
+            self.blockSignals(False)
             self.setUpdatesEnabled(True)
 
     def selected_row(self) -> int:

@@ -317,6 +317,14 @@ class TestsScreen(QWidget):
         self.table = Table(["Code", "Name", "Group", "Specimen", "Unit",
                             "Normal Value", "Formula", "Rate", "TAT"],
                            stretch_column=1)
+        self.table.setColumnWidth(0, 90)   # Code
+        self.table.setColumnWidth(2, 140)  # Group
+        self.table.setColumnWidth(3, 130)  # Specimen
+        self.table.setColumnWidth(4, 70)   # Unit
+        self.table.setColumnWidth(5, 140)  # Normal Value
+        self.table.setColumnWidth(6, 110)  # Formula
+        self.table.setColumnWidth(7, 80)   # Rate
+        self.table.setColumnWidth(8, 60)   # TAT
         self.table.doubleClicked.connect(self._edit)
         lay.addWidget(self.table, 1)
 
