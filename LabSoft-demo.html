@@ -742,6 +742,74 @@
     line-height: 1.2;
   }
 
+
+  /* Select & Dropdown Design System */
+  select.field-input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: var(--surface);
+    color: var(--text);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230A3668' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    padding-right: 28px !important;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  select.field-input:focus {
+    border-color: var(--brand-blue);
+    outline: 2px solid rgba(10, 54, 104, 0.2);
+  }
+  select.field-input option {
+    background-color: var(--surface);
+    color: var(--text);
+    padding: 8px 12px;
+  }
+  body.dark select.field-input {
+    background-color: #1e2022;
+    color: #e5e5e5;
+    border-color: #3e4246;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2348CAE4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  }
+  body.dark select.field-input option {
+    background-color: #1e2022;
+    color: #e5e5e5;
+  }
+
+  /* Floating Search Dropdown */
+  .search-drop-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 1000;
+  }
+  .search-item-row {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background .1s ease;
+  }
+  .search-item-row:hover {
+    background: var(--surface-alt);
+  }
+  .search-item-row.already-added {
+    opacity: 0.65;
+    background: var(--surface-alt);
+    cursor: default;
+  }
+
 </style>
 </head>
 <body>
@@ -1568,7 +1636,7 @@ function renderJobScreen(container) {
       } else {
         inputField = `
           <div class="res-input-box ${isCalc?'calc-box':''}">
-            <input type="text" value="${val}" ${isCalc?'readonly':''} oninput="onResultInput('${code}', this.value)" placeholder="${isCalc?'Auto':'—'}">
+            <input type="text" data-test-code="${code}" value="${val}" ${isCalc?'readonly':''} oninput="onResultInput('${code}', this.value)" onchange="render()" placeholder="${isCalc?'Auto':'—'}">
           </div>
         `;
       }
@@ -1660,8 +1728,10 @@ function renderJobScreen(container) {
         </div>
 
         <div class="sec-title" style="margin-top:16px;">02. SEARCH & ADD TEST (F3)</div>
-        <input type="text" id="test-search-inp" class="field-input" placeholder="Type test name or code..." oninput="onSearchTest(this.value)">
-        <div id="test-search-results" class="search-drop-list" style="display:none;"></div>
+        <div style="position:relative;">
+          <input type="text" id="test-search-inp" class="field-input" placeholder="Type test name or code..." oninput="onSearchTest(this.value)">
+          <div id="test-search-results" class="search-drop-list" style="display:none;"></div>
+        </div>
 
         <div class="sec-title" style="margin-top:16px;">03. COMMON PANELS</div>
         <div style="display:flex; flex-wrap:wrap; gap:6px;">
@@ -1820,13 +1890,13 @@ function onResultInput(code, val) {
     const neu = parseFloat(activeJob.results["NEU"] || 0);
     const lym = parseFloat(activeJob.results["LYM"] || 0);
     const eos = parseFloat(activeJob.results["EOS"] || 0);
-    if (tc && neu) activeJob.results["ANC"] = String(Math.round(tc * neu / 100));
-    if (tc && lym) activeJob.results["ALC"] = String(Math.round(tc * lym / 100));
-    if (tc && eos) activeJob.results["AEC"] = String(Math.round(tc * eos / 100));
+    if (tc && neu) activeJob.results["ANC"] = String(Math.round((tc * neu) / 100));
+    if (tc && lym) activeJob.results["ALC"] = String(Math.round((tc * lym) / 100));
+    if (tc && eos) activeJob.results["AEC"] = String(Math.round((tc * eos) / 100));
     if (neu && lym) activeJob.results["NLR"] = (neu / lym).toFixed(2);
   }
 
-  // 6. Electrolytes Anion Gap
+  // 6. Serum Electrolyte Anion Gap
   if (code === "NA" || code === "CL" || code === "BICARB") {
     const na = parseFloat(activeJob.results["NA"] || 0);
     const cl = parseFloat(activeJob.results["CL"] || 0);
@@ -1855,7 +1925,15 @@ function onResultInput(code, val) {
     }
   }
 
-  render();
+  // Update calculated fields in DOM without destroying focus
+  Object.keys(activeJob.results).forEach(k => {
+    const inputEl = document.querySelector(`input[data-test-code="${k}"]`);
+    if (inputEl && TESTS[k]?.f) {
+      inputEl.value = activeJob.results[k] || "";
+    }
+  });
+
+  saveState();
 }
 
 function addPanel(name) {
@@ -1871,6 +1949,102 @@ function removeTest(code) {
   delete activeJob.results[code];
   render();
 }
+
+
+/* --------------------------------------------------------------------------
+   Search Autocomplete & Dropdown Engine
+   -------------------------------------------------------------------------- */
+function onSearchTest(term) {
+  const box = document.getElementById("test-search-results");
+  if (!box) return;
+  term = (term || "").trim().toLowerCase();
+  if (term.length < 2) {
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+
+  // Search Panels
+  const panelMatches = Object.keys(PANELS).filter(p => p.toLowerCase().includes(term));
+  // Search Tests
+  const testMatches = Object.keys(TESTS).filter(k => 
+    k.toLowerCase().includes(term) || 
+    TESTS[k].n.toLowerCase().includes(term) || 
+    (TESTS[k].g && TESTS[k].g.toLowerCase().includes(term))
+  );
+
+  if (!panelMatches.length && !testMatches.length) {
+    box.innerHTML = `<div style="padding:12px 14px; font-size:11.5px; color:var(--text-muted); text-align:center;">No matching tests or panels found.</div>`;
+    box.style.display = "block";
+    return;
+  }
+
+  let html = "";
+  if (panelMatches.length > 0) {
+    html += `<div style="padding:5px 12px; font-size:10px; font-weight:800; color:var(--brand-blue); text-transform:uppercase; background:var(--surface-alt); border-bottom:1px solid var(--border-light);">★ Common Panels</div>`;
+    panelMatches.slice(0, 4).forEach(p => {
+      const count = PANELS[p].length;
+      html += `
+        <div class="search-item-row" onclick="addPanelFromSearch('${p}')">
+          <span style="font-weight:800; color:var(--text); font-size:12px;">★ ${p}</span>
+          <span style="font-size:10px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:2px;">${count} tests</span>
+        </div>
+      `;
+    });
+  }
+
+  if (testMatches.length > 0) {
+    html += `<div style="padding:5px 12px; font-size:10px; font-weight:800; color:var(--brand-blue); text-transform:uppercase; background:var(--surface-alt); border-bottom:1px solid var(--border-light); border-top:1px solid var(--border-light);">🧪 Individual Investigations</div>`;
+    testMatches.slice(0, 10).forEach(code => {
+      const t = TESTS[code];
+      const isAdded = activeJob.tests.includes(code);
+      html += `
+        <div class="search-item-row ${isAdded?'already-added':''}" onclick="if(!activeJob.tests.includes('${code}')) addTestFromSearch('${code}')">
+          <div>
+            <div style="font-weight:700; color:var(--text); font-size:12.5px;">${t.n}</div>
+            <div style="font-size:10px; color:var(--text-dim);">${code} · ${t.g || 'General'} · ₹${t.rate}</div>
+          </div>
+          <div>
+            ${isAdded ? '<span style="font-size:10px; font-weight:700; color:var(--accent-green);">✓ Added</span>' : '<button class="btn-m primary" style="padding:2px 8px; font-size:11px;">+ Add</button>'}
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  box.innerHTML = html;
+  box.style.display = "block";
+}
+
+function addTestFromSearch(code) {
+  if (!activeJob.tests.includes(code)) {
+    activeJob.tests.push(code);
+  }
+  const inp = document.getElementById("test-search-inp");
+  if (inp) inp.value = "";
+  const box = document.getElementById("test-search-results");
+  if (box) box.style.display = "none";
+  saveState();
+  render();
+}
+
+function addPanelFromSearch(panelName) {
+  addPanel(panelName);
+  const inp = document.getElementById("test-search-inp");
+  if (inp) inp.value = "";
+  const box = document.getElementById("test-search-results");
+  if (box) box.style.display = "none";
+}
+
+// Close search dropdown on click outside
+document.addEventListener("click", (e) => {
+  const box = document.getElementById("test-search-results");
+  const inp = document.getElementById("test-search-inp");
+  if (box && inp && !box.contains(e.target) && e.target !== inp) {
+    box.style.display = "none";
+  }
+});
+
 
 function searchTestQuick(term) {
   term = term.trim().toUpperCase();
