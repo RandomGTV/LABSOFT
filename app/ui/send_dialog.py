@@ -148,9 +148,10 @@ class SendDialog(QDialog):
         test_summary = "\n".join(test_lines)
         lab_full = (self.settings.get("lab_name_prefix", "") + " " +
                     self.settings.get("lab_name", "")).strip()
-        name_str = self.job.get("name_at_test") or self.job.get("patient_name") or ""
         rep_no = self.job.get("report_no") or ""
-        date_str = turnaround.format_date(reported)
+        rep_raw = self.job.get("reported_at") or self.job.get("received_at")
+        rep_dt = q.to_dt(rep_raw) if isinstance(rep_raw, str) else rep_raw
+        date_str = turnaround.format_date(rep_dt) if rep_dt else ""
         phone_str = self.settings.get("lab_phone", "").replace("Ph :", "").strip()
 
         if test_summary:

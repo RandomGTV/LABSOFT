@@ -27,8 +27,8 @@ from .. import services
 from ..core import turnaround
 from ..db import queries as q
 from . import style
+from .pos_receipt_dialog import POSReceiptDialog
 from .smart_phrases_dialog import SmartPhrasesDialog
-from .tube_label_dialog import TubeLabelDialog
 from .whatsapp_dialog import WhatsAppDialog
 from .widgets import (
     EllipsisLabel, FlagLabel, SearchBox, age_unit_combo, button, column,
@@ -354,15 +354,14 @@ class JobScreen(QWidget):
 
         self.clear_button = button("New job", "", self.new_job,
                                    "Start a fresh job  (F2)")
-        self.preview_button = button("Preview", "", self.preview,
-                                     "Look at the report before sending it", "F8")
-        self.tube_button = button("🏷️ Tube Label", "", self._open_tube_label, "Print 50x25mm vial sticker", "F7")
         self.whatsapp_button = button("📱 WhatsApp", "", self._open_whatsapp_dispatch, "Send structured WhatsApp report", "F8")
         self.smart_button = button("✨ Smart Phrases", "quiet", self._open_smart_phrases, "Insert clinical smear impressions")
+        self.preview_button = button("Preview", "", self.preview,
+                                     "Look at the report before sending it")
         self.verify_button = button("Check && make report", "go", self.verify,
                                     "Check every test is filled in, then make the report",
                                     "F9")
-        for b in (self.clear_button, self.tube_button, self.whatsapp_button, self.smart_button, self.preview_button, self.verify_button):
+        for b in (self.clear_button, self.whatsapp_button, self.smart_button, self.preview_button, self.verify_button):
             lay.addWidget(b)
         return rail
 
@@ -583,6 +582,8 @@ class JobScreen(QWidget):
             "Show the receipt, then print, save or send it")
         self.bill_button2 = button("Make the bill", "primary", self._open_bill,
                                    "Record what is being charged", "F4")
+        self.pos_receipt_btn = button("🧾 POS Receipt", "", self._open_pos_receipt, "Print 80mm thermal receipt slip")
+        lay.addWidget(self.pos_receipt_btn)
         lay.addWidget(self.bill_print_button)
         lay.addWidget(self.bill_button2)
         return self.bill_box
@@ -1710,9 +1711,17 @@ class JobScreen(QWidget):
 
     def _open_smart_phrases(self) -> None:
         def insert_cb(phrase: str):
-            curr = self.remarks_edit.toPlainText().strip() if hasattr(self, "remarks_edit") else ""
-            if curr:
-                self.remarks_edit.setPlainText(curr + "\n\n" + phrase)
-            elif hasattr(self, "remarks_edit"):
-                self.remarks_edit.setPlainText(phrase)
+            if not self.job_id:
+                return
+            job = q.get_job(self.job_id) or {}
+            curr = (job.get("remarks") or "").strip()
+            new_remarks = f"{curr}\n\n{phrase}".strip() if curr else phrase
+            q.update_job(self.job_id, {"remarks": new_remarks})
+            self.message.setText(f"✓ Clinical smart-phrase inserted into report remarks.")
+            self.message.setStyleSheet(f"color: {style.GREEN}; font-weight: 600;")
         SmartPhrasesDialog(self, insert_cb).exec()
+
+    def _open_pos_receipt(self) -> None:
+        if not self.job_id:
+            return
+        POSReceiptDialog(self, self.job_id).exec()

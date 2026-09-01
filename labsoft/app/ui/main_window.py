@@ -114,7 +114,6 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence("F5"), self, activated=self._refresh_all)
         QShortcut(QKeySequence("Ctrl+1"), self, activated=lambda: self.tabs.setCurrentIndex(0))
         QShortcut(QKeySequence("Ctrl+2"), self, activated=lambda: self.tabs.setCurrentIndex(1))
-        QShortcut(QKeySequence("F7"), self, activated=lambda: self.job_screen._open_tube_label())
         QShortcut(QKeySequence("F8"), self, activated=lambda: self.job_screen._open_whatsapp_dispatch())
         QShortcut(QKeySequence("F9"), self, activated=lambda: self.preview(self.job_screen.job_id))
         QShortcut(QKeySequence("F10"), self, activated=lambda: self.tabs.setCurrentWidget(self.analytics_screen))

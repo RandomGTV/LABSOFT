@@ -1542,7 +1542,7 @@ function render() {
       <span class="hud-item" onclick="newJob()"><kbd>F2</kbd> ${getIcon('user', 12)} New Job</span>
       <span class="hud-item" onclick="setTab('job'); setTimeout(()=>document.getElementById('test-search-inp')?.focus(), 50);"><kbd>F3</kbd> ${getIcon('tests', 12)} Add Test</span>
       <span class="hud-item" onclick="openBillModal()"><kbd>F4</kbd> ${getIcon('billing', 12)} Settle Bill</span>
-      <span class="hud-item" onclick="openTubeLabelModal(activeJob)"><kbd>F7</kbd> ${getIcon('barcode', 12)} Tube Label</span>
+      
       <span class="hud-item" onclick="openWhatsAppDispatchModal(activeJob)"><kbd>F8</kbd> ${getIcon('whatsapp', 12)} WhatsApp</span>
       <span class="hud-item" onclick="openReportPreview(activeJob)"><kbd>F9</kbd> ${getIcon('printer', 12)} Report Print</span>
       <span class="hud-item" onclick="setTab('analytics')"><kbd>F10</kbd> ${getIcon('analytics', 12)} Day-Book</span>
@@ -3799,6 +3799,85 @@ const SMART_PHRASES = [
   }
 ];
 
+
+function openSmartPhrasesModal() {
+  openSmartPhraseModal();
+}
+
+function openPOSReceiptModal(job) {
+  job = job || activeJob;
+  const tests = (job.tests || []).map(c => TESTS[c] || { n: c, rate: 0 });
+  const total = tests.reduce((a, b) => a + (b.rate || 0), 0);
+  const discount = job.bill_disc || job.discount || 0;
+  const net = Math.max(0, total - discount);
+  const paid = job.paid !== undefined ? job.paid : net;
+  const due = Math.max(0, net - paid);
+
+  const receiptHtml = `
+    <div style="padding:10px; display:flex; justify-content:center;">
+      <div id="pos-receipt-print-area" style="background:#ffffff; color:#000000; border:1.5px dashed #94a3b8; border-radius:4px; padding:16px; width:320px; font-family:monospace; font-size:11px; line-height:1.4; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <div style="text-align:center;">
+          <b style="font-size:13px;">${LAB_CONFIG.prefix || 'MITHRA'} ${LAB_CONFIG.name || 'DIAGNOSTIC LABORATORY'}</b><br>
+          <span style="font-size:9.5px; color:#444;">${LAB_CONFIG.address || 'Medical Centre Road'}<br>Ph: ${LAB_CONFIG.phone || '9876543210'}</span><br>
+          ------------------------------------<br>
+          <b style="font-size:10px;">TAX INVOICE / CASH RECEIPT</b><br>
+          ------------------------------------
+        </div>
+        <div style="margin:6px 0; font-size:10px;">
+          Bill No: <b>#${job.id || '101'}</b><br>
+          Date   : ${new Date().toLocaleString()}<br>
+          Patient: <b>${job.name || 'PATIENT'} .${job.initial || ''}.</b> (${job.age || ''} ${job.age_unit || ''}/${job.sex || ''})<br>
+          Ref By : ${job.referrer || 'SELF / DIRECT'}<br>
+          ------------------------------------
+        </div>
+        <table style="width:100%; font-family:monospace; font-size:10.5px; border-collapse:collapse;">
+          <tr style="border-bottom:1px solid #000;"><th align="left">Test Description</th><th align="right">Amount</th></tr>
+          ${tests.map(t => `<tr><td>${t.n.slice(0, 20)}</td><td align="right">₹${t.rate}</td></tr>`).join("")}
+        </table>
+        <div style="margin-top:8px; border-top:1px solid #000; padding-top:4px; font-size:10.5px;">
+          Gross Total : <span style="float:right;">₹${total}</span><br>
+          Discount    : <span style="float:right;">₹${discount}</span><br>
+          <b style="font-size:11px;">NET PAYABLE : <span style="float:right;">₹${net}</span></b><br>
+          Amount Paid : <span style="float:right;">₹${paid}</span><br>
+          Balance Due : <span style="float:right;">₹${due}</span><br>
+          ------------------------------------<br>
+          <div style="text-align:center; font-size:9.5px; margin-top:6px;">* Thank You & Wish You Good Health *</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("modal-dialog-title").textContent = "🧾 80mm POS Thermal Receipt Preview";
+  document.getElementById("modal-dialog-body").className = "modal-dialog-body plain";
+  document.getElementById("modal-dialog-body").innerHTML = receiptHtml;
+  document.getElementById("modal-dialog-footer").innerHTML = `
+    <button class="btn-m" onclick="closeModal()">Close</button>
+    <button class="btn-m primary" onclick="printReceiptDirect()">${getIcon('printer', 14, '#fff')} Print 80mm Receipt</button>
+  `;
+  document.getElementById("modal-container").classList.add("open");
+}
+
+function printReceiptDirect() {
+  const content = document.getElementById("pos-receipt-print-area")?.innerHTML;
+  if (!content) return;
+  const win = window.open("", "_blank");
+  win.document.write(`
+    <html>
+      <head>
+        <title>POS Receipt Print</title>
+        <style>
+          @page { size: 80mm auto; margin: 4mm; }
+          body { font-family: monospace; font-size: 11px; margin: 0; padding: 0; color: #000; }
+        </style>
+      </head>
+      <body onload="window.print(); window.close();">
+        ${content}
+      </body>
+    </html>
+  `);
+  win.document.close();
+}
+
 function openSmartPhraseModal() {
   const content = `
     <div style="padding:16px; display:flex; flex-direction:column; gap:16px; max-height:68vh; overflow:auto;">
@@ -3834,8 +3913,10 @@ function openSmartPhraseModal() {
 }
 
 function insertSmartPhrase(phraseText) {
-  activeJob.clinical_notes = (activeJob.clinical_notes ? activeJob.clinical_notes + "\n" : "") + phraseText;
-  saveState();
+  const currNotes = (activeJob.clinical_notes || "").trim();
+  activeJob.clinical_notes = currNotes ? currNotes + "\n\n" + phraseText : phraseText;
+  const currRemarks = (activeJob.remarks || "").trim();
+  activeJob.remarks = currRemarks ? currRemarks + "\n\n" + phraseText : phraseText;
   closeModal();
   render();
 }
