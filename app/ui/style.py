@@ -312,22 +312,19 @@ def _apply_qpalette(app, c: Dict[str, str], dark: bool) -> None:
 
 
 def stylesheet_for(name: str = "light") -> str:
-    """The whole application sheet, built from one theme's tokens.
-
-    Modernist rules, applied without exception:
-      * radius 0 -- nothing is rounded
-      * 2px rules separate sections, 1px lines bound controls
-      * the accent appears on the live tab, the focus ring, and the one button
-        on a screen that finishes the job. Nowhere else.
-    """
-    c = THEMES[normalise_theme(name)]
-    dark = normalise_theme(name) == "dark"
+    """The whole application sheet, built from one theme's tokens with modern UI/UX."""
+    name = normalise_theme(name)
+    c = THEMES[name]
+    dark = name == "dark"
 
     BRAND = c["BRAND"]
     BRAND_DARK = c["BRAND_DARK"]
     BRAND_SOFT = c["BRAND_SOFT"]
+    ACCENT_INK = c["ACCENT_INK"]
     RED = c["RED"]
     GREEN = c["GREEN"]
+    AMBER = c["AMBER"]
+    BLUE = c["BLUE"]
     INK = c["INK"]
     INK2 = c["INK2"]
     INK3 = c["INK3"]
@@ -339,149 +336,119 @@ def stylesheet_for(name: str = "light") -> str:
     RULE = c["RULE"]
     ON_INK = c["ON_INK"]
     ON_ACCENT = c["ON_ACCENT"]
-    ACCENT_INK = c["ACCENT_INK"]
-    FONT = FONT_STACK
 
     return f"""
+* {{
+    font-family: {FONT_STACK};
+    font-size: 9.5pt;
+    color: {INK};
+}}
+
 QWidget {{
-    font-family: {FONT};
-    font-size: 10.5pt;
-    color: {INK};
-}}
-QMainWindow, QDialog {{ background: {BG}; }}
-
-/* Scroll areas: the viewport is a separate widget and inherits the system
-   theme unless it is named here. This is what made the results panel black. */
-QScrollArea {{ background: {PANEL}; border: 0; }}
-QScrollArea > QWidget > QWidget {{ background: {PANEL}; }}
-QAbstractScrollArea {{ background: {PANEL}; }}
-QAbstractScrollArea::viewport {{ background: {PANEL}; }}
-#resultsHost, #resultsScroll {{ background: {PANEL}; }}
-
-/* Dropdown popups are top-level windows and miss the parent's styling. */
-QComboBox QAbstractItemView {{
     background: {PANEL};
     color: {INK};
-    border: 1px solid {INK};
-    selection-background-color: {FILL};
-    selection-color: {INK};
-    outline: 0;
 }}
-QListWidget, QListView, QTreeView {{
-    background: {PANEL};
-    color: {INK};
-    border: 1px solid {LINE};
-    border-radius: 0;
-}}
-QListWidget::item {{ padding: 7px 9px; }}
-QListWidget::item:selected {{ background: {FILL}; color: {INK}; }}
-QListWidget::item:hover {{ background: {LINE2}; }}
-QMenu {{ background: {PANEL}; color: {INK}; border: 1px solid {INK}; }}
-QMenu::item {{ padding: 7px 16px; }}
-QMenu::item:selected {{ background: {FILL}; }}
 
-/* Tabs: a 2px rule runs the width of the bar, and the live tab is the one
-   carrying the accent. */
+QMainWindow, QDialog {{
+    background: {BG};
+}}
+
+/* ── Modern Tabs Bar ───────────────────────────────────────────────── */
 QTabWidget::pane {{
-    border: 0;
-    border-top: 2px solid {RULE};
+    border: none;
+    border-top: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"};
     background: {PANEL};
-    border-radius: 0;
     top: -1px;
+}}
+QTabBar {{
+    background: {PANEL};
+    border-bottom: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"};
+    padding: 3px 6px 0px 6px;
 }}
 QTabBar::tab {{
     background: transparent;
-    padding: 9px 18px 8px 18px;
-    margin: 0 2px 0 0;
-    border: 0;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    color: {INK3};
-    font-weight: 500;
+    padding: 8px 15px;
+    margin: 2px 3px 0px 3px;
+    border: 1px solid transparent;
+    border-bottom: 2.5px solid transparent;
+    border-radius: 5px 5px 0px 0px;
+    color: {INK2};
+    font-weight: 700;
+    font-size: 9.5pt;
 }}
 QTabBar::tab:selected {{
-    background: {PANEL};
-    border-bottom: 2px solid {BRAND};
-    color: {INK};
-    font-weight: 700;
-}}
-QTabBar::tab:hover:!selected {{ color: {INK}; }}
-/* Focus underlines the label rather than recolouring it: the accent already
-   means "this is the live tab", and two reds side by side said nothing. */
-QTabBar::tab:focus {{ text-decoration: underline; }}
-
-/* Buttons. Square, 1px edge, no gradient. The plain button is the common
-   case; primary is ink; "go" is the accent and there is one per screen. */
-QPushButton {{
-    background: {PANEL};
-    border: 1px solid {LINE if not dark else "#3C464E"};
-    border-radius: 0;
-    padding: 8px 15px;
-    font-weight: 600;
-    min-height: 24px;
-}}
-QPushButton:hover {{ background: {LINE2}; border-color: {INK3}; }}
-QPushButton:pressed {{ background: {LINE}; }}
-QPushButton:disabled {{
-    color: {c["PRIMARY_OFF_TEXT"]}; background: {LINE2}; border-color: {LINE};
-}}
-/* Keyboard focus must be visible on buttons too, not only in text boxes —
-   otherwise tabbing through the screen leaves no trace of where you are. */
-QPushButton:focus {{
-    border: 2px solid {BRAND};
-    padding: 7px 14px;
-}}
-QCheckBox:focus, QRadioButton:focus {{ color: {BRAND}; }}
-QCheckBox::indicator {{
-    width: 17px; height: 17px; border-radius: 0;
-    border: 1px solid {c["FIELD_BORDER"]}; background: {PANEL};
-}}
-QCheckBox::indicator:checked {{ background: {INK}; border-color: {INK}; }}
-QCheckBox::indicator:focus {{ border: 2px solid {BRAND}; }}
-/* Toggle buttons (the work-queue filters) must show which one is active. */
-QPushButton:checked {{
-    background: {INK};
-    border-color: {INK};
-    color: {ON_INK};
-}}
-QPushButton:checked:hover {{ background: {INK2}; border-color: {INK2}; }}
-QPushButton[kind="primary"] {{
-    background: {INK}; border-color: {INK}; color: {ON_INK};
-}}
-QPushButton[kind="primary"]:hover {{ background: {INK2}; border-color: {INK2}; }}
-QPushButton[kind="primary"]:disabled {{
-    background: {c["PRIMARY_OFF"]}; border-color: {c["PRIMARY_OFF"]};
-    color: {c["PRIMARY_OFF_TEXT"]};
-}}
-QPushButton[kind="go"] {{
-    background: {ACCENT_INK}; border-color: {ACCENT_INK}; color: {ON_ACCENT};
+    background: {"#E0F2FE" if not dark else "#082F49"};
+    border: 1px solid {"#BAE6FD" if not dark else "#0284C7"};
+    border-bottom: 2.5px solid {ACCENT_INK};
+    color: {"#0284C7" if not dark else "#38BDF8"};
     font-weight: 800;
 }}
+QTabBar::tab:hover:!selected {{
+    background: {LINE2};
+    color: {INK};
+}}
+
+/* ── Modern Buttons ─────────────────────────────────────────────────── */
+QPushButton {{
+    background: {PANEL};
+    border: 1.5px solid {"#CBD5E1" if not dark else "#3C464E"};
+    border-radius: 5px;
+    padding: 7px 14px;
+    font-weight: 700;
+    font-size: 9.5pt;
+    min-height: 22px;
+}}
+QPushButton:hover {{
+    background: {"#F8FAFC" if not dark else "#1E3A5F"};
+    border-color: {"#94A3B8" if not dark else "#38BDF8"};
+    color: {"#0A3668" if not dark else "#FFFFFF"};
+}}
+QPushButton:pressed {{
+    background: {LINE2};
+}}
+QPushButton:disabled {{
+    color: {INK3};
+    background: {LINE2};
+    border-color: {LINE};
+}}
+QPushButton:focus {{
+    border: 2px solid {ACCENT_INK};
+}}
+
+QPushButton[kind="primary"] {{
+    background: {"#0A3668" if not dark else "#0284C7"};
+    border: 1.5px solid {"#0A3668" if not dark else "#0284C7"};
+    color: #FFFFFF;
+    font-weight: 800;
+    border-radius: 5px;
+}}
+QPushButton[kind="primary"]:hover {{
+    background: {"#0284C7" if not dark else "#0369A1"};
+    border-color: {"#0284C7" if not dark else "#0369A1"};
+    color: #FFFFFF;
+}}
+
+QPushButton[kind="go"] {{
+    background: #059669;
+    border: 1.5px solid #059669;
+    color: #FFFFFF;
+    font-weight: 800;
+    border-radius: 5px;
+}}
 QPushButton[kind="go"]:hover {{
-    background: {BRAND_DARK}; border-color: {BRAND_DARK};
+    background: #047857;
+    border-color: #047857;
+    color: #FFFFFF;
 }}
-QPushButton[kind="go"]:disabled {{
-    background: {c["GO_OFF"]}; border-color: {c["GO_OFF"]};
-    color: {c["GO_OFF_TEXT"]};
-}}
-/* Quiet buttons are secondary actions, so they are ink with an underline --
-   if every link on the screen were accent, the accent would stop meaning
-   "this is the one". */
-QPushButton[kind="quiet"] {{
-    background: transparent; border-color: transparent; color: {INK2};
-    padding: 6px 8px; text-decoration: underline;
-}}
-QPushButton[kind="quiet"]:hover {{ color: {ACCENT_INK}; background: transparent; }}
-/* The panel buttons: a chosen panel is filled ink, an unchosen one is paper
-   with a hairline. No colour needed to tell them apart. */
+
 QPushButton[kind="panel"] {{
     background: {"#FFFFFF" if not dark else "#132F4C"};
     border: 1px solid {"#BAE6FD" if not dark else "#1E3A5F"};
     border-radius: 4px;
     color: {"#0A3668" if not dark else "#E2E8F0"};
-    padding: 8px 12px;
+    padding: 7px 11px;
     font-weight: 700;
-    font-size: 9.5pt;
+    font-size: 9pt;
 }}
 QPushButton[kind="panel"]:hover {{
     background: {"#E0F2FE" if not dark else "#1E3A5F"};
@@ -493,141 +460,76 @@ QPushButton[kind="panel"]:pressed {{
     border-color: {ACCENT_INK};
     color: #FFFFFF;
 }}
-QPushButton[kind="danger"] {{ color: {RED}; }}
 
+QPushButton[kind="quiet"] {{
+    background: transparent;
+    border: none;
+    color: {ACCENT_INK};
+    padding: 4px 6px;
+    text-decoration: underline;
+    font-weight: 600;
+}}
+QPushButton[kind="quiet"]:hover {{
+    color: {"#0A3668" if not dark else "#38BDF8"};
+    background: transparent;
+}}
+
+/* ── Modern Form Inputs ─────────────────────────────────────────────── */
 QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateEdit, QPlainTextEdit, QTextEdit {{
     background: {PANEL};
-    border: 1px solid {c["FIELD_BORDER"]};
-    border-radius: 0;
-    padding: 6px 9px;
-    selection-background-color: {BRAND};
-    selection-color: {ON_ACCENT};
+    border: 1.5px solid {"#CBD5E1" if not dark else "#3C464E"};
+    border-radius: 4px;
+    padding: 5px 8px;
+    color: {INK};
+    selection-background-color: {ACCENT_INK};
+    selection-color: #FFFFFF;
 }}
-QLineEdit:hover, QComboBox:hover {{ border-color: {INK2}; }}
 QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus,
 QDateEdit:focus, QPlainTextEdit:focus, QTextEdit:focus {{
-    border: 2px solid {BRAND};
-    padding: 5px 8px;
-}}
-/* The result boxes carry the number that matters, so they are given the
-   weight to match: bigger type in a taller box. */
-QLineEdit[kind="result_entry"] {{
-    font-size: 13pt;
-    font-weight: 700;
-    padding: 6px 9px;
-    min-height: 28px;
-}}
-QLineEdit:read-only {{
-    background: {c["READONLY_BG"]}; color: {INK2}; border-style: dashed;
-}}
-QLineEdit:disabled {{ background: {LINE2}; color: {INK3}; }}
-QComboBox::drop-down {{ border: 0; width: 22px; }}
-QComboBox::down-arrow {{
-    image: none;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid {INK2};
-    width: 0; height: 0; margin-right: 8px;
-}}
-
-/* Spin boxes: Fusion draws tiny unreadable arrows at this size, so the
-   buttons are given real width and a drawn triangle. */
-QSpinBox, QDoubleSpinBox {{ padding-right: 20px; }}
-QSpinBox::up-button, QDoubleSpinBox::up-button,
-QSpinBox::down-button, QDoubleSpinBox::down-button {{
-    subcontrol-origin: border;
-    width: 18px;
-    border: 0;
-    background: {LINE2};
-}}
-QSpinBox::up-button, QDoubleSpinBox::up-button {{
-    subcontrol-position: top right;
-    border-bottom: 1px solid {LINE};
-}}
-QSpinBox::down-button, QDoubleSpinBox::down-button {{
-    subcontrol-position: bottom right;
-}}
-QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
-QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
-    background: {LINE};
-}}
-QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
-    image: none;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-bottom: 5px solid {INK2};
-    width: 0; height: 0;
-}}
-QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{
-    image: none;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid {INK2};
-    width: 0; height: 0;
-}}
-
-/* Tables: a 2px rule under the head, hairlines between rows, no outer box. */
-QTableWidget, QTableView {{
+    border: 2px solid {ACCENT_INK};
     background: {PANEL};
-    border: 0;
-    border-radius: 0;
-    gridline-color: {LINE2};
-    selection-background-color: {FILL};
+}}
+
+QComboBox::drop-down {{
+    border: none;
+    width: 22px;
+}}
+QComboBox QAbstractItemView {{
+    background: {PANEL};
+    border: 1.5px solid {"#CBD5E1" if not dark else "#3C464E"};
+    border-radius: 4px;
+    selection-background-color: {"#E0F2FE" if not dark else "#1E3A5F"};
     selection-color: {INK};
-}}
-QHeaderView::section {{
-    background: {PANEL};
-    border: 0;
-    border-bottom: 2px solid {RULE};
-    border-right: 0;
-    padding: 8px 10px;
-    font-size: 8.5pt;
-    font-weight: 700;
-    color: {INK3};
-    text-transform: uppercase;
-}}
-QTableView::item {{ padding: 6px 8px; border-bottom: 1px solid {LINE2}; }}
-
-/* Group boxes are sections, not cards: a 2px rule along the top with the
-   name sitting on it, and no border round the rest. */
-QGroupBox {{
-    border: 0;
-    border-top: 2px solid {RULE};
-    border-radius: 0;
-    margin-top: 15px;
-    padding-top: 4px;
-    background: {PANEL};
-    font-weight: 700;
-}}
-QGroupBox::title {{
-    subcontrol-origin: margin;
-    left: 0px;
-    padding: 0 8px 0 0;
-    color: {INK};
-    background: {PANEL};
-    font-size: 8.5pt;
-    font-weight: 800;
-    text-transform: uppercase;
+    padding: 4px;
 }}
 
-/* ── The Job screen's bands ────────────────────────────────────────────
-   Four surfaces of falling weight: an ink money band, a white status rail
-   and result field, and a quiet counsel column on the page ground. Named
-   here rather than styled inline so that switching theme restyles them. */
-#statusRail {{ background: {PANEL}; border-bottom: 2px solid {RULE}; }}
-/* The left column is filled, so the screen reads as three surfaces: what you
-   put in (left), what you are working on (the white field), and what the
-   program has to say (the counsel column). The fill runs up through the
-   status rail so the column is one panel from the top of the window down. */
-#railLeft   {{ background: {"#F0F6FB" if not dark else "#0A1929"}; border-right: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"}; }}
-#leftRail   {{ background: {"#F0F6FB" if not dark else "#0A1929"}; border-right: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"}; }}
-#patientBlock {{ background: transparent; border-bottom: 1px solid {"#D1E3F0" if not dark else "#1E3A5F"}; }}
-#testsBlock {{ background: transparent; }}
+/* ── Job Screen Sections ─────────────────────────────────────────────── */
+#statusRail {{
+    background: {PANEL};
+    border-bottom: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"};
+}}
+
+#railLeft {{
+    background: {"#F0F6FB" if not dark else "#0A1929"};
+    border-right: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"};
+}}
+#leftRail {{
+    background: {"#F0F6FB" if not dark else "#0A1929"};
+    border-right: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"};
+}}
+#patientBlock {{
+    background: transparent;
+    border-bottom: 1px solid {"#D1E3F0" if not dark else "#1E3A5F"};
+}}
+#testsBlock {{
+    background: transparent;
+}}
+
 #leftRail QLineEdit, #leftRail QComboBox, #leftRail QSpinBox {{
     background: {PANEL};
     border: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"};
     border-radius: 4px;
-    padding: 6px 8px;
+    padding: 5px 8px;
     color: {INK};
 }}
 #leftRail QLineEdit:focus, #leftRail QComboBox:focus, #leftRail QSpinBox:focus {{
@@ -641,74 +543,144 @@ QGroupBox::title {{
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }}
-#moneyBand  {{ background: {INK}; }}
-#moneyBand QLabel {{ color: {ON_INK}; }}
-#resultsField {{ background: {PANEL}; border-right: 1px solid {LINE}; }}
-#resultsHead {{ background: {PANEL}; border-bottom: 2px solid {RULE}; }}
-#footBar    {{ background: {BG}; border-top: 2px solid {RULE}; }}
-#counsel    {{ background: {BG}; border-left: 1px solid {LINE}; }}
-#counselBlock {{ border-bottom: 1px solid {LINE}; }}
-#groupRow   {{ background: {FILL}; }}
 
-QLabel[role="micro"] {{
-    color: {INK3}; font-size: 7.5pt; font-weight: 700; text-transform: uppercase;
+#moneyBand {{
+    background: #0F172A;
+    border-bottom: 2px solid #0A3668;
 }}
-QLabel[role="stat"] {{ font-size: 12.5pt; font-weight: 700; }}
-QLabel[role="money"] {{ font-size: 25pt; font-weight: 800; }}
-QLabel[role="railvalue"] {{ font-size: 12.5pt; font-weight: 800; }}
-QLabel[role="railname"] {{ font-size: 11pt; font-weight: 700; }}
-QLabel[role="group"] {{
-    font-size: 8pt; font-weight: 800; text-transform: uppercase; color: {INK};
+#moneyBand QLabel {{
+    color: #F8FAFC;
 }}
-QLabel[role="method"] {{ color: {INK3}; font-size: 8pt; }}
-
-/* Buttons living on the ink money band. */
 #moneyBand QPushButton {{
-    background: transparent; border: 1px solid {c["SCROLL"] if not dark else "#5A6670"};
-    color: {ON_INK}; font-weight: 700; padding: 7px 14px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 7px 14px;
 }}
-#moneyBand QPushButton:hover {{ background: {INK2}; }}
+#moneyBand QPushButton:hover {{
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}}
 #moneyBand QPushButton[kind="primary"] {{
-    background: {ON_INK}; border-color: {ON_INK}; color: {INK};
+    background: #FFFFFF;
+    border: 1px solid #FFFFFF;
+    color: #0F172A;
+    font-weight: 800;
 }}
-#moneyBand QPushButton[kind="primary"]:hover {{ background: {LINE}; }}
-
-QLabel[role="h1"] {{ font-size: 15pt; font-weight: 800; letter-spacing: -0.3px; }}
-QLabel[role="hint"] {{ color: {INK3}; font-size: 9pt; }}
-QLabel[role="field"] {{
-    color: {INK3}; font-size: 8pt; font-weight: 700; text-transform: uppercase;
+#moneyBand QPushButton[kind="primary"]:hover {{
+    background: #F1F5F9;
 }}
-QLabel[role="error"] {{ color: {RED}; font-weight: 700; }}
-QLabel[role="ok"] {{ color: {GREEN}; font-weight: 700; }}
 
+#resultsField {{
+    background: {PANEL};
+    border-right: 1px solid {LINE};
+}}
+#resultsHead {{
+    background: {"#F8FAFC" if not dark else "#0F172A"};
+    border-bottom: 2px solid {"#0A3668" if not dark else "#38BDF8"};
+}}
+#footBar {{
+    background: {BG};
+    border-top: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"};
+}}
+#counsel {{
+    background: {"#F8FAFC" if not dark else "#0F172A"};
+    border-left: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"};
+}}
+#counselBlock {{
+    border-bottom: 1px solid {"#E2E8F0" if not dark else "#1E3A5F"};
+}}
+
+/* ── Typography Roles ───────────────────────────────────────────────── */
+QLabel[role="micro"] {{
+    color: {"#0A3668" if not dark else "#38BDF8"};
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}}
+QLabel[role="stat"] {{
+    font-size: 13pt;
+    font-weight: 700;
+    color: #F8FAFC;
+}}
+QLabel[role="money"] {{
+    font-size: 24pt;
+    font-weight: 800;
+    color: #FFFFFF;
+}}
+QLabel[role="railvalue"] {{
+    font-size: 12pt;
+    font-weight: 800;
+    color: {INK};
+}}
+QLabel[role="railname"] {{
+    font-size: 11pt;
+    font-weight: 700;
+    color: {INK};
+}}
+QLabel[role="group"] {{
+    font-size: 8.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: {"#0A3668" if not dark else "#38BDF8"};
+    letter-spacing: 0.5px;
+}}
+QLabel[role="hint"] {{
+    color: {INK3};
+    font-size: 9pt;
+}}
+
+/* ── Status Bar ─────────────────────────────────────────────────────── */
 QStatusBar {{
-    background: {PANEL}; border-top: 2px solid {RULE}; color: {INK3};
+    background: {PANEL};
+    border-top: 1px solid {"#CBD5E1" if not dark else "#1E3A5F"};
+    color: {INK2};
+    font-size: 8.5pt;
 }}
-QStatusBar QLabel {{ padding: 0 10px; font-size: 9pt; }}
-QStatusBar::item {{ border: 0; }}
+QStatusBar QLabel {{
+    color: {INK2};
+    font-size: 8.5pt;
+}}
 
-QScrollBar:vertical {{ background: transparent; width: 12px; margin: 0; }}
+/* ── Tables & Views ─────────────────────────────────────────────────── */
+QTableView, QTableWidget, QListView, QListWidget, QTreeView {{
+    background: {PANEL};
+    border: 1px solid {"#CBD5E1" if not dark else "#3C464E"};
+    border-radius: 4px;
+    selection-background-color: {"#E0F2FE" if not dark else "#1E3A5F"};
+    selection-color: {INK};
+    gridline-color: {LINE2};
+}}
+QHeaderView::section {{
+    background: {"#F8FAFC" if not dark else "#0F172A"};
+    border: none;
+    border-bottom: 2px solid {"#0A3668" if not dark else "#38BDF8"};
+    border-right: 1px solid {LINE2};
+    padding: 6px 10px;
+    font-weight: 800;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    color: {"#0A3668" if not dark else "#38BDF8"};
+}}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────── */
+QScrollBar:vertical {{
+    background: transparent;
+    width: 8px;
+    margin: 0;
+}}
 QScrollBar::handle:vertical {{
-    background: {c["SCROLL"]}; border-radius: 0; min-height: 30px;
+    background: {"#CBD5E1" if not dark else "#3C464E"};
+    border-radius: 4px;
+    min-height: 24px;
 }}
-QScrollBar::handle:vertical:hover {{ background: {c["SCROLL_HOVER"]}; }}
-QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; width: 0; }}
-QScrollBar:horizontal {{ background: transparent; height: 12px; }}
-QScrollBar::handle:horizontal {{
-    background: {c["SCROLL"]}; border-radius: 0; min-width: 30px;
+QScrollBar::handle:vertical:hover {{
+    background: {"#94A3B8" if not dark else "#5A6670"};
 }}
-
-QToolTip {{
-    background: {c["TIP_BG"]}; color: {c["TIP_TEXT"]}; border: 0;
-    padding: 6px 9px; border-radius: 0;
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+    height: 0;
 }}
-QProgressBar {{
-    border: 0; background: {c["TRACK"]}; border-radius: 0; height: 6px;
-    text-align: center;
-}}
-QProgressBar::chunk {{ background: {INK}; border-radius: 0; }}
 """
-
-
-#: Kept for callers (and tests) that want the daylight sheet without asking.
-STYLESHEET = stylesheet_for("light")
