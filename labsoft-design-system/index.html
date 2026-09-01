@@ -1307,6 +1307,9 @@ function toggleKeypad() {
   if (kp) kp.style.display = kp.style.display === "grid" ? "none" : "grid";
 }
 
+function createEmptyJob() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-GB").replace(/\//g, "-");
   const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
   const nextNo = String(51359 + jobs.length);
 
