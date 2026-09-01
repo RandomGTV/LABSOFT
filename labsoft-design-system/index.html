@@ -8,53 +8,260 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
 <style>
+  
   :root {
-    --bg: #f3f2f2;
-    --surface: #ffffff;
-    --surface-alt: #eae7e7;
-    --text: #201e1d;
-    --text-muted: #605d5d;
-    --text-dim: #7d7979;
-    --border: #201e1d;
-    --border-light: #d7d3d3;
-    --border-subtle: #eae7e7;
-    --accent-red: #ec3013;
-    --accent-red-hover: #dd2b0f;
-    --accent-blue: #1A5FB4;
-    --accent-blue-soft: #E8EFFA;
-    --accent-green: #16703F;
-    --accent-green-soft: #EAF5EE;
-    --accent-amber: #8A5A00;
-    --accent-amber-soft: #FDF5E3;
+    --bg: #F8FAFC;
+    --surface: #FFFFFF;
+    --surface-alt: #F1F5F9;
+    --border: #CBD5E1;
+    --border-light: #E2E8F0;
+    --border-subtle: #F1F5F9;
+    --text: #0F172A;
+    --text-muted: #64748B;
+    --text-dim: #94A3B8;
     --brand-navy: #0A3668;
-    --brand-blue: #0E4D92;
-    --brand-cyan: #00A3E0;
-    --brand-ice: #F0F6FC;
+    --brand-blue: #0284C7;
+    --brand-cyan: #38BDF8;
+    --accent-red: #DC2626;
+    --accent-red-bg: #FEE2E2;
+    --accent-green: #059669;
+    --accent-green-bg: #ECFDF5;
+    --accent-amber: #D97706;
+    --accent-amber-bg: #FEF3C7;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --font-sans: "Plus Jakarta Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   }
 
   body.dark {
-    --bg: #151413;
-    --surface: #1e1c1b;
-    --surface-alt: #282625;
-    --text: #f3f2f2;
-    --text-muted: #a6a2a2;
-    --text-dim: #7d7979;
-    --border: #f3f2f2;
-    --border-light: #3d3a39;
-    --border-subtle: #282625;
-    --accent-red: #ff563c;
-    --accent-red-hover: #ff705a;
-    --accent-blue: #62A0EA;
-    --accent-blue-soft: #1C2E46;
-    --accent-green: #57E389;
-    --accent-green-soft: #123820;
-    --accent-amber: #F6D32D;
-    --accent-amber-soft: #382D08;
-    --brand-navy: #072242;
-    --brand-blue: #48CAE4;
-    --brand-cyan: #48CAE4;
-    --brand-ice: #102438;
+    --bg: #0B1120;
+    --surface: #1E293B;
+    --surface-alt: #0F172A;
+    --border: #334155;
+    --border-light: #1E293B;
+    --border-subtle: #1E293B;
+    --text: #F8FAFC;
+    --text-muted: #94A3B8;
+    --text-dim: #64748B;
+    --brand-navy: #38BDF8;
+    --brand-blue: #38BDF8;
+    --brand-cyan: #0284C7;
+    --accent-red: #F87171;
+    --accent-red-bg: #450A0A;
+    --accent-green: #34D399;
+    --accent-green-bg: #064E3B;
+    --accent-amber: #FBBF24;
+    --accent-amber-bg: #451A03;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
   }
+
+  * { box-sizing: border-box; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .icon-svg {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  /* Refined Buttons with Haptic Press Physics */
+  .btn-m {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all .15s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+    user-select: none;
+    white-space: nowrap;
+  }
+  .btn-m:hover {
+    background: var(--surface-alt);
+    border-color: var(--text-muted);
+  }
+  .btn-m:active {
+    transform: scale(0.97);
+  }
+  .btn-m.primary {
+    background: #0A3668;
+    color: #FFFFFF;
+    border-color: #0A3668;
+  }
+  .btn-m.primary:hover {
+    background: #082d57;
+    border-color: #082d57;
+  }
+  body.dark .btn-m.primary {
+    background: #0284C7;
+    border-color: #0284C7;
+    color: #FFFFFF;
+  }
+  body.dark .btn-m.primary:hover {
+    background: #0369a1;
+  }
+  .btn-m.success {
+    background: #059669;
+    color: #FFFFFF;
+    border-color: #059669;
+  }
+  .btn-m.success:hover { background: #047857; }
+  .btn-m.whatsapp {
+    background: #25D366;
+    color: #FFFFFF;
+    border-color: #25D366;
+  }
+  .btn-m.whatsapp:hover { background: #1eb954; }
+
+  /* Navigation Bar */
+  .nav-bar {
+    height: 42px;
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+    display: flex;
+    align-items: stretch;
+    padding: 0 12px;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .nav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all .12s ease;
+    white-space: nowrap;
+  }
+  .nav-tab:hover:not(.active) {
+    color: var(--text);
+    background: var(--surface-alt);
+  }
+  .nav-tab.active {
+    color: #0A3668;
+    border-bottom-color: #DC2626;
+    background: var(--surface-alt);
+  }
+  body.dark .nav-tab.active {
+    color: #38BDF8;
+    border-bottom-color: #38BDF8;
+  }
+
+  /* Status Badges */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+  }
+  .status-pill.sp-ready {
+    background: var(--accent-green-bg);
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green);
+  }
+  .status-pill.sp-prog {
+    background: #E0F2FE;
+    color: #0369A1;
+    border: 1px solid #7DD3FC;
+  }
+  .status-pill.sp-draft {
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  /* Results Input Styling */
+  .field-input {
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    font-size: 12.5px;
+    font-family: inherit;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .field-input:focus {
+    border-color: #0A3668;
+    box-shadow: 0 0 0 3px rgba(10, 54, 104, 0.15);
+  }
+  body.dark .field-input:focus {
+    border-color: #38BDF8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+  }
+
+  /* Results Row Grid */
+  .results-table-head {
+    display: grid;
+    grid-template-columns: 1fr 130px 80px 130px 90px 32px;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--surface-alt);
+    border-bottom: 2px solid var(--border);
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-muted);
+    align-items: center;
+  }
+  .results-data-row {
+    display: grid;
+    grid-template-columns: 1fr 130px 80px 130px 90px 32px;
+    gap: 12px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    align-items: center;
+    background: var(--surface);
+    transition: background .1s ease;
+  }
+  .results-data-row:hover {
+    background: var(--surface-alt);
+  }
+
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -1059,6 +1266,45 @@ let DOCTORS = JSON.parse(localStorage.getItem("labsoft_docs_v2") || "null") || [
 
 
 // Laboratory Customization & Branding Configuration
+
+/* --------------------------------------------------------------------------
+   Medical & UI SVG Iconography Engine (Zero External Dependencies)
+   -------------------------------------------------------------------------- */
+function getIcon(name, size = 16, color = "currentColor", strokeWidth = 2) {
+  const icons = {
+    "job": `<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>`,
+    "queue": `<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h6"/>`,
+    "patients": `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`,
+    "doctors": `<path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/>`,
+    "tests": `<path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/>`,
+    "billing": `<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>`,
+    "analytics": `<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>`,
+    "summaries": `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>`,
+    "staff": `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`,
+    "settings": `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>`,
+    "printer": `<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>`,
+    "whatsapp": `<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>`,
+    "barcode": `<path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/>`,
+    "sparkles": `<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>`,
+    "plus": `<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>`,
+    "trash": `<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>`,
+    "x": `<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>`,
+    "search": `<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>`,
+    "alert": `<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+    "check": `<polyline points="20 6 9 17 4 12"/>`,
+    "sun": `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`,
+    "moon": `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`,
+    "info": `<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>`,
+    "logout": `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>`,
+    "user": `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
+    "download": `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>`
+  };
+
+  const svgBody = icons[name] || icons["info"];
+  return `<span class="icon-svg" style="width:${size}px; height:${size}px; color:${color};"><svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">${svgBody}</svg></span>`;
+}
+
+
 let LAB_CONFIG = JSON.parse(localStorage.getItem("labsoft_config_v2") || "null") || {
   prefix: "NEW",
   name: "MITHRA",
@@ -1264,41 +1510,43 @@ function render() {
   root.innerHTML = `
     <!-- Top Header Bar -->
     <header class="top-header">
-      <div style="font-weight:800; letter-spacing:1.5px; padding:0 16px; font-size:14px;">LABSOFT</div>
-      <div style="font-size:12px; color:#c9c5c5;">Sunrise Pathology Lab · Workstation PC-01</div>
-      <div class="user-chip" style="margin-left:auto; display:flex; align-items:center; gap:8px;">
-        <span style="font-weight:700; color:#ffffff;">👤 ${currentUser.name} (${currentUser.role})</span>
-        <button onclick="signOut()" class="header-btn" style="background:#ec3013; color:#fff; font-weight:700; border:none; padding:4px 10px; font-size:11px; cursor:pointer;">Sign Out</button>
+      <div style="font-weight:900; letter-spacing:2px; font-size:14px; color:#FFFFFF; display:flex; align-items:center; gap:8px;">
+        ${getIcon('tests', 16, '#38BDF8')} LABSOFT
       </div>
-      <button class="header-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="margin-right:12px; font-size:12px; padding:4px 8px;">🌓 ${currentTheme==='dark'?'Light':'Dark'}</button>
-      <button class="header-btn" onclick="showAbout()" title="About & Credits" style="margin-right:12px; font-size:12px; padding:4px 8px;">ℹ️ About</button>
+      <div style="font-size:11.5px; color:#94A3B8;">${LAB_CONFIG.name || 'MITHRA'} Diagnostic Pathology System · Workstation PC-01</div>
+      <div class="user-chip" style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+        <span style="font-weight:700; color:#FFFFFF; font-size:12px; display:flex; align-items:center; gap:6px;">${getIcon('user', 14, '#38BDF8')} ${currentUser.name} (${currentUser.role})</span>
+        <button onclick="signOut()" class="btn-m" style="background:#DC2626; color:#fff; border:none; height:26px; padding:0 10px; font-size:11px;">${getIcon('logout', 13)} Sign Out</button>
+      </div>
+      <button class="btn-m" onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="height:28px; padding:0 10px; font-size:11.5px;">${currentTheme==='dark'?getIcon('sun', 14, '#FBBF24'):getIcon('moon', 14, '#0A3668')} ${currentTheme==='dark'?'Light':'Dark'}</button>
+      <button class="btn-m" onclick="showAbout()" title="About & Credits" style="height:28px; padding:0 10px; font-size:11.5px;">${getIcon('info', 14)} About</button>
     </header>
 
     <!-- Navigation Tabs -->
     <nav class="nav-bar">
-      <button class="nav-tab ${currentTab==='job'?'active':''}" onclick="setTab('job')">01. 🧭 Job (F2)</button>
-      <button class="nav-tab ${currentTab==='queue'?'active':''}" onclick="setTab('queue')">02. 📋 Queue</button>
-      <button class="nav-tab ${currentTab==='patients'?'active':''}" onclick="setTab('patients')">03. 👥 Patients</button>
-      <button class="nav-tab ${currentTab==='doctors'?'active':''}" onclick="setTab('doctors')">04. 🩺 Doctors</button>
-      <button class="nav-tab ${currentTab==='tests'?'active':''}" onclick="setTab('tests')">05. 🧪 Catalog</button>
-      <button class="nav-tab ${currentTab==='billing'?'active':''}" onclick="setTab('billing')">06. 💳 Billing (F4)</button>
-      <button class="nav-tab ${currentTab==='analytics'?'active':''}" onclick="setTab('analytics')">07. 📊 Analytics (F10)</button>
-      <button class="nav-tab ${currentTab==='summaries'?'active':''}" onclick="setTab('summaries')">08. 📑 Summaries</button>
-      <button class="nav-tab ${currentTab==='staff'?'active':''}" onclick="setTab('staff')">09. 🛡️ Staff</button>
-      <button class="nav-tab ${currentTab==='settings'?'active':''}" onclick="setTab('settings')">10. ⚙️ Settings</button>
+      <button class="nav-tab ${currentTab==='job'?'active':''}" onclick="setTab('job')">${getIcon('job', 15)} 01. Job (F2)</button>
+      <button class="nav-tab ${currentTab==='queue'?'active':''}" onclick="setTab('queue')">${getIcon('queue', 15)} 02. Queue</button>
+      <button class="nav-tab ${currentTab==='patients'?'active':''}" onclick="setTab('patients')">${getIcon('patients', 15)} 03. Patients</button>
+      <button class="nav-tab ${currentTab==='doctors'?'active':''}" onclick="setTab('doctors')">${getIcon('doctors', 15)} 04. Doctors</button>
+      <button class="nav-tab ${currentTab==='tests'?'active':''}" onclick="setTab('tests')">${getIcon('tests', 15)} 05. Catalog</button>
+      <button class="nav-tab ${currentTab==='billing'?'active':''}" onclick="setTab('billing')">${getIcon('billing', 15)} 06. Billing (F4)</button>
+      <button class="nav-tab ${currentTab==='analytics'?'active':''}" onclick="setTab('analytics')">${getIcon('analytics', 15)} 07. Analytics (F10)</button>
+      <button class="nav-tab ${currentTab==='summaries'?'active':''}" onclick="setTab('summaries')">${getIcon('summaries', 15)} 08. Summaries</button>
+      <button class="nav-tab ${currentTab==='staff'?'active':''}" onclick="setTab('staff')">${getIcon('staff', 15)} 09. Staff</button>
+      <button class="nav-tab ${currentTab==='settings'?'active':''}" onclick="setTab('settings')">${getIcon('settings', 15)} 10. Settings</button>
     </nav>
 
     
     <!-- Speed-Keyboard HUD Bar -->
     <div class="keyboard-hud-bar">
-      <span class="hud-item" onclick="newJob()"><kbd>F2</kbd> 👤 New Job</span>
-      <span class="hud-item" onclick="setTab('job'); setTimeout(()=>document.getElementById('test-search-inp')?.focus(), 50);"><kbd>F3</kbd> 🧪 Add Test</span>
-      <span class="hud-item" onclick="openBillModal()"><kbd>F4</kbd> 💳 Settle Bill</span>
-      <span class="hud-item" onclick="openTubeLabelModal(activeJob)"><kbd>F7</kbd> 🏷️ Tube Label</span>
-      <span class="hud-item" onclick="openWhatsAppDispatchModal(activeJob)"><kbd>F8</kbd> 📱 WhatsApp</span>
-      <span class="hud-item" onclick="openReportPreview(activeJob)"><kbd>F9</kbd> 🖨️ Report Print</span>
-      <span class="hud-item" onclick="setTab('analytics')"><kbd>F10</kbd> 📊 Day-Book</span>
-      <span class="hud-item" onclick="closeModal()"><kbd>Esc</kbd> ✕ Close</span>
+      <span class="hud-item" onclick="newJob()"><kbd>F2</kbd> ${getIcon('user', 12)} New Job</span>
+      <span class="hud-item" onclick="setTab('job'); setTimeout(()=>document.getElementById('test-search-inp')?.focus(), 50);"><kbd>F3</kbd> ${getIcon('tests', 12)} Add Test</span>
+      <span class="hud-item" onclick="openBillModal()"><kbd>F4</kbd> ${getIcon('billing', 12)} Settle Bill</span>
+      <span class="hud-item" onclick="openTubeLabelModal(activeJob)"><kbd>F7</kbd> ${getIcon('barcode', 12)} Tube Label</span>
+      <span class="hud-item" onclick="openWhatsAppDispatchModal(activeJob)"><kbd>F8</kbd> ${getIcon('whatsapp', 12)} WhatsApp</span>
+      <span class="hud-item" onclick="openReportPreview(activeJob)"><kbd>F9</kbd> ${getIcon('printer', 12)} Report Print</span>
+      <span class="hud-item" onclick="setTab('analytics')"><kbd>F10</kbd> ${getIcon('analytics', 12)} Day-Book</span>
+      <span class="hud-item" onclick="closeModal()"><kbd>Esc</kbd> ${getIcon('x', 12)} Close</span>
     </div>
 
     <!-- Main Active Workspace -->
@@ -1600,7 +1848,7 @@ function renderJobScreen(container) {
           🧬 ${gName} (${gCodes.length} tests)
         </span>
         <button class="btn-m" style="padding:2px 8px; font-size:10px; color:var(--accent-red); border:1px solid #fca5a5; background:var(--surface);" onclick="removeGroup('${gName}')" title="Remove entire ${gName} department">
-          🗑️ Remove Group
+          ${getIcon('trash', 12, '#DC2626')} Remove Group
         </button>
       </div>
     `;
@@ -3635,7 +3883,7 @@ function renderAnalyticsScreen(container) {
         <div style="font-size:11.5px; color:var(--text-muted);">Real-time revenue, workload performance and referral statements</div>
       </div>
       <div style="margin-left:auto; display:flex; gap:10px;">
-        <button class="btn-m" onclick="exportDaySheetCSV()">📥 Export Day Sheet (CSV)</button>
+        <button class="btn-m" onclick="exportDaySheetCSV()">${getIcon('download', 13, '#FFFFFF')} Export Day Sheet (CSV)</button>
         <button class="btn-m primary" onclick="window.print()">🖨️ Print Executive Statement</button>
       </div>
     </div>
