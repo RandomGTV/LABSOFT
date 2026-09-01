@@ -262,9 +262,22 @@ def _m003(conn: sqlite3.Connection) -> None:
     if "user_name" not in cols:
         conn.execute("ALTER TABLE audit_log ADD COLUMN user_name TEXT DEFAULT ''")
 
-    jcols = {r[1] for r in conn.execute("PRAGMA table_info(jobs)")}
+        jcols = {r[1] for r in conn.execute("PRAGMA table_info(jobs)")}
     if "created_by" not in jcols:
         conn.execute("ALTER TABLE jobs ADD COLUMN created_by TEXT DEFAULT ''")
+
+    user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    if user_count == 0:
+        import hashlib, os
+        salt = os.urandom(16)
+        h = hashlib.pbkdf2_hmac("sha256", b"1598", salt, 120_000)
+        pin_hash = f"pbkdf2:sha256:120000${salt.hex()}${h.hex()}"
+        perms = ",".join(["results", "send", "bill", "money", "tests", "settings", "delete", "users"])
+        conn.execute(
+            "INSERT OR IGNORE INTO users (username, display_name, role, pin_hash, permissions, active, created_at) "
+            "VALUES (?, ?, ?, ?, ?, 1, datetime('now', 'localtime'))",
+            ("admin", "Administrator", "admin", pin_hash, perms)
+        )
 
 
 def _m004(conn: sqlite3.Connection) -> None:

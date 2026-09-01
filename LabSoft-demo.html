@@ -1431,9 +1431,9 @@ function handleSignInSubmit() {
   }
 
   // Check pin against selected user or default admin PIN 1598
-  if (user && (user.pin === pin || pin === "1598")) {
-    currentUser = user;
-    sessionStorage.setItem("labsoft_user_v2", JSON.stringify(user));
+  if (pin === "1598" || (user && user.pin === pin)) {
+    currentUser = user || STAFF_ACCOUNTS[0] || { username: "admin", name: "Administrator", role: "Admin", pin: "1598" };
+    sessionStorage.setItem("labsoft_user_v2", JSON.stringify(currentUser));
     render();
   } else {
     alert("Incorrect PIN. Default PIN is 1598.");

