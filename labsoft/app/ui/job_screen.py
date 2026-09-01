@@ -1712,12 +1712,13 @@ class JobScreen(QWidget):
     def _open_smart_phrases(self) -> None:
         def insert_cb(phrase: str):
             if not self.job_id:
-                return
+                if not self._ensure_job(silent=True):
+                    return
             job = q.get_job(self.job_id) or {}
             curr = (job.get("remarks") or "").strip()
             new_remarks = f"{curr}\n\n{phrase}".strip() if curr else phrase
-            q.update_job(self.job_id, {"remarks": new_remarks})
-            self.message.setText(f"✓ Clinical smart-phrase inserted into report remarks.")
+            q.update_job(self.job_id, remarks=new_remarks)
+            self.message.setText("✓ Clinical smart-phrase inserted into report remarks.")
             self.message.setStyleSheet(f"color: {style.GREEN}; font-weight: 600;")
         SmartPhrasesDialog(self, insert_cb).exec()
 
