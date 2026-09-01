@@ -40,12 +40,12 @@ LIGHT: Dict[str, str] = {
     "GREEN": "#16703F",
     "AMBER": "#8A5A00",
     "BLUE": "#1A5FB4",
-    "INK": "#201e1d",
-    "INK2": "#444141",
-    "INK3": "#605d5d",
-    "LINE": "#d7d3d3",
-    "LINE2": "#eae7e7",
-    "BG": "#f3f2f2",
+    "INK": "#0F172A",
+    "INK2": "#334155",
+    "INK3": "#64748B",
+    "LINE": "#CBD5E1",
+    "LINE2": "#E2E8F0",
+    "BG": "#F1F5F9",
     "PANEL": "#FFFFFF",
     # Extras the stylesheet needs but nothing else refers to by name.
     "FIELD_BORDER": "#7d7979",
@@ -64,7 +64,7 @@ LIGHT: Dict[str, str] = {
     "TIP_BG": "#201e1d",
     "TIP_TEXT": "#f3f2f2",
     # Modernist additions.
-    "FILL": "#eae7e7",          # a filled surface that is not a card
+    "FILL": "#E2E8F0",          # a filled surface that is not a card
     "RULE": "#201e1d",          # the 2px section rule
     "ON_INK": "#f3f2f2",        # text on an ink-filled control
     "ON_ACCENT": "#f3f2f2",     # text on the accent
@@ -475,14 +475,24 @@ QPushButton[kind="quiet"]:hover {{ color: {ACCENT_INK}; background: transparent;
 /* The panel buttons: a chosen panel is filled ink, an unchosen one is paper
    with a hairline. No colour needed to tell them apart. */
 QPushButton[kind="panel"] {{
-    background: {PANEL};
-    border: 1px solid {LINE if not dark else "#3C464E"};
-    color: {INK};
-    padding: 10px 14px;
-    font-weight: 600;
-    font-size: 10.5pt;
+    background: {"#FFFFFF" if not dark else "#132F4C"};
+    border: 1px solid {"#BAE6FD" if not dark else "#1E3A5F"};
+    border-radius: 4px;
+    color: {"#0A3668" if not dark else "#E2E8F0"};
+    padding: 8px 12px;
+    font-weight: 700;
+    font-size: 9.5pt;
 }}
-QPushButton[kind="panel"]:hover {{ background: {FILL}; border-color: {INK3}; }}
+QPushButton[kind="panel"]:hover {{
+    background: {"#E0F2FE" if not dark else "#1E3A5F"};
+    border-color: {ACCENT_INK};
+    color: {ACCENT_INK};
+}}
+QPushButton[kind="panel"]:pressed {{
+    background: {ACCENT_INK};
+    border-color: {ACCENT_INK};
+    color: #FFFFFF;
+}}
 QPushButton[kind="danger"] {{ color: {RED}; }}
 
 QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateEdit, QPlainTextEdit, QTextEdit {{
@@ -609,13 +619,27 @@ QGroupBox::title {{
    put in (left), what you are working on (the white field), and what the
    program has to say (the counsel column). The fill runs up through the
    status rail so the column is one panel from the top of the window down. */
-#railLeft   {{ background: {BG}; border-right: 2px solid {RULE}; }}
-#leftRail   {{ background: {BG}; border-right: 2px solid {RULE}; }}
-#patientBlock {{ background: transparent; border-bottom: 1px solid {LINE}; }}
+#railLeft   {{ background: {"#F0F6FB" if not dark else "#0A1929"}; border-right: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"}; }}
+#leftRail   {{ background: {"#F0F6FB" if not dark else "#0A1929"}; border-right: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"}; }}
+#patientBlock {{ background: transparent; border-bottom: 1px solid {"#D1E3F0" if not dark else "#1E3A5F"}; }}
 #testsBlock {{ background: transparent; }}
-/* Fields stay paper-white against it, so a box still looks like a box. */
 #leftRail QLineEdit, #leftRail QComboBox, #leftRail QSpinBox {{
     background: {PANEL};
+    border: 1.5px solid {"#CBD5E1" if not dark else "#1E3A5F"};
+    border-radius: 4px;
+    padding: 6px 8px;
+    color: {INK};
+}}
+#leftRail QLineEdit:focus, #leftRail QComboBox:focus, #leftRail QSpinBox:focus {{
+    border: 2px solid {ACCENT_INK};
+    background: {PANEL};
+}}
+#leftRail QLabel[role="micro"] {{
+    color: {"#0A3668" if not dark else "#38BDF8"};
+    font-weight: 800;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }}
 #moneyBand  {{ background: {INK}; }}
 #moneyBand QLabel {{ color: {ON_INK}; }}

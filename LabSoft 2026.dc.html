@@ -1017,6 +1017,61 @@
     cursor: default;
   }
 
+
+  .workspace-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: calc(100vh - 120px);
+  }
+  .col-side {
+    background: #F0F6FB;
+    border-right: 1.5px solid #CBD5E1;
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  body.dark .col-side {
+    background: #0A1929;
+    border-right: 1.5px solid #1E3A5F;
+  }
+  .col-side .sec-title {
+    color: #0A3668;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  body.dark .col-side .sec-title {
+    color: #38BDF8;
+  }
+  .panel-tag-btn {
+    background: #FFFFFF;
+    border: 1px solid #BAE6FD;
+    border-radius: 4px;
+    color: #0A3668;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 6px 11px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .panel-tag-btn:hover {
+    background: #E0F2FE;
+    border-color: #0284C7;
+    color: #0284C7;
+  }
+  body.dark .panel-tag-btn {
+    background: #132F4C;
+    border-color: #1E3A5F;
+    color: #E2E8F0;
+  }
+  body.dark .panel-tag-btn:hover {
+    background: #1E3A5F;
+    border-color: #38BDF8;
+    color: #38BDF8;
+  }
+
 </style>
 </head>
 <body>
@@ -3834,7 +3889,62 @@ function printReceiptDirect() {
         <style>
           @page { size: 80mm auto; margin: 4mm; }
           body { font-family: monospace; font-size: 11px; margin: 0; padding: 0; color: #000; }
-        </style>
+        
+  .workspace-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: calc(100vh - 120px);
+  }
+  .col-side {
+    background: #F0F6FB;
+    border-right: 1.5px solid #CBD5E1;
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  body.dark .col-side {
+    background: #0A1929;
+    border-right: 1.5px solid #1E3A5F;
+  }
+  .col-side .sec-title {
+    color: #0A3668;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  body.dark .col-side .sec-title {
+    color: #38BDF8;
+  }
+  .panel-tag-btn {
+    background: #FFFFFF;
+    border: 1px solid #BAE6FD;
+    border-radius: 4px;
+    color: #0A3668;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 6px 11px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .panel-tag-btn:hover {
+    background: #E0F2FE;
+    border-color: #0284C7;
+    color: #0284C7;
+  }
+  body.dark .panel-tag-btn {
+    background: #132F4C;
+    border-color: #1E3A5F;
+    color: #E2E8F0;
+  }
+  body.dark .panel-tag-btn:hover {
+    background: #1E3A5F;
+    border-color: #38BDF8;
+    color: #38BDF8;
+  }
+
+</style>
       </head>
       <body onload="window.print(); window.close();">
         ${content}
