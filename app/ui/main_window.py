@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QLabel, QMainWindow, QStatusBar, QTabWidget
 from .. import config
 from ..core import auth
 from ..db import connection, queries as q
-from . import style
+from . import icons, style
 from .analytics_screen import AnalyticsScreen
 from .billing_screen import BillingScreen
 from .doctors_screen import DoctorsScreen
@@ -48,20 +48,20 @@ class MainWindow(QMainWindow):
 
         # Tabs a person cannot use are not shown at all. A greyed-out tab is an
         # invitation to ask why; an absent one is simply not their job.
-        self.tabs.addTab(self.job_screen, "Job")
-        self.tabs.addTab(self.queue_screen, "Work Queue")
-        self.tabs.addTab(self.patients_screen, "Patients")
-        self.tabs.addTab(self.doctors_screen, "Doctors")
+        self.tabs.addTab(self.job_screen, icons.get_icon("job", "#0A3668", 16), "Job")
+        self.tabs.addTab(self.queue_screen, icons.get_icon("queue", "#0A3668", 16), "Work Queue")
+        self.tabs.addTab(self.patients_screen, icons.get_icon("patients", "#0A3668", 16), "Patients")
+        self.tabs.addTab(self.doctors_screen, icons.get_icon("doctors", "#0A3668", 16), "Doctors")
         if auth.can(auth.P_TESTS):
-            self.tabs.addTab(self.tests_screen, "Tests")
+            self.tabs.addTab(self.tests_screen, icons.get_icon("tests", "#0A3668", 16), "Tests")
         if auth.can(auth.P_MONEY):
-            self.tabs.addTab(self.billing_screen, "Billing")
-            self.tabs.addTab(self.analytics_screen, "Analytics")
-            self.tabs.addTab(self.summaries_screen, "Summaries")
+            self.tabs.addTab(self.billing_screen, icons.get_icon("billing", "#0A3668", 16), "Billing")
+            self.tabs.addTab(self.analytics_screen, icons.get_icon("analytics", "#0A3668", 16), "Analytics")
+            self.tabs.addTab(self.summaries_screen, icons.get_icon("summaries", "#0A3668", 16), "Summaries")
         if auth.can(auth.P_USERS):
-            self.tabs.addTab(self.staff_screen, "Staff")
+            self.tabs.addTab(self.staff_screen, icons.get_icon("staff", "#0A3668", 16), "Staff")
         if auth.can(auth.P_SETTINGS) or auth.can(auth.P_USERS):
-            self.tabs.addTab(self.settings_screen, "Settings")
+            self.tabs.addTab(self.settings_screen, icons.get_icon("settings", "#0A3668", 16), "Settings")
         self.tabs.currentChanged.connect(self._tab_changed)
         self.setCentralWidget(self.tabs)
 

@@ -26,7 +26,7 @@ from PyQt6.QtWidgets import (
 from .. import services
 from ..core import turnaround
 from ..db import queries as q
-from . import style
+from . import icons, style
 from .pos_receipt_dialog import POSReceiptDialog
 from .whatsapp_dialog import WhatsAppDialog
 from .widgets import (
@@ -351,14 +351,10 @@ class JobScreen(QWidget):
         self.message.setMaximumWidth(260)
         lay.addWidget(self.message)
 
-        self.clear_button = button("New job", "", self.new_job,
-                                   "Start a fresh job  (F2)")
-        self.whatsapp_button = button("📱 WhatsApp", "", self._open_whatsapp_dispatch, "Send structured WhatsApp report", "F8")
-        self.preview_button = button("Preview", "", self.preview,
-                                     "Look at the report before sending it")
-        self.verify_button = button("Check && make report", "go", self.verify,
-                                    "Check every test is filled in, then make the report",
-                                    "F9")
+        self.clear_button = button("New job", "", self.new_job, "Start a fresh job (F2)"); self.clear_button.setIcon(icons.get_icon("new_job", "#0A3668", 16))
+        self.whatsapp_button = button("WhatsApp", "", self._open_whatsapp_dispatch, "Send structured WhatsApp report", "F8"); self.whatsapp_button.setIcon(icons.get_icon("whatsapp", "#25D366", 16))
+        self.preview_button = button("Preview", "", self.preview, "Look at the report before sending it"); self.preview_button.setIcon(icons.get_icon("preview", "#0A3668", 16))
+        self.verify_button = button("Check && make report", "go", self.verify, "Check every test is filled in, then make the report", "F9"); self.verify_button.setIcon(icons.get_icon("check_report", "#FFFFFF", 16))
         for b in (self.clear_button, self.whatsapp_button, self.preview_button, self.verify_button):
             lay.addWidget(b)
         return rail
@@ -575,12 +571,9 @@ class JobScreen(QWidget):
         self.bill_hint.setMaximumWidth(230)
         lay.addWidget(self.bill_hint)
 
-        self.bill_print_button = button(
-            "Print bill…", "", self._print_bill,
-            "Show the receipt, then print, save or send it")
-        self.bill_button2 = button("Make the bill", "primary", self._open_bill,
-                                   "Record what is being charged", "F4")
-        self.pos_receipt_btn = button("🧾 POS Receipt", "", self._open_pos_receipt, "Print 80mm thermal receipt slip")
+        self.bill_print_button = button("Print bill…", "", self._print_bill, "Show the receipt, then print, save or send it"); self.bill_print_button.setIcon(icons.get_icon("print", "#F8FAFC", 16))
+        self.bill_button2 = button("Make the bill", "primary", self._open_bill, "Record what is being charged", "F4"); self.bill_button2.setIcon(icons.get_icon("bill", "#0F172A", 16))
+        self.pos_receipt_btn = button("POS Receipt", "", self._open_pos_receipt, "Print 80mm thermal receipt slip"); self.pos_receipt_btn.setIcon(icons.get_icon("pos", "#F8FAFC", 16))
         lay.addWidget(self.pos_receipt_btn)
         lay.addWidget(self.bill_print_button)
         lay.addWidget(self.bill_button2)
@@ -800,7 +793,7 @@ class JobScreen(QWidget):
         block, inner = self._counsel_block("Clinical Remarks & Smear Impression")
         self.remarks_edit = QTextEdit()
         self.remarks_edit.setFixedHeight(72)
-        self.remarks_edit.setPlaceholderText("Enter clinical notes or click 'Smart-Phrases'...")
+        self.remarks_edit.setPlaceholderText("Enter clinical remarks and smear impression...")
         self.remarks_edit.textChanged.connect(self._remarks_changed)
         inner.addWidget(self.remarks_edit)
         lay.addWidget(block)
@@ -1000,7 +993,7 @@ class JobScreen(QWidget):
         for p in q.list_panels(quick_only=True):
             # Qt reads a single & as a keyboard shortcut marker and hides it, so
             # "Blood Sugar F & PP" would print as "Blood Sugar F _PP".
-            b = button(p["name"].replace("&", "&&"), "panel")
+            b = button("+ " + p["name"].replace("&", "&&"), "panel")
             b.clicked.connect(lambda _c=False, pid=p["id"]: self._add_panel(pid))
             self.panel_layout.addWidget(b)
 
