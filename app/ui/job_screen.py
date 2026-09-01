@@ -359,7 +359,7 @@ class JobScreen(QWidget):
         self.verify_button = button("Check && make report", "go", self.verify,
                                     "Check every test is filled in, then make the report",
                                     "F9")
-        for b in (self.clear_button, self.whatsapp_button, self.smart_button, self.preview_button, self.verify_button):
+        for b in (self.clear_button, self.whatsapp_button, self.preview_button, self.verify_button):
             lay.addWidget(b)
         return rail
 

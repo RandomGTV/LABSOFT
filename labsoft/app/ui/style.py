@@ -29,13 +29,13 @@ from typing import Dict
 LIGHT: Dict[str, str] = {
     # BRAND is the accent: the one colour in the room. It marks the live tab,
     # the focus ring and the single most consequential button on a screen.
-    "BRAND": "#ec3013",
-    "BRAND_DARK": "#7c1405",
-    "BRAND_SOFT": "#fff2ef",
+    "BRAND": "#0A3668",
+    "BRAND_DARK": "#062344",
+    "BRAND_SOFT": "#F0F9FF",
     # #ec3013 is the marker colour -- a 2px underline, a focus ring, an edge,
     # all of which only need 3:1. As *text* or as a fill behind text it is
     # 4.2:1 and fails AA, so anything carrying words uses the darker step.
-    "ACCENT_INK": "#ae1800",
+    "ACCENT_INK": "#0284C7",
     "RED": "#ae1800",
     "GREEN": "#16703F",
     "AMBER": "#8A5A00",
@@ -57,7 +57,7 @@ LIGHT: Dict[str, str] = {
     "PANEL_BTN_HOVER": "#eae7e7",
     "PRIMARY_OFF": "#d7d3d3",
     "PRIMARY_OFF_TEXT": "#7d7979",
-    "GO_HOVER": "#dd2b0f",
+    "GO_HOVER": "#0369A1",
     "GO_OFF": "#d7d3d3",
     "GO_OFF_TEXT": "#7d7979",
     "TRACK": "#eae7e7",
@@ -77,10 +77,10 @@ DARK: Dict[str, str] = {
     # Its own ground and its own paper, not an inversion of the day theme, and
     # the accent lifted to #ff563c so it still reads at three in the morning
     # without glaring.
-    "BRAND": "#ff563c",
-    "BRAND_DARK": "#ff7a66",
-    "BRAND_SOFT": "#2A1A17",
-    "ACCENT_INK": "#ff563c",
+    "BRAND": "#38BDF8",
+    "BRAND_DARK": "#0284C7",
+    "BRAND_SOFT": "#082F49",
+    "ACCENT_INK": "#38BDF8",
     "RED": "#FF8A8A",
     "GREEN": "#6FD79B",
     "AMBER": "#F0C066",
