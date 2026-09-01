@@ -767,8 +767,7 @@ let DOCTORS = JSON.parse(localStorage.getItem("labsoft_docs_v2") || "null") || [
 let currentTab = "job";
 let currentTheme = localStorage.getItem("labsoft_theme_v2") || "light";
 let letterheadStyle = localStorage.getItem("labsoft_lh_v2") || "classic";
-let currentUser = JSON.parse(sessionStorage.getItem("labsoft_user_v2") || "null");
-
+let currentUser = null; // Always show the Artboard 09 Sign In & Sign Up screen on launch
 let jobs = JSON.parse(localStorage.getItem("labsoft_jobs_v3") || "[]");
 let activeJob = createEmptyJob();
 
