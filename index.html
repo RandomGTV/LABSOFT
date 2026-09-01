@@ -1072,6 +1072,223 @@
     color: #38BDF8;
   }
 
+
+  /* Desktop Layout Replication */
+  .desktop-status-rail {
+    display: flex;
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 2px solid #0A3668;
+    align-items: center;
+  }
+  .rail-left-box {
+    width: 320px;
+    height: 100%;
+    background: #F0F6FB;
+    border-right: 1.5px solid #CBD5E1;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  body.dark .rail-left-box {
+    background: #0A1929;
+    border-right: 1.5px solid #1E3A5F;
+  }
+  .rail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .rail-item .micro-lbl {
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0A3668;
+    letter-spacing: .5px;
+  }
+  body.dark .rail-item .micro-lbl {
+    color: #38BDF8;
+  }
+  .rail-item .val-lbl {
+    font-size: 11pt;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+  }
+  .rail-v-line {
+    width: 1px;
+    height: 32px;
+    background: #CBD5E1;
+  }
+  body.dark .rail-v-line {
+    background: #1E3A5F;
+  }
+
+  .rail-right-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+    padding-right: 16px;
+    align-items: center;
+  }
+
+  .desktop-body-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr 280px;
+    min-height: calc(100vh - 150px);
+    background: var(--bg);
+  }
+
+  /* Left Intake Rail */
+  .desktop-left-rail {
+    background: #F0F6FB;
+    border-right: 1.5px solid #CBD5E1;
+    display: flex;
+    flex-direction: column;
+  }
+  body.dark .desktop-left-rail {
+    background: #0A1929;
+    border-right: 1.5px solid #1E3A5F;
+  }
+  .patient-block-ui {
+    padding: 14px 16px;
+    border-bottom: 1px solid #D1E3F0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  body.dark .patient-block-ui {
+    border-bottom: 1px solid #1E3A5F;
+  }
+  .tests-block-ui {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .patient-grid-ui {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 6px 10px;
+  }
+
+  /* Money Band */
+  .desktop-money-band {
+    background: #0F172A;
+    color: #F8FAFC;
+    height: 96px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    border-bottom: 2px solid #0A3668;
+  }
+  .money-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .money-stat .m-lbl {
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #94A3B8;
+    letter-spacing: .5px;
+  }
+  .money-stat .m-val {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #F8FAFC;
+  }
+  .money-stat .m-val.large {
+    font-size: 22pt;
+    font-weight: 800;
+    color: #FFFFFF;
+  }
+  .money-band-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  /* Results Table */
+  .desktop-results-head {
+    display: grid;
+    grid-template-columns: 1fr 140px 90px 140px 80px 32px;
+    gap: 12px;
+    padding: 9px 16px;
+    background: var(--surface);
+    border-bottom: 2px solid #0A3668;
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #64748B;
+  }
+
+  .desktop-results-body {
+    padding-bottom: 60px;
+    background: var(--surface);
+    min-height: 400px;
+  }
+
+  /* Right Counsel Rail */
+  .desktop-counsel-rail {
+    background: #F8FAFC;
+    border-left: 1.5px solid #CBD5E1;
+    display: flex;
+    flex-direction: column;
+  }
+  body.dark .desktop-counsel-rail {
+    background: #0F172A;
+    border-left: 1.5px solid #1E3A5F;
+  }
+  .counsel-section {
+    padding: 14px 16px;
+    border-bottom: 1px solid #E2E8F0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  body.dark .counsel-section {
+    border-bottom: 1px solid #1E3A5F;
+  }
+  .counsel-title {
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0A3668;
+    letter-spacing: .8px;
+  }
+  body.dark .counsel-title {
+    color: #38BDF8;
+  }
+
+  /* Foot Bar */
+  .desktop-foot-bar {
+    height: 44px;
+    background: #F1F5F9;
+    border-top: 2px solid #0A3668;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-size: 11.5px;
+    color: #64748B;
+  }
+  body.dark .desktop-foot-bar {
+    background: #0A1929;
+    border-top: 2px solid #1E3A5F;
+    color: #94A3B8;
+  }
+
 </style>
 </head>
 <body>
@@ -1858,31 +2075,39 @@ function handleKeypadClick(key) {
    01. Job Screen (Modernist Grid Layout with Medical Metadata & Panic Alerts)
    -------------------------------------------------------------------------- */
 
+
+const DESKTOP_PANELS = [
+  "CBC",
+  "Blood Sugar F & PP",
+  "HbA1c (with Mean Blood Glucose)",
+  "Lipid Profile",
+  "Liver Function Test",
+  "Renal Function Test",
+  "Thyroid Profile",
+  "Urine Routine",
+  "Diabetic Profile",
+  "Semen Analysis",
+  "Fever Profile",
+  "Iron Studies",
+  "Anaemia Profile",
+  "Full Body Checkup",
+  "Antenatal (ANC) Profile",
+  "Pre-Operative Profile",
+  "Diabetic Comprehensive",
+  "Senior Citizen Comprehensive"
+];
+
 function renderJobScreen(container) {
   const total = activeJob.tests.length;
   const done = activeJob.tests.filter(c => activeJob.results[c] && activeJob.results[c].trim() !== "").length;
   const isNameSet = activeJob.name.trim().length > 0;
-  const isMobileSet = activeJob.mobile.trim().length > 0;
-  const isSexSet = activeJob.sex.trim().length > 0;
-  const ready = total > 0 && done === total && isNameSet && isMobileSet && isSexSet;
+  const ready = total > 0 && done === total && isNameSet;
 
   const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate || 100), 0);
-  const netPayable = Math.max(0, subtotal - (activeJob.bill_disc || 0));
-
-  // Panic Alert Detection
-  let panicAlerts = [];
-  activeJob.tests.forEach(code => {
-    const t = TESTS[code];
-    const val = activeJob.results[code];
-    if (t && val && !isNaN(val)) {
-      const num = parseFloat(val);
-      if (t.panicLo !== undefined && num <= t.panicLo) {
-        panicAlerts.push({ name: t.n, val: `${num} ${t.u}`, reason: `CRITICALLY LOW (≤ ${t.panicLo} ${t.u})` });
-      } else if (t.panicHi !== undefined && num >= t.panicHi) {
-        panicAlerts.push({ name: t.n, val: `${num} ${t.u}`, reason: `CRITICALLY HIGH (≥ ${t.panicHi} ${t.u})` });
-      }
-    }
-  });
+  const discount = activeJob.bill_disc || 0;
+  const netPayable = Math.max(0, subtotal - discount);
+  const paid = activeJob.paid || 0;
+  const outstanding = Math.max(0, netPayable - paid);
 
   // Group tests by Department / Clinical Group
   const groups = {};
@@ -1898,11 +2123,11 @@ function renderJobScreen(container) {
   Object.keys(groups).forEach(gName => {
     const gCodes = groups[gName];
     resultsHTML += `
-      <div class="dept-header-strip">
-        <span style="font-weight:800; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--brand-blue);">
+      <div class="dept-header-strip" style="background:#F1F5F9; border-bottom:1px solid #CBD5E1; padding:6px 16px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:800; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#0A3668;">
           🧬 ${gName} (${gCodes.length} tests)
         </span>
-        <button class="btn-m" style="padding:2px 8px; font-size:10px; color:var(--accent-red); border:1px solid #fca5a5; background:var(--surface);" onclick="removeGroup('${gName}')" title="Remove entire ${gName} department">
+        <button class="btn-m" style="padding:2px 8px; font-size:10px; color:#DC2626; border:1px solid #fca5a5; background:#FFFFFF;" onclick="removeGroup('${gName}')" title="Remove entire ${gName} department">
           ${getIcon('trash', 12, '#DC2626')} Remove Group
         </button>
       </div>
@@ -1931,7 +2156,7 @@ function renderJobScreen(container) {
       let inputField = "";
       if (t.opts) {
         inputField = `
-          <select class="field-input" onchange="onResultInput('${code}', this.value)" style="height:38px; font-weight:800; font-size:13.5px;">
+          <select class="field-input" onchange="onResultInput('${code}', this.value)" style="height:34px; font-weight:700; font-size:12.5px;">
             <option value="">— Select —</option>
             ${t.opts.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join("")}
           </select>
@@ -1939,7 +2164,7 @@ function renderJobScreen(container) {
       } else {
         inputField = `
           <div class="res-input-box ${isCalc?'calc-box':''}">
-            <input type="text" data-test-code="${code}" value="${val}" ${isCalc?'readonly':''} oninput="onResultInput('${code}', this.value)" onchange="render()" placeholder="${isCalc?'Auto':'—'}">
+            <input type="text" data-test-code="${code}" value="${val}" ${isCalc?'readonly':''} oninput="onResultInput('${code}', this.value)" onchange="render()" placeholder="${isCalc?'Auto':'—'}" style="height:32px; padding:0 8px; font-size:12.5px; border:1.5px solid #CBD5E1; width:100%;">
           </div>
         `;
       }
@@ -1948,162 +2173,229 @@ function renderJobScreen(container) {
       if (activeJob.mobile || activeJob.name) {
         const prev = jobs.find(j => j.id !== activeJob.id && (j.mobile === activeJob.mobile || (j.name && j.name.toLowerCase() === activeJob.name.toLowerCase())) && j.results[code]);
         if (prev && prev.results[code]) {
-          deltaHTML = `<span style="font-size:10px; color:#1d4ed8; background:#eff6ff; padding:1px 5px; border-radius:2px; margin-left:6px; font-weight:700;" title="Previous result from ${prev.date}">Δ Prev: ${prev.results[code]} (${prev.date})</span>`;
+          deltaHTML = `<span style="font-size:10px; color:#0284C7; background:#E0F2FE; padding:1px 5px; border-radius:2px; margin-left:6px; font-weight:700;" title="Previous result from ${prev.date}">Δ Prev: ${prev.results[code]} (${prev.date})</span>`;
         }
       }
 
       resultsHTML += `
-        <div class="results-data-row">
+        <div class="desktop-results-head" style="background:#FFFFFF; border-bottom:1px solid #E2E8F0; font-size:12.5px; font-weight:normal; text-transform:none; letter-spacing:normal; color:#0F172A; align-items:center;">
           <div style="min-width:0;">
-            <div style="font-size:13.5px; font-weight:700; ${isCalc?'font-style:italic; color:var(--text-muted);':''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            <div style="font-size:13px; font-weight:700; ${isCalc?'font-style:italic; color:#64748B;':''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
               ${t.n}
             </div>
-            <div style="font-size:10.5px; color:var(--text-dim);">${t.m || 'Standard Method'} · <span style="color:var(--text-muted);">${t.g}</span>${deltaHTML}</div>
+            <div style="font-size:10.5px; color:#64748B;">${t.m || 'Standard Method'} · <span style="color:#94A3B8;">${t.g}</span>${deltaHTML}</div>
           </div>
           <div>${inputField}</div>
-          <div style="font-size:11.5px; color:var(--text-muted);">${t.u || '—'}</div>
-          <div style="font-size:11.5px; color:var(--text-muted); font-variant-numeric:tabular-nums;">${t.r || '—'}</div>
+          <div style="font-size:11.5px; color:#64748B;">${t.u || '—'}</div>
+          <div style="font-size:11.5px; color:#64748B; font-variant-numeric:tabular-nums;">${t.r || '—'}</div>
           <div>${flagHTML}</div>
-          <div><button class="btn-m" style="border:none; color:var(--accent-red); padding:0; width:24px; height:24px;" onclick="removeTest('${code}')" title="Remove single test">✕</button></div>
+          <div><button class="btn-m" style="border:none; color:#DC2626; padding:0; width:24px; height:24px; background:transparent;" onclick="removeTest('${code}')" title="Remove test">✕</button></div>
         </div>
       `;
     });
   });
 
   container.innerHTML = `
-    <!-- 03. Job Banner / Status Region -->
-    <div class="job-banner">
-      <div class="stat-block">
-        <span class="stat-label">Report No</span>
-        <span class="stat-value-lg">${activeJob.report_no}</span>
+    <!-- Top Status Rail -->
+    <div class="desktop-status-rail">
+      <div class="rail-left-box">
+        <div class="rail-item">
+          <span class="micro-lbl">Report No</span>
+          <span class="val-lbl">${activeJob.report_no || '—'}</span>
+        </div>
+        <div class="rail-v-line"></div>
+        <div class="rail-item" style="flex:1;">
+          <span class="micro-lbl">Patient</span>
+          <span class="val-lbl">${activeJob.name ? activeJob.name + ' .' + (activeJob.initial||'M') + '.' : 'New Job'}</span>
+        </div>
+        <div class="rail-v-line"></div>
+        <div class="rail-item">
+          <span class="micro-lbl">Due</span>
+          <span class="val-lbl" style="font-size:9pt; color:#64748B;">—</span>
+        </div>
       </div>
-      <div class="v-divider"></div>
-      <div class="stat-block">
-        <span class="stat-label">Patient</span>
-        <span style="font-size:15px; font-weight:700;">${activeJob.name ? activeJob.name + ' .' + activeJob.initial + '.' : '—'}</span>
-      </div>
-      <div class="v-divider"></div>
-      <div class="stat-block">
-        <span class="stat-label">Tube Specimen</span>
-        <span style="font-size:13px; font-weight:700; color:var(--accent-red);">${activeJob.specimen || 'Serum'}</span>
-      </div>
-      <div class="v-divider"></div>
-      <div style="display:flex; align-items:center; gap:12px;">
-        <span class="status-pill ${ready?'sp-ready':'sp-prog'}">${ready?'READY TO SEND':'IN PROGRESS'}</span>
-        ${activeJob.revision > 1 ? `<span class="status-pill" style="background:#fef3c7; color:#b45309; border:1px solid #f59e0b;">REV ${activeJob.revision}</span>` : ''}
-      </div>
-      <div style="margin-left:auto; display:flex; gap:10px;">
-        <button class="btn-m" onclick="openTubeLabelModal(activeJob)" title="Print 50mm x 25mm Tube Barcode Sticker [F7]">🏷️ Vial Label (F7)</button>
-        <button class="btn-m" onclick="openBillModal()" title="Settle Bill & Invoicing [F4]">💳 Bill (F4)</button>
-        <button class="btn-m primary" onclick="openReportPreview(activeJob)" title="Print Official A4 Diagnostic Report [F9]">🖨️ Report (F9)</button>
-        <button class="btn-m" style="background:#25D366; color:#ffffff; font-weight:700; border:none;" onclick="openWhatsAppDispatchModal(activeJob)" title="Dispatch Structured WhatsApp Report [F8]">📱 WhatsApp (F8)</button>
+
+      <div class="rail-right-actions">
+        <button class="btn-m" onclick="newJob()" title="Start a fresh job (F2)">New job</button>
+        <button class="btn-m" style="background:#25D366; color:#ffffff; font-weight:700; border:none;" onclick="openWhatsAppDispatchModal(activeJob)" title="Send structured WhatsApp report (F8)">📱 WhatsApp</button>
+        <button class="btn-m" onclick="openReportPreview(activeJob)" title="Look at the report before sending it">Preview</button>
+        <button class="btn-m ${ready?'primary':''}" style="${ready?'background:#059669; border-color:#059669; color:#FFFFFF;':'background:#CBD5E1; color:#64748B; border:none;'}" onclick="openReportPreview(activeJob)" title="Check every test is filled in, then make the report (F9)">Check & make report</button>
       </div>
     </div>
 
-    <!-- Panic / Critical Medical Alert Banner -->
-    ${panicAlerts.length > 0 ? `
-      <div style="background:#fee2e2; border-bottom:2px solid #ef4444; padding:8px 18px; display:flex; align-items:center; gap:12px;">
-        <span style="font-size:16px;">🚨</span>
-        <div style="font-size:12px; font-weight:800; color:#991b1b;">
-          CRITICAL PANIC VALUES DETECTED — CLINICAL ALERT:
-          ${panicAlerts.map(a => `<span style="background:#b91c1c; color:#fff; padding:2px 6px; border-radius:3px; margin:0 4px;">${a.name}: ${a.val} (${a.reason})</span>`).join("")}
+    <!-- 3-Column Desktop Grid -->
+    <div class="desktop-body-grid">
+      <!-- 1. Left Intake Rail (320px) -->
+      <div class="desktop-left-rail">
+        <!-- Patient Block -->
+        <div class="patient-block-ui">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="counsel-title">Patient</span>
+            <button class="btn-m" style="font-size:10.5px; padding:2px 6px; border:none; background:transparent; color:#0284C7; text-decoration:underline;" onclick="currentTab='patients'; render();">Patient history →</button>
+          </div>
+
+          <div class="patient-grid-ui">
+            <div>
+              <label class="counsel-title" style="font-size:7pt;">Name</label>
+              <input type="text" class="field-input" value="${activeJob.name}" oninput="activeJob.name=this.value; saveState();" placeholder="Patient name" style="height:32px; font-size:12px;">
+            </div>
+            <div>
+              <label class="counsel-title" style="font-size:7pt;">Initial</label>
+              <input type="text" class="field-input" value="${activeJob.initial}" oninput="activeJob.initial=this.value; saveState();" placeholder="M" maxlength="4" style="height:32px; font-size:12px; max-width:84px;">
+            </div>
+            <div>
+              <label class="counsel-title" style="font-size:7pt;">Mobile</label>
+              <input type="text" class="field-input" value="${activeJob.mobile}" oninput="activeJob.mobile=this.value; saveState();" placeholder="Mobile number" style="height:32px; font-size:12px;">
+            </div>
+            <div>
+              <label class="counsel-title" style="font-size:7pt;">Sex</label>
+              <select class="field-input" onchange="activeJob.sex=this.value; saveState();" style="height:32px; font-size:12px;">
+                <option value="Male" ${activeJob.sex==='Male'?'selected':''}>Male</option>
+                <option value="Female" ${activeJob.sex==='Female'?'selected':''}>Female</option>
+                <option value="Other" ${activeJob.sex==='Other'?'selected':''}>Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="counsel-title" style="font-size:7pt;">Age</label>
+              <div style="display:flex; gap:4px;">
+                <input type="number" class="field-input" value="${activeJob.age}" oninput="activeJob.age=this.value; saveState();" style="height:32px; font-size:12px; width:50px;">
+                <select class="field-input" onchange="activeJob.age_unit=this.value; saveState();" style="height:32px; font-size:12px; flex:1;">
+                  <option value="years" ${activeJob.age_unit==='years'?'selected':''}>Years</option>
+                  <option value="months" ${activeJob.age_unit==='months'?'selected':''}>Months</option>
+                  <option value="days" ${activeJob.age_unit==='days'?'selected':''}>Days</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="counsel-title" style="font-size:7pt;">Referred by</label>
+              <select class="field-input" onchange="activeJob.referrer=this.value; saveState();" style="height:32px; font-size:12px;">
+                <option value="Self">— none —</option>
+                ${DOCTORS.map(d => `<option value="${d.name}" ${activeJob.referrer.includes(d.name)?'selected':''}>${d.name}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tests Block -->
+        <div class="tests-block-ui">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="counsel-title">Tests</span>
+            <span style="font-size:10px; color:#64748B;">${activeJob.tests.length} chosen</span>
+          </div>
+
+          <div style="position:relative;">
+            <input type="text" id="test-search-inp" class="field-input" placeholder="Type to add a test — filters as you type" oninput="onSearchTest(this.value)" style="height:34px; border:1.5px solid #0284C7; font-size:12px;">
+            <div id="test-search-results" class="search-drop-list" style="display:none;"></div>
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+            ${DESKTOP_PANELS.map(p => `
+              <button class="panel-tag-btn" onclick="addPanel('${p}')">${p}</button>
+            `).join("")}
+          </div>
         </div>
       </div>
-    ` : ''}
 
-    <!-- 04. 3-Column Workspace -->
-    <div class="workspace-grid">
-      <!-- Left Column: Patient & Test Selector -->
-      <div class="col-side">
-        <div class="sec-title">01. PATIENT REGISTRATION</div>
-        <div class="side-form-group">
-          <div><label class="stat-label">Full Name</label><input type="text" class="field-input" value="${activeJob.name}" oninput="activeJob.name=this.value; saveState();" placeholder="Patient name"></div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <div><label class="stat-label">Initial</label><input type="text" class="field-input" value="${activeJob.initial}" oninput="activeJob.initial=this.value; saveState();" placeholder="M"></div>
-            <div><label class="stat-label">Sex</label><select class="field-input" onchange="activeJob.sex=this.value; saveState();"><option value="Male" ${activeJob.sex==='Male'?'selected':''}>Male</option><option value="Female" ${activeJob.sex==='Female'?'selected':''}>Female</option><option value="Other" ${activeJob.sex==='Other'?'selected':''}>Other</option></select></div>
+      <!-- 2. Center Working Field -->
+      <div style="background:#FFFFFF; border-right:1.5px solid #CBD5E1; display:flex; flex-direction:column;">
+        <!-- Money Band -->
+        <div class="desktop-money-band">
+          <div class="money-stat">
+            <span class="m-lbl">Net payable</span>
+            <span class="m-val large">₹ ${netPayable}.00</span>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <div><label class="stat-label">Age</label><input type="number" class="field-input" value="${activeJob.age}" oninput="activeJob.age=this.value; saveState();"></div>
-            <div><label class="stat-label">Unit</label><select class="field-input" onchange="activeJob.age_unit=this.value; saveState();"><option value="years" ${activeJob.age_unit==='years'?'selected':''}>years</option><option value="months" ${activeJob.age_unit==='months'?'selected':''}>months</option><option value="days" ${activeJob.age_unit==='days'?'selected':''}>days</option></select></div>
+          <div class="money-stat">
+            <span class="m-lbl">Charged</span>
+            <span class="m-val">₹ ${subtotal}.00</span>
           </div>
-          <div><label class="stat-label">Mobile Phone (WhatsApp)</label><input type="text" class="field-input" value="${activeJob.mobile}" oninput="activeJob.mobile=this.value; saveState();" placeholder="10-digit mobile number"></div>
-          <div><label class="stat-label">Referred By</label><select class="field-input" onchange="activeJob.referrer=this.value; saveState();"><option value="Self">Self / Walk-in</option>${DOCTORS.map(d => `<option value="${d.name}" ${activeJob.referrer.includes(d.name)?'selected':''}>${d.name} (${d.spec})</option>`).join("")}</select></div>
+          <div class="money-stat">
+            <span class="m-lbl">Discount</span>
+            <span class="m-val">₹ ${discount}.00</span>
+          </div>
+          <div class="money-stat">
+            <span class="m-lbl">Paid</span>
+            <span class="m-val">₹ ${paid}.00</span>
+          </div>
+          <div class="money-stat">
+            <span class="m-lbl">Outstanding</span>
+            <span class="m-val" style="${outstanding>0?'color:#F87171;':''}">₹ ${outstanding}.00</span>
+          </div>
+
+          <div class="money-band-actions">
+            <button class="btn-m" onclick="openPOSReceiptModal(activeJob)" title="Open 80mm POS Thermal Slip" style="background:transparent; color:#FFFFFF; border:1px solid #64748B;">🧾 POS Receipt</button>
+            <button class="btn-m" onclick="openBillModal()" title="Print A4 Tax Invoice" style="background:transparent; color:#FFFFFF; border:1px solid #64748B;">Print bill…</button>
+            <button class="btn-m" onclick="openBillModal()" style="background:#FFFFFF; color:#0F172A; font-weight:800; border:none;">Make the bill</button>
+          </div>
         </div>
 
-        <div class="sec-title" style="margin-top:16px;">02. SEARCH & ADD TEST (F3)</div>
-        <div style="position:relative;">
-          <input type="text" id="test-search-inp" class="field-input" placeholder="Type test name or code..." oninput="onSearchTest(this.value)">
-          <div id="test-search-results" class="search-drop-list" style="display:none;"></div>
+        <!-- Results Table Header -->
+        <div class="desktop-results-head">
+          <div>Test</div>
+          <div>Result</div>
+          <div>Unit</div>
+          <div>Normal Range</div>
+          <div>Flag</div>
+          <div></div>
         </div>
 
-        <div class="sec-title" style="margin-top:16px;">03. COMMON PANELS</div>
-        <div style="display:flex; flex-wrap:wrap; gap:6px;">
-          ${Object.keys(PANELS).map(p => `
-            <button class="panel-tag-btn" onclick="addPanel('${p}')">+ ${p}</button>
-          `).join("")}
-        </div>
-      </div>
-
-      <!-- Center Column: Results Grid & Smart Impressions -->
-      <div class="col-center">
-        <div class="results-table-head">
-          <div>Investigation</div>
-          <div style="width:130px;">Observed Value</div>
-          <div style="width:70px;">Unit</div>
-          <div style="width:110px;">Reference Range</div>
-          <div style="width:80px;">Flag</div>
-          <div style="width:24px;"></div>
-        </div>
-
-        <div class="results-table-body">
+        <!-- Results Table Body / Empty State -->
+        <div class="desktop-results-body">
           ${activeJob.tests.length === 0 ? `
-            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:320px; color:var(--text-muted);">
-              <span style="font-size:36px; margin-bottom:12px;">🧪</span>
-              <div style="font-weight:700; font-size:14px;">No tests added to this job yet</div>
-              <div style="font-size:12px;">Click a panel on the left or press <b>F3</b> to search catalog.</div>
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:340px; color:#64748B; text-align:center; padding:20px;">
+              <div style="font-size:13px; font-weight:600; line-height:1.8;">
+                No tests chosen yet.<br>
+                Click a panel on the left, or type a test name — the result boxes appear here.<br>
+                <span style="font-size:11px; color:#94A3B8;">F2 starts a new job.</span>
+              </div>
             </div>
           ` : resultsHTML}
-
-          <!-- Clinical Impressions / Smart Phrases Box -->
-          <div style="margin-top:16px; padding:14px; background:var(--surface); border:1px solid var(--border-light);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-weight:800; font-size:11.5px; text-transform:uppercase; color:var(--brand-blue);">💬 Clinical Notes & Peripheral Smear Interpretation</span>
-              
-            </div>
-            <textarea class="field-input" rows="3" style="width:100%; font-size:12px; font-family:inherit; resize:vertical;" placeholder="Enter clinical impressions or click '+ Insert Smart-Phrase'..." oninput="activeJob.clinical_notes=this.value; saveState();">${activeJob.clinical_notes || ''}</textarea>
-          </div>
         </div>
       </div>
 
-      <!-- Right Column: Financial & Job Metadata -->
-      <div class="col-side" style="border-left:2px solid var(--border); border-right:none;">
-        <div class="sec-title">04. BILLING & FINANCIALS (F4)</div>
-        <div style="background:var(--surface); border:1px solid var(--border-light); padding:14px; display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
-          <div style="display:flex; justify-content:space-between; font-size:12px;">
-            <span style="color:var(--text-muted);">Total Tests (${activeJob.tests.length}):</span>
-            <span style="font-weight:800;">₹ ${subtotal}.00</span>
+      <!-- 3. Right Counsel Column (280px) -->
+      <div class="desktop-counsel-rail">
+        <div class="counsel-section">
+          <span class="counsel-title">Before it can go</span>
+          <div style="font-size:11.5px; color:#64748B; line-height:1.5;">
+            ${!isNameSet ? "• The patient's name is needed before this job can be finished.<br>" : ""}
+            Everything typed so far is already saved. Leaving now loses nothing.
           </div>
-          <div style="display:flex; justify-content:space-between; font-size:12px;">
-            <span style="color:var(--text-muted);">Discount:</span>
-            <span style="font-weight:800; color:var(--accent-red);">− ₹ ${activeJob.bill_disc || 0}.00</span>
-          </div>
-          <div style="border-top:1px dashed var(--border); padding-top:8px; display:flex; justify-content:space-between; font-size:14px; font-weight:800;">
-            <span>Net Payable:</span>
-            <span style="color:var(--accent-green);">₹ ${netPayable}.00</span>
-          </div>
-          <button class="btn-m primary" style="width:100%; margin-top:4px;" onclick="openBillModal()">💳 Settle Payment / Invoice</button>
         </div>
 
-        <div class="sec-title">05. QUALITY CHECK & FORMULAS</div>
-        <div style="font-size:11.5px; color:var(--text-muted); line-height:1.45; background:var(--surface); border:1px solid var(--border-light); padding:12px;">
-          • <b>Real-time Formula Engine:</b> Derived parameters (e.g. eAG, BUN, NLR, LDL, Globulin, A/G Ratio, Corrected Calcium) calculate instantly on input.<br>
-          • <b>Delta Check:</b> Historical test comparisons display in blue.<br>
-          • <b>Critical Panic Alert:</b> Red banner activates on critical values.
+        <div class="counsel-section">
+          <span class="counsel-title">Clinical Remarks & Smear Impression</span>
+          <textarea class="field-input" rows="4" style="width:100%; font-size:12px; font-family:inherit; resize:vertical; background:#FFFFFF; border:1.5px solid #CBD5E1;" placeholder="Enter clinical notes..." oninput="activeJob.clinical_notes=this.value; saveState();">${activeJob.clinical_notes || ''}</textarea>
         </div>
+
+        <div class="counsel-section">
+          <span class="counsel-title">Last Visit</span>
+          <div style="font-size:11.5px; color:#64748B;">No earlier visit.</div>
+        </div>
+
+        <div class="counsel-section" style="border-bottom:none;">
+          <span class="counsel-title">Keyboard</span>
+          <div style="display:grid; grid-template-columns:40px 1fr; gap:4px; font-size:11px; color:#64748B; margin-top:2px;">
+            <b style="color:#0F172A;">F2</b><span>New job</span>
+            <b style="color:#0F172A;">F4</b><span>Bill</span>
+            <b style="color:#0F172A;">F8</b><span>WhatsApp</span>
+            <b style="color:#0F172A;">F9</b><span>Check & make report</span>
+            <b style="color:#0F172A;">TAB</b><span>Next result box</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Foot Bar -->
+    <div class="desktop-foot-bar">
+      <span>Each box saves as you leave it. Nothing waits for a Save.</span>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-m" onclick="saveState(); alert('Job saved cleanly.');">Save</button>
+        <button class="btn-m primary" onclick="openBillModal()">Bill</button>
       </div>
     </div>
   `;
 }
+
 
 function updateJobNotes() {
   const box = document.getElementById("job-dynamic-notes");
@@ -3942,6 +4234,223 @@ function printReceiptDirect() {
     background: #1E3A5F;
     border-color: #38BDF8;
     color: #38BDF8;
+  }
+
+
+  /* Desktop Layout Replication */
+  .desktop-status-rail {
+    display: flex;
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 2px solid #0A3668;
+    align-items: center;
+  }
+  .rail-left-box {
+    width: 320px;
+    height: 100%;
+    background: #F0F6FB;
+    border-right: 1.5px solid #CBD5E1;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  body.dark .rail-left-box {
+    background: #0A1929;
+    border-right: 1.5px solid #1E3A5F;
+  }
+  .rail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .rail-item .micro-lbl {
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0A3668;
+    letter-spacing: .5px;
+  }
+  body.dark .rail-item .micro-lbl {
+    color: #38BDF8;
+  }
+  .rail-item .val-lbl {
+    font-size: 11pt;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+  }
+  .rail-v-line {
+    width: 1px;
+    height: 32px;
+    background: #CBD5E1;
+  }
+  body.dark .rail-v-line {
+    background: #1E3A5F;
+  }
+
+  .rail-right-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+    padding-right: 16px;
+    align-items: center;
+  }
+
+  .desktop-body-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr 280px;
+    min-height: calc(100vh - 150px);
+    background: var(--bg);
+  }
+
+  /* Left Intake Rail */
+  .desktop-left-rail {
+    background: #F0F6FB;
+    border-right: 1.5px solid #CBD5E1;
+    display: flex;
+    flex-direction: column;
+  }
+  body.dark .desktop-left-rail {
+    background: #0A1929;
+    border-right: 1.5px solid #1E3A5F;
+  }
+  .patient-block-ui {
+    padding: 14px 16px;
+    border-bottom: 1px solid #D1E3F0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  body.dark .patient-block-ui {
+    border-bottom: 1px solid #1E3A5F;
+  }
+  .tests-block-ui {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .patient-grid-ui {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 6px 10px;
+  }
+
+  /* Money Band */
+  .desktop-money-band {
+    background: #0F172A;
+    color: #F8FAFC;
+    height: 96px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    border-bottom: 2px solid #0A3668;
+  }
+  .money-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .money-stat .m-lbl {
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #94A3B8;
+    letter-spacing: .5px;
+  }
+  .money-stat .m-val {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #F8FAFC;
+  }
+  .money-stat .m-val.large {
+    font-size: 22pt;
+    font-weight: 800;
+    color: #FFFFFF;
+  }
+  .money-band-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  /* Results Table */
+  .desktop-results-head {
+    display: grid;
+    grid-template-columns: 1fr 140px 90px 140px 80px 32px;
+    gap: 12px;
+    padding: 9px 16px;
+    background: var(--surface);
+    border-bottom: 2px solid #0A3668;
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #64748B;
+  }
+
+  .desktop-results-body {
+    padding-bottom: 60px;
+    background: var(--surface);
+    min-height: 400px;
+  }
+
+  /* Right Counsel Rail */
+  .desktop-counsel-rail {
+    background: #F8FAFC;
+    border-left: 1.5px solid #CBD5E1;
+    display: flex;
+    flex-direction: column;
+  }
+  body.dark .desktop-counsel-rail {
+    background: #0F172A;
+    border-left: 1.5px solid #1E3A5F;
+  }
+  .counsel-section {
+    padding: 14px 16px;
+    border-bottom: 1px solid #E2E8F0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  body.dark .counsel-section {
+    border-bottom: 1px solid #1E3A5F;
+  }
+  .counsel-title {
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0A3668;
+    letter-spacing: .8px;
+  }
+  body.dark .counsel-title {
+    color: #38BDF8;
+  }
+
+  /* Foot Bar */
+  .desktop-foot-bar {
+    height: 44px;
+    background: #F1F5F9;
+    border-top: 2px solid #0A3668;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-size: 11.5px;
+    color: #64748B;
+  }
+  body.dark .desktop-foot-bar {
+    background: #0A1929;
+    border-top: 2px solid #1E3A5F;
+    color: #94A3B8;
   }
 
 </style>
