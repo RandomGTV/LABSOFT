@@ -28,7 +28,6 @@ from ..core import turnaround
 from ..db import queries as q
 from . import style
 from .pos_receipt_dialog import POSReceiptDialog
-from .smart_phrases_dialog import SmartPhrasesDialog
 from .whatsapp_dialog import WhatsAppDialog
 from .widgets import (
     EllipsisLabel, FlagLabel, SearchBox, age_unit_combo, button, column,
@@ -355,7 +354,6 @@ class JobScreen(QWidget):
         self.clear_button = button("New job", "", self.new_job,
                                    "Start a fresh job  (F2)")
         self.whatsapp_button = button("📱 WhatsApp", "", self._open_whatsapp_dispatch, "Send structured WhatsApp report", "F8")
-        self.smart_button = button("✨ Smart Phrases", "quiet", self._open_smart_phrases, "Insert clinical smear impressions")
         self.preview_button = button("Preview", "", self.preview,
                                      "Look at the report before sending it")
         self.verify_button = button("Check && make report", "go", self.verify,
@@ -805,8 +803,6 @@ class JobScreen(QWidget):
         self.remarks_edit.setPlaceholderText("Enter clinical notes or click 'Smart-Phrases'...")
         self.remarks_edit.textChanged.connect(self._remarks_changed)
         inner.addWidget(self.remarks_edit)
-        self.smart_counsel_btn = button("✨ Smart-Phrases Library", "quiet", self._open_smart_phrases)
-        inner.addWidget(self.smart_counsel_btn)
         lay.addWidget(block)
 
         block, inner = self._counsel_block("Last visit")
@@ -1732,17 +1728,6 @@ class JobScreen(QWidget):
             return
         if self.job_id:
             q.update_job(self.job_id, remarks=self.remarks_edit.toPlainText().strip())
-
-    def _open_smart_phrases(self) -> None:
-        def insert_cb(phrase: str):
-            curr = self.remarks_edit.toPlainText().strip()
-            new_text = f"{curr}\n\n{phrase}".strip() if curr else phrase
-            self.remarks_edit.setPlainText(new_text)
-            if self.job_id:
-                q.update_job(self.job_id, remarks=new_text)
-            self.message.setText("✓ Clinical smart-phrase inserted into remarks.")
-            self.message.setStyleSheet(f"color: {style.GREEN}; font-weight: 600;")
-        SmartPhrasesDialog(self, insert_cb).exec()
 
     def _open_pos_receipt(self) -> None:
         if not self.job_id:

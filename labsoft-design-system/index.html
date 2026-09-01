@@ -2013,7 +2013,7 @@ function renderJobScreen(container) {
           <div style="margin-top:16px; padding:14px; background:var(--surface); border:1px solid var(--border-light);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <span style="font-weight:800; font-size:11.5px; text-transform:uppercase; color:var(--brand-blue);">💬 Clinical Notes & Peripheral Smear Interpretation</span>
-              <button class="btn-m" style="font-size:11px;" onclick="openSmartPhraseModal()">+ Insert Smart-Phrase</button>
+              
             </div>
             <textarea class="field-input" rows="3" style="width:100%; font-size:12px; font-family:inherit; resize:vertical;" placeholder="Enter clinical impressions or click '+ Insert Smart-Phrase'..." oninput="activeJob.clinical_notes=this.value; saveState();">${activeJob.clinical_notes || ''}</textarea>
           </div>
@@ -3767,43 +3767,6 @@ function openTubeLabelModal(job) {
 /* --------------------------------------------------------------------------
    Pathology Smart-Phrases & Peripheral Smear Comment Library
    -------------------------------------------------------------------------- */
-const SMART_PHRASES = [
-  {
-    cat: "🩸 Peripheral Blood Smear (PS)",
-    items: [
-      { code: "PS-NORM", title: "Normocytic Normochromic", text: "RBCs are predominantly normocytic and normochromic. WBCs are normal in count and morphology. Platelets are adequate in number and morphology on smear examination." },
-      { code: "PS-MICRO", title: "Microcytic Hypochromic (Iron Deficiency)", text: "RBCs show moderate microcytic hypochromic picture with mild to moderate anisopoikilocytosis, pencil cells and target cells. Suggestive of Iron Deficiency Anemia. Clinical correlation & Iron Profile advised." },
-      { code: "PS-DIMORPH", title: "Dimorphic Anemia", text: "RBCs show dimorphic picture with dual population of both microcytic hypochromic and macrocytic cells. Suggestive of mixed nutritional deficiency (Iron + Vitamin B12/Folate)." },
-      { code: "PS-LEUKO", title: "Leukocytosis with Left Shift", text: "Moderate to marked leukocytosis noted with absolute neutrophilia and toxic granulations. Features suggestive of acute bacterial infection / acute inflammatory response." },
-      { code: "PS-THROMB", title: "Thrombocytopenia Confirmed", text: "Marked thrombocytopenia confirmed on peripheral smear examination. No giant platelets or significant platelet clumps seen. Suggest repeat count and clinical correlation." }
-    ]
-  },
-  {
-    cat: "🔬 Urine Routine Examination",
-    items: [
-      { code: "UR-UTI", title: "Active Urinary Sediment (UTI)", text: "Urine examination shows numerous pus cells (pyuria) with moderate epithelial cells and bacteriuria, consistent with active Urinary Tract Infection (UTI). Urine Culture & Sensitivity test advised." },
-      { code: "UR-MICRO", title: "Microscopic Hematuria & Proteinuria", text: "Occasional intact RBCs seen with mild proteinuria (Albumin 1+). Suggestive of early glomerular / lower urinary tract irritation. Follow-up advised." }
-    ]
-  },
-  {
-    cat: "🩺 Lipid & Cardiovascular Risk",
-    items: [
-      { code: "LIP-RISK", title: "Atherogenic Dyslipidemia", text: "Lipid profile indicates atherogenic dyslipidemia with elevated LDL and non-HDL cholesterol. Dietary lifestyle modification, regular aerobic exercise and clinical cardiovascular evaluation recommended." }
-    ]
-  },
-  {
-    cat: "🦋 Thyroid Function",
-    items: [
-      { code: "THY-HYPO", title: "Primary Hypothyroidism Pattern", text: "Significantly elevated serum TSH with normal to reduced Free T4 level, consistent with Primary Hypothyroidism. Clinical endocrinological correlation advised." }
-    ]
-  }
-];
-
-
-function openSmartPhrasesModal() {
-  openSmartPhraseModal();
-}
-
 function openPOSReceiptModal(job) {
   job = job || activeJob;
   const tests = (job.tests || []).map(c => TESTS[c] || { n: c, rate: 0 });
@@ -3876,49 +3839,6 @@ function printReceiptDirect() {
     </html>
   `);
   win.document.close();
-}
-
-function openSmartPhraseModal() {
-  const content = `
-    <div style="padding:16px; display:flex; flex-direction:column; gap:16px; max-height:68vh; overflow:auto;">
-      <div style="font-size:12px; color:var(--text-muted);">
-        Click any verified clinical impression below to insert it directly into this report's clinical notes:
-      </div>
-      ${SMART_PHRASES.map(cat => `
-        <div style="border:1px solid var(--border-light); background:var(--surface-alt); padding:12px;">
-          <div style="font-size:12px; font-weight:800; color:var(--brand-blue); text-transform:uppercase; margin-bottom:8px;">${cat.cat}</div>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            ${cat.items.map(item => `
-              <div style="background:var(--surface); border:1px solid var(--border); padding:10px; cursor:pointer; transition:all .1s;" onmouseover="this.style.borderColor='var(--accent-red)'" onmouseout="this.style.borderColor='var(--border)'" onclick="insertSmartPhrase('${item.text.replace(/'/g, "\\'")}')">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                  <span style="font-weight:800; font-size:12.5px; color:var(--text);">${item.title}</span>
-                  <span style="font-size:10px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:2px;">[${item.code}]</span>
-                </div>
-                <div style="font-size:11.5px; color:var(--text-muted); line-height:1.4;">${item.text}</div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      `).join("")}
-    </div>
-  `;
-
-  document.getElementById("modal-dialog-title").textContent = "💬 Clinical Pathology Impression & Smart-Phrases";
-  document.getElementById("modal-dialog-body").className = "modal-dialog-body plain";
-  document.getElementById("modal-dialog-body").innerHTML = content;
-  document.getElementById("modal-dialog-footer").innerHTML = `
-    <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
-  `;
-  document.getElementById("modal-container").classList.add("open");
-}
-
-function insertSmartPhrase(phraseText) {
-  const currNotes = (activeJob.clinical_notes || "").trim();
-  activeJob.clinical_notes = currNotes ? currNotes + "\n\n" + phraseText : phraseText;
-  const currRemarks = (activeJob.remarks || "").trim();
-  activeJob.remarks = currRemarks ? currRemarks + "\n\n" + phraseText : phraseText;
-  closeModal();
-  render();
 }
 
 /* --------------------------------------------------------------------------
