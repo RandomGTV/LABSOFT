@@ -441,6 +441,18 @@ QPushButton[kind="go"]:hover {{
     color: #FFFFFF;
 }}
 
+QPushButton:checked {{
+    background: {"#0A3668" if not dark else "#0284C7"};
+    border: 1.5px solid {"#0A3668" if not dark else "#0284C7"};
+    color: #FFFFFF;
+    font-weight: 800;
+}}
+QPushButton:checked:hover {{
+    background: {"#0284C7" if not dark else "#0369A1"};
+    border-color: {"#0284C7" if not dark else "#0369A1"};
+    color: #FFFFFF;
+}}
+
 QPushButton[kind="panel"] {{
     background: {"#FFFFFF" if not dark else "#132F4C"};
     border: 1px solid {"#BAE6FD" if not dark else "#1E3A5F"};

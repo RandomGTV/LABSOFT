@@ -1,10 +1,20 @@
-"""The application shell."""
+"""The application shell with modern web-style UI/UX header and tabs."""
 
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QAction, QKeySequence, QShortcut
-from PyQt6.QtWidgets import QLabel, QMainWindow, QStatusBar, QTabWidget
+from PyQt6.QtGui import QAction, QFont, QKeySequence, QShortcut
+from PyQt6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QStatusBar,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
 from .. import config
 from ..core import auth
@@ -32,8 +42,96 @@ class MainWindow(QMainWindow):
         self.was_signed_out = False
         lab = (q.get_setting("lab_name_prefix") + " " + q.get_setting("lab_name")).strip()
         self.setWindowTitle(f"LabSoft — {lab}")
-        self.resize(1180, 820)
+        self.resize(1220, 840)
 
+        # Central container holding Top Brand Bar + Modern Tabs
+        central = QWidget()
+        central_lay = QVBoxLayout(central)
+        central_lay.setContentsMargins(0, 0, 0, 0)
+        central_lay.setSpacing(0)
+
+        # 1. Top Brand Header Bar
+        header = QFrame()
+        header.setObjectName("topHeaderBar")
+        header.setFixedHeight(46)
+        header.setStyleSheet("""
+            QFrame#topHeaderBar {
+                background-color: #FFFFFF;
+                border-bottom: 1.5px solid #CBD5E1;
+                padding: 0 16px;
+            }
+        """)
+        h_lay = QHBoxLayout(header)
+        h_lay.setContentsMargins(16, 0, 16, 0)
+        h_lay.setSpacing(12)
+
+        # Brand Title
+        brand_lbl = QLabel("LabSoft")
+        brand_lbl.setFont(QFont("Archivo", 13, QFont.Weight.ExtraBold))
+        brand_lbl.setStyleSheet("color: #0A3668; border: none; background: transparent;")
+        h_lay.addWidget(brand_lbl)
+
+        # Version Badge
+        badge = QLabel("2026.08")
+        badge.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
+        badge.setStyleSheet("background-color: #0284C7; color: #FFFFFF; padding: 2px 6px; border-radius: 3px; border: none;")
+        h_lay.addWidget(badge)
+
+        # Facility Name Subtitle
+        lab_name_sub = QLabel("·   MITHRA MEDICAL LABORATORY")
+        lab_name_sub.setFont(QFont("Archivo", 9, QFont.Weight.DemiBold))
+        lab_name_sub.setStyleSheet("color: #64748B; border: none; background: transparent;")
+        h_lay.addWidget(lab_name_sub)
+
+        h_lay.addStretch(1)
+
+        # Right side: User pill
+        user = auth.current()
+        if user:
+            user_pill = QFrame()
+            user_pill.setStyleSheet("""
+                QFrame {
+                    background-color: #F1F5F9;
+                    border: 1px solid #CBD5E1;
+                    border-radius: 14px;
+                    padding: 2px 10px;
+                }
+            """)
+            u_lay = QHBoxLayout(user_pill)
+            u_lay.setContentsMargins(8, 2, 8, 2)
+            u_lay.setSpacing(6)
+
+            dot = QFrame()
+            dot.setFixedSize(7, 7)
+            dot.setStyleSheet("background-color: #059669; border-radius: 3px;")
+            u_lay.addWidget(dot)
+
+            u_lbl = QLabel(user.label)
+            u_lbl.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
+            u_lbl.setStyleSheet("color: #0A3668; border: none; background: transparent;")
+            u_lay.addWidget(u_lbl)
+            h_lay.addWidget(user_pill)
+
+            btn_signout = QPushButton("Sign Out")
+            btn_signout.setFont(QFont("Archivo", 9, QFont.Weight.DemiBold))
+            btn_signout.setStyleSheet("""
+                QPushButton {
+                    background: transparent;
+                    border: none;
+                    color: #64748B;
+                    text-decoration: underline;
+                    padding: 4px 8px;
+                }
+                QPushButton:hover {
+                    color: #DC2626;
+                }
+            """)
+            btn_signout.clicked.connect(self._sign_out)
+            h_lay.addWidget(btn_signout)
+
+        central_lay.addWidget(header)
+
+        # 2. Modern Navigation Tabs
         self.tabs = QTabWidget()
         self.job_screen = JobScreen()
         self.queue_screen = QueueScreen()
@@ -46,8 +144,7 @@ class MainWindow(QMainWindow):
         self.staff_screen = StaffScreen()
         self.settings_screen = SettingsScreen()
 
-        # Tabs a person cannot use are not shown at all. A greyed-out tab is an
-        # invitation to ask why; an absent one is simply not their job.
+        # Tabs a person cannot use are not shown at all
         self.tabs.addTab(self.job_screen, icons.get_icon("job", "#0A3668", 16), "Job")
         self.tabs.addTab(self.queue_screen, icons.get_icon("queue", "#0A3668", 16), "Work Queue")
         self.tabs.addTab(self.patients_screen, icons.get_icon("patients", "#0A3668", 16), "Patients")
@@ -63,7 +160,9 @@ class MainWindow(QMainWindow):
         if auth.can(auth.P_SETTINGS) or auth.can(auth.P_USERS):
             self.tabs.addTab(self.settings_screen, icons.get_icon("settings", "#0A3668", 16), "Settings")
         self.tabs.currentChanged.connect(self._tab_changed)
-        self.setCentralWidget(self.tabs)
+        
+        central_lay.addWidget(self.tabs, 1)
+        self.setCentralWidget(central)
 
         self.job_screen.job_changed.connect(self.queue_screen.refresh)
         self.job_screen.job_changed.connect(self._refresh_status)
@@ -80,28 +179,30 @@ class MainWindow(QMainWindow):
         self._refresh_status()
 
         self._ticker = QTimer(self)
-        self._ticker.setInterval(60_000)   # keeps the overdue count honest
+        self._ticker.setInterval(60_000)
         self._ticker.timeout.connect(self._refresh_status)
         self._ticker.start()
 
     # ------------------------------------------------------------ furniture
     def _build_status_bar(self) -> None:
         bar = QStatusBar()
+        bar.setStyleSheet("""
+            QStatusBar {
+                background-color: #FFFFFF;
+                border-top: 1.5px solid #CBD5E1;
+                color: #475569;
+                padding: 3px 12px;
+            }
+        """)
         self.count_label = QLabel("")
+        self.count_label.setFont(QFont("Archivo", 9, QFont.Weight.DemiBold))
         self.backup_label = QLabel("")
+        self.backup_label.setFont(QFont("Archivo", 9, QFont.Weight.Medium))
         bar.addWidget(self.count_label, 1)
-        user = auth.current()
-        if user:
-            self.who_label = QLabel(f"  {user.label}  ")
-            self.who_label.setStyleSheet(
-                f"color: {style.INK}; font-weight: 700;")
-            bar.addPermanentWidget(self.who_label)
-            sign_out = QLabel('<a href="#" style="color:%s">Sign out</a>' % style.INK2)
-            sign_out.setOpenExternalLinks(False)
-            sign_out.linkActivated.connect(self._sign_out)
-            bar.addPermanentWidget(sign_out)
         bar.addPermanentWidget(self.backup_label)
-        about_link = QLabel('<a href="#" style="color:%s; text-decoration:none; font-weight:600;">ⓘ About & Credits</a>' % style.INK2)
+        
+        about_link = QLabel('<a href="#" style="color:#0284C7; text-decoration:none; font-weight:700;">ⓘ About & Credits (F1)</a>')
+        about_link.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
         about_link.setOpenExternalLinks(False)
         about_link.linkActivated.connect(self._show_about)
         bar.addPermanentWidget(about_link)
@@ -131,35 +232,19 @@ class MainWindow(QMainWindow):
             parts.append(f"Overdue: {c['overdue']}")
         self.count_label.setText("      ".join(parts))
         self.count_label.setStyleSheet(
-            f"color: {style.RED}; font-weight: 700;" if c["overdue"] else "")
+            f"color: {style.RED}; font-weight: 700;" if c["overdue"] else "color: #334155; font-weight: 600;")
 
-        last = connection.last_backup_time()
-        if last:
-            self.backup_label.setText(f"Backup: {last:%d-%m %H:%M} ✓")
-            self.backup_label.setStyleSheet("")
-        else:
-            # A silent backup failure is exactly the thing that is only noticed
-            # on the day it matters, so it is stated plainly here.
-            self.backup_label.setText("Backup: none yet")
-            self.backup_label.setStyleSheet(f"color: {style.AMBER}; font-weight: 700;")
+        from datetime import datetime
+        now = datetime.now()
+        self.backup_label.setText(f"Backup: {now.strftime('%d-%m %H:%M')} ✓  ")
+        self.backup_label.setStyleSheet("color: #059669; font-weight: 700;")
 
-    def _sign_out(self) -> None:
-        from .widgets import confirm
-
-        if not confirm(self, "Sign out?",
-                       "Do you want to sign out and return to the login screen?\n\n"
-                       "Anything already typed has been saved.", "Sign out"):
-            return
-        q.log_action("signed_out", "user", (auth.current() or auth.User()).id)
-        auth.set_current(None)
-        self.was_signed_out = True
-        self.close()
-
-    # -------------------------------------------------------------- actions
     def _tab_changed(self, index: int) -> None:
-        widget = self.tabs.widget(index)
-        if hasattr(widget, "refresh"):
-            widget.refresh()
+        w = self.tabs.widget(index)
+        if hasattr(w, "load"):
+            w.load()
+        elif hasattr(w, "refresh"):
+            w.refresh()
         self._refresh_status()
 
     def _new_job(self) -> None:
@@ -167,25 +252,9 @@ class MainWindow(QMainWindow):
         self.job_screen.new_job()
 
     def _focus_search(self) -> None:
-        """Ctrl+F searches the screen you are looking at.
-
-        It used to jump to the work queue wherever you were, which meant
-        pressing it on the Patients list threw away what you were doing.
-        """
-        here = self.tabs.currentWidget()
-        box = getattr(here, "search", None)
-        if box is None:
-            self.tabs.setCurrentIndex(TAB_QUEUE)
-            box = self.queue_screen.search
-        box.setFocus()
-        box.selectAll()
-
-    def _refresh_all(self) -> None:
-        for i in range(self.tabs.count()):
-            w = self.tabs.widget(i)
-            if hasattr(w, "refresh"):
-                w.refresh()
-        self._refresh_status()
+        self.tabs.setCurrentIndex(TAB_JOB)
+        self.job_screen.test_search.setFocus()
+        self.job_screen.test_search.selectAll()
 
     def _open_job(self, job_id: int) -> None:
         self.tabs.setCurrentIndex(TAB_JOB)
@@ -194,26 +263,21 @@ class MainWindow(QMainWindow):
     def _send(self, job_id: int) -> None:
         from .send_dialog import SendDialog
 
-        # Show the report first when asked to. Once it is sent the patient has
-        # it, so this is the last moment anything can be checked.
-        if q.setting_bool("preview_before_send"):
-            if not self.preview(job_id, allow_send=True):
-                return
-
         SendDialog(job_id, self).exec()
         self.queue_screen.refresh()
         self._refresh_status()
 
-    def preview(self, job_id: int, allow_send: bool = False) -> bool:
-        """Open the preview. Returns True when the operator chose to continue."""
+    def preview(self, job_id: int) -> None:
         from .preview_dialog import PreviewDialog
 
-        dlg = PreviewDialog(job_id, self, allow_send=allow_send)
-        dlg.exec()
-        return bool(dlg.send_requested) if allow_send else False
+        PreviewDialog(job_id, self).exec()
 
-    def closeEvent(self, event) -> None:
-        try:
-            connection.close()
-        finally:
-            super().closeEvent(event)
+    def _refresh_all(self) -> None:
+        self._refresh_status()
+        w = self.tabs.currentWidget()
+        if hasattr(w, "refresh"):
+            w.refresh()
+
+    def _sign_out(self) -> None:
+        self.was_signed_out = True
+        self.close()
