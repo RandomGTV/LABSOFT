@@ -73,11 +73,10 @@ class ModernLoginDialog(QDialog):
 
         left_lay.addStretch(1)
 
-        # Hero Title
         lab_name_prefix = q.get_setting("lab_name_prefix") or "MITHRA"
-        lab_name = q.get_setting("lab_name") or "Pathology\nLab"
+        lab_name = q.get_setting("lab_name") or "MEDICAL LABORATORY"
         hero_text = f"{lab_name_prefix}\n{lab_name}".replace(" \\n ", "\n")
-        if "Pathology" not in hero_text and "Laboratory" not in hero_text:
+        if "Sunrise" in hero_text or "Pathology\nLab" in hero_text:
             hero_text = "MITHRA\nMEDICAL\nLABORATORY"
 
         hero_label = QLabel(hero_text)

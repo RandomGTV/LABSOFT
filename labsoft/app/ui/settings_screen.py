@@ -167,14 +167,6 @@ class SettingsScreen(QWidget):
             "the person who made it.", "hint"))
         lay.addWidget(staff)
 
-        about_box = QGroupBox("About LabSoft")
-        alay = QVBoxLayout(about_box)
-        alay.addWidget(label(
-            "LabSoft v1.0.0 — Medical Diagnostic Laboratory Information System.\n"
-            "Author / Developer: RANDOM_GTV", "hint"))
-        alay.addWidget(row(button("View About & Credits", "", self._show_about), None))
-        lay.addWidget(about_box)
-
         backups = QGroupBox("Data and backups")
         blay = QVBoxLayout(backups)
         self.backup_label = label("", "hint")
@@ -190,7 +182,7 @@ class SettingsScreen(QWidget):
 
         self.saved_note = label("", "ok")
         outer.addWidget(row(button("Reload", "", self.reload),
-                            button("About", "quiet", self._show_about), None,
+                            None,
                             self.saved_note, 8,
                             button("Save settings", "primary", self.save)))
 
@@ -489,7 +481,3 @@ class SettingsScreen(QWidget):
 
         sender.open_folder(config.db_path())
 
-    def _show_about(self) -> None:
-        from .about_dialog import AboutDialog
-
-        AboutDialog(self).exec()

@@ -3,100 +3,112 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QPixmap
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
-from .. import config
-from ..output.report import BLUE_DARK, BLUE_PRIMARY, BLUE_TINT
 from . import style
-from .widgets import button, field_label, hline, label, row
+from .widgets import button, label, row
 
 
 class AboutDialog(QDialog):
-    """Show software version, author credit, and system overview."""
+    """Single canonical software version, author credit, and system overview dialog."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("About LabSoft")
-        self.setFixedSize(520, 480)
+        self.setWindowTitle("About LabSoft — Pathology Laboratory System")
+        self.setFixedSize(540, 520)
         self._build()
 
     def _build(self) -> None:
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(24, 20, 24, 20)
-        lay.setSpacing(12)
+        lay.setContentsMargins(24, 22, 24, 20)
+        lay.setSpacing(14)
 
-        # Header card with medical blue banner
+        # 1. Header Banner Card (Medical Sapphire #0A3668)
         card = QFrame()
-        card.setObjectName("aboutCard")
-        card.setStyleSheet(f"""
-            QFrame#aboutCard {{
-                background: {BLUE_DARK.name()};
-                border-radius: 8px;
+        card.setObjectName("aboutHeaderCard")
+        card.setStyleSheet("""
+            QFrame#aboutHeaderCard {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #062344, stop:0.6 #0A3668, stop:1 #0284C7);
+                border: none;
+                border-radius: 6px;
                 padding: 16px;
-            }}
+            }
         """)
         clay = QVBoxLayout(card)
-        clay.setContentsMargins(12, 10, 12, 10)
+        clay.setContentsMargins(14, 12, 14, 12)
         clay.setSpacing(4)
 
+        top_row = QHBoxLayout()
         app_title = QLabel("LabSoft")
-        app_title.setStyleSheet("color: #FFFFFF; font-size: 20pt; font-weight: 800;")
-        clay.addWidget(app_title)
+        app_title.setStyleSheet("color: #FFFFFF; font-size: 22pt; font-weight: 800; background: transparent; border: none;")
+        top_row.addWidget(app_title)
+
+        ver_pill = QLabel(" 2026.08 ")
+        ver_pill.setStyleSheet("color: #0A3668; background: #FFFFFF; font-size: 9.5pt; font-weight: 800; border-radius: 3px; padding: 2px 6px; border: none;")
+        top_row.addWidget(ver_pill)
+        top_row.addStretch(1)
+        clay.addLayout(top_row)
 
         subtitle = QLabel("Medical Diagnostic Laboratory Information & Reporting System")
-        subtitle.setStyleSheet("color: #48CAE4; font-size: 9.5pt; font-weight: 600;")
+        subtitle.setStyleSheet("color: #E0F2FE; font-size: 10pt; font-weight: 600; background: transparent; border: none;")
         clay.addWidget(subtitle)
 
-        tagline = QLabel("ACCURACY  •  CARE  •  TRUST")
-        tagline.setStyleSheet("color: #D4E7FA; font-size: 7.5pt; font-weight: 700; letter-spacing: 1px; padding-top: 4px;")
+        tagline = QLabel("ACCURACY  •  CLINICAL CARE  •  TRUST")
+        tagline.setStyleSheet("color: #BAE6FD; font-size: 7.5pt; font-weight: 800; letter-spacing: 1.5px; padding-top: 4px; background: transparent; border: none;")
         clay.addWidget(tagline)
 
         lay.addWidget(card)
 
-        # Author & Version Info Box
+        # 2. Author Credit & System Metadata Card
         info_frame = QFrame()
+        info_frame.setObjectName("aboutInfoBox")
         info_frame.setStyleSheet(f"""
-            QFrame {{
-                background: {style.PANEL};
-                border: 1px solid {style.LINE};
+            QFrame#aboutInfoBox {{
+                background: #FFFFFF;
+                border: 1.5px solid #CBD5E1;
                 border-radius: 6px;
                 padding: 12px;
             }}
+            QFrame#aboutInfoBox QLabel {{
+                background: transparent;
+                border: none;
+            }}
         """)
         flay = QVBoxLayout(info_frame)
-        flay.setSpacing(8)
+        flay.setContentsMargins(14, 12, 14, 12)
+        flay.setSpacing(9)
 
         # Author Credit
         author_row = QHBoxLayout()
         lbl_author = QLabel("Author / Developer:")
-        lbl_author.setStyleSheet(f"color: {style.INK2}; font-weight: 600; font-size: 10pt;")
+        lbl_author.setStyleSheet("color: #475569; font-weight: 600; font-size: 9.5pt;")
         val_author = QLabel("RANDOM_GTV")
-        val_author.setStyleSheet(f"color: {BLUE_PRIMARY.name()}; font-weight: 800; font-size: 11pt;")
+        val_author.setStyleSheet("color: #0284C7; font-weight: 800; font-size: 10.5pt;")
         author_row.addWidget(lbl_author)
         author_row.addSpacing(8)
         author_row.addWidget(val_author)
         author_row.addStretch(1)
         flay.addLayout(author_row)
 
-        # Version & Architecture
-        ver_row = QHBoxLayout()
-        lbl_ver = QLabel("Version:")
-        lbl_ver.setStyleSheet(f"color: {style.INK2}; font-weight: 600; font-size: 10pt;")
-        val_ver = QLabel("v1.0.0 (Production Release)")
-        val_ver.setStyleSheet(f"color: {style.INK}; font-weight: 600; font-size: 10pt;")
-        ver_row.addWidget(lbl_ver)
-        ver_row.addSpacing(8)
-        ver_row.addWidget(val_ver)
-        ver_row.addStretch(1)
-        flay.addLayout(ver_row)
+        # Operating Facility
+        fac_row = QHBoxLayout()
+        lbl_fac = QLabel("Licensed Facility:")
+        lbl_fac.setStyleSheet("color: #475569; font-weight: 600; font-size: 9.5pt;")
+        val_fac = QLabel("MITHRA MEDICAL LABORATORY")
+        val_fac.setStyleSheet("color: #0A3668; font-weight: 800; font-size: 9.5pt;")
+        fac_row.addWidget(lbl_fac)
+        fac_row.addSpacing(8)
+        fac_row.addWidget(val_fac)
+        fac_row.addStretch(1)
+        flay.addLayout(fac_row)
 
-        # System Engine
+        # Core Engine Architecture
         engine_row = QHBoxLayout()
-        lbl_eng = QLabel("Core Engine:")
-        lbl_eng.setStyleSheet(f"color: {style.INK2}; font-weight: 600; font-size: 10pt;")
-        val_eng = QLabel("PyQt6 • SQLite WAL • QPdf Engine")
-        val_eng.setStyleSheet(f"color: {style.INK3}; font-size: 9.5pt;")
+        lbl_eng = QLabel("System Architecture:")
+        lbl_eng.setStyleSheet("color: #475569; font-weight: 600; font-size: 9.5pt;")
+        val_eng = QLabel("PyQt6 • SQLite WAL • 80mm POS • QPdf Engine")
+        val_eng.setStyleSheet("color: #64748B; font-size: 9pt; font-weight: 500;")
         engine_row.addWidget(lbl_eng)
         engine_row.addSpacing(8)
         engine_row.addWidget(val_eng)
@@ -105,25 +117,32 @@ class AboutDialog(QDialog):
 
         lay.addWidget(info_frame)
 
-        # Key Features Summary
-        feat_label = label("Key Capabilities:", "field")
-        lay.addWidget(feat_label)
+        # 3. Key Capabilities
+        lbl_cap = QLabel("KEY CLINICAL CAPABILITIES:")
+        lbl_cap.setStyleSheet("color: #0A3668; font-size: 8.5pt; font-weight: 800; letter-spacing: 0.8px; margin-top: 2px;")
+        lay.addWidget(lbl_cap)
 
         features = [
-            "✓ Clinical calculation engine & formula evaluation",
-            "✓ Standard & detailed single-sheet HbA1c with clinical notes",
-            "✓ Multi-style letterhead with high-resolution logo integration",
-            "✓ Reception billing, thermal receipts & doctor commissions",
-            "✓ Automated WhatsApp PDF dispatch & local encrypted audit",
+            "Clinical calculation engine with real-time delta check analysis",
+            "Multi-style diagnostic letterheads & dual HbA1c report layouts",
+            "Executive Day-Book financial dashboard with live CSV exports",
+            "Dual invoicing: Official A4 Tax Invoices + 80mm POS thermal slips",
+            "Instant WhatsApp structured report dispatch & medico-legal audit",
         ]
         for f in features:
-            flbl = QLabel(f)
-            flbl.setStyleSheet(f"color: {style.INK2}; font-size: 9pt;")
-            lay.addWidget(flbl)
+            h_row = QHBoxLayout()
+            h_row.setSpacing(8)
+            chk = QLabel("✓")
+            chk.setStyleSheet("color: #059669; font-weight: 800; font-size: 9.5pt;")
+            txt = QLabel(f)
+            txt.setStyleSheet("color: #334155; font-size: 9pt; font-weight: 500;")
+            h_row.addWidget(chk)
+            h_row.addWidget(txt, 1)
+            lay.addLayout(h_row)
 
         lay.addStretch(1)
 
-        # Bottom Close button
+        # 4. Footer Close Button
         btn_close = button("Close", "primary", self.accept)
         btn_close.setFixedWidth(110)
         lay.addWidget(row(None, btn_close))

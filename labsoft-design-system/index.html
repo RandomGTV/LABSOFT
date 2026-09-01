@@ -3616,37 +3616,40 @@ function printPOSReceipt() {
 
 function showAbout() {
   const content = `
-    <div style="padding:10px;">
-      <div style="background:#201e1d; color:#FFF; padding:20px; margin-bottom:16px;">
-        <h2 style="margin:0; font-size:26px; font-weight:800; letter-spacing:-.02em;">LABSOFT 2026</h2>
-        <div style="color:var(--accent-red); font-size:13px; font-weight:700; margin:4px 0;">Modernist Pathology Laboratory Information System</div>
-        <div style="color:#9b9797; font-size:11px; font-weight:700; letter-spacing:1.5px;">ACCURACY • CARE • TRUST</div>
+    <div style="padding:4px;">
+      <div style="background:linear-gradient(135deg, #062344 0%, #0A3668 60%, #0284C7 100%); color:#FFF; padding:22px 20px; border-radius:6px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h2 style="margin:0; font-size:26px; font-weight:800; letter-spacing:-.02em;">LabSoft</h2>
+          <span style="background:#FFFFFF; color:#0A3668; font-size:11px; font-weight:800; padding:2px 7px; border-radius:3px;">2026.08</span>
+        </div>
+        <div style="color:#E0F2FE; font-size:13px; font-weight:600; margin:6px 0 2px 0;">Medical Diagnostic Laboratory Information & Reporting System</div>
+        <div style="color:#BAE6FD; font-size:10.5px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase;">Accuracy • Clinical Care • Trust</div>
       </div>
 
-      <div style="background:var(--surface-alt); border:2px solid var(--border); padding:16px; margin-bottom:16px;">
-        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border-light);">
-          <span style="color:var(--text-muted); font-weight:700;">Author / Developer:</span>
-          <span style="color:var(--accent-red); font-weight:800; font-size:15px;">${AUTHOR}</span>
+      <div style="background:#FFFFFF; border:1.5px solid #CBD5E1; border-radius:6px; padding:16px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #E2E8F0;">
+          <span style="color:#475569; font-weight:600; font-size:13px;">Author / Developer:</span>
+          <span style="color:#0284C7; font-weight:800; font-size:14px;">${AUTHOR}</span>
         </div>
-        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border-light);">
-          <span style="color:var(--text-muted); font-weight:700;">Design Architecture:</span>
-          <span style="font-weight:700;">Modernist Grid (0px Radius • 2px Crisp Rules • Archivo)</span>
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #E2E8F0;">
+          <span style="color:#475569; font-weight:600; font-size:13px;">Licensed Facility:</span>
+          <span style="color:#0A3668; font-weight:800; font-size:13px;">MITHRA MEDICAL LABORATORY</span>
         </div>
         <div style="display:flex; justify-content:space-between; padding:6px 0;">
-          <span style="color:var(--text-muted); font-weight:700;">Version:</span>
-          <span style="font-weight:700;">v${APP_VERSION}</span>
+          <span style="color:#475569; font-weight:600; font-size:13px;">System Architecture:</span>
+          <span style="font-weight:600; font-size:12.5px; color:#64748B;">SPA Modernist Grid • SQLite WAL • 80mm POS Thermal</span>
         </div>
       </div>
 
-      <div style="font-size:12.5px; color:var(--text-muted); line-height:1.6;">
-        <b>Key Capabilities:</b>
-        <ul style="margin:6px 0 0 18px; padding:0;">
-          <li>Modernist High-Density 3-Pane Clinical Layout</li>
-          <li>Real-time Derived Clinical Formula Evaluator (HbA1c, LDL, Bilirubin, Globulin)</li>
-          <li>Single-Sheet HbA1c with Clinical Significance Paragraph & 3 Doctor Signatures</li>
-          <li>WhatsApp Dispatch Assistant with Auto-Paste Guidance</li>
-          <li>POS Thermal Receipt Printing & Financial Statements</li>
-        </ul>
+      <div style="font-size:12.5px; color:#334155; line-height:1.7;">
+        <b style="color:#0A3668; letter-spacing:.5px; text-transform:uppercase; font-size:11.5px;">Key Clinical Capabilities:</b>
+        <div style="margin-top:6px; display:grid; gap:4px;">
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Real-time clinical formula calculation & automatic delta check</span></div>
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Multi-style diagnostic letterheads & dual HbA1c layout sheets</span></div>
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Executive Day-Book analytics, revenue tracking & CSV export</span></div>
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Dual invoicing: Official A4 Tax Invoices + 80mm POS thermal slips</span></div>
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Automated WhatsApp PDF dispatch & medico-legal audit trails</span></div>
+        </div>
       </div>
     </div>
   `;

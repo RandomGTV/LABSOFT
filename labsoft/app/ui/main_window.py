@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
             sign_out.linkActivated.connect(self._sign_out)
             bar.addPermanentWidget(sign_out)
         bar.addPermanentWidget(self.backup_label)
-        about_link = QLabel('<a href="#" style="color:%s; text-decoration:none; font-weight:600;">ⓘ About</a>' % style.INK2)
+        about_link = QLabel('<a href="#" style="color:%s; text-decoration:none; font-weight:600;">ⓘ About & Credits</a>' % style.INK2)
         about_link.setOpenExternalLinks(False)
         about_link.linkActivated.connect(self._show_about)
         bar.addPermanentWidget(about_link)
