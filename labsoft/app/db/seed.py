@@ -557,6 +557,17 @@ PANELS += [
                                   "CHIK", "SCRUB", "LEPTO", "CRP"], 1800, 0),
     ("PCOS Profile", ["FSH", "LH", "PRL", "TESTO", "TSH", "INSULIN", "GLU_F",
                       "HOMAIR"], 2800, 0),
+    ("Antenatal (ANC) Profile", ["BLGRP", "HB", "TC", "PLT", "GLU_R", "HIV",
+                                "HBSAG", "VDRL", "TSH", "U_ALB", "U_SUG"], 1400, 1),
+    ("Pre-Operative Profile", ["BLGRP", "HB", "TC", "PLT", "BT", "CT", "PT",
+                               "INR", "GLU_F", "UREA", "CREAT", "HIV", "HBSAG",
+                               "HCV", "U_ALB"], 1800, 1),
+    ("Diabetic Comprehensive", ["GLU_F", "GLU_PP", "HBA1C", "EAG", "CHOL",
+                                "TG", "HDL", "LDL", "CREAT", "U_MALB"], 1600, 1),
+    ("Senior Citizen Comprehensive", ["HB", "TC", "PLT", "ESR", "GLU_F", "HBA1C",
+                                      "UREA", "CREAT", "UA", "CA", "TBIL", "SGPT",
+                                      "SGOT", "ALP", "CHOL", "TG", "HDL", "LDL",
+                                      "TSH", "VITD", "VITB12", "PSA"], 3600, 1),
 ]
 
 

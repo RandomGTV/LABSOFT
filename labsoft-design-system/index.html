@@ -684,93 +684,208 @@ const AUTHOR = "RANDOM_GTV";
 const APP_VERSION = "2026.1 (Modernist Release)";
 
 /* Full Pathology Catalog */
+/* Full Pathology Catalog — Comprehensive Clinical Specimen & Investigation Library */
 const TESTS = {
-  // Bio-chemistry
-  GLU_F:{n:"Blood Glucose [Fasting]",m:"Hexokinase",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:110,r:"70 - 110 mg/dl",rate:80},
-  GLU_PP:{n:"Blood Glucose [P P 2 hrs]",m:"Hexokinase",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:140,r:"70 - 140 mg/dl",rate:80},
-  GLU_R:{n:"Blood Glucose [Random]",m:"Hexokinase",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,lo:70,hi:140,r:"70 - 140 mg/dl",rate:80},
-  HBA1C:{n:"HbA1c (Glycated Haemoglobin)",m:"HPLC",g:"BIO-CHEMISTRY (Routine)",u:"%",d:1,hi:5.7,r:"< 5.7%",rate:450},
-  EAG:{n:"Mean Blood Glucose",m:"Calculated",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:0,hi:117,r:"< 117mg/dl",f:"28.7 * HBA1C - 46.7",rate:0},
-  UREA:{n:"Blood Urea",m:"GLDH",g:"RENAL FUNCTION TEST",u:"mg/dl",d:0,lo:15,hi:45,r:"15 - 45 mg/dl",rate:100},
-  BUN:{n:"Blood Urea Nitrogen",m:"Calculated",g:"RENAL FUNCTION TEST",u:"mg/dl",d:1,lo:7,hi:21,r:"7 - 21 mg/dl",f:"UREA / 2.14",rate:0},
-  CREAT:{n:"Serum Creatinine",m:"Modified Jaffe",g:"RENAL FUNCTION TEST",u:"mg/dl",d:2,lo:0.6,hi:1.3,r:"0.6 - 1.3 mg/dl",rate:120},
-  UA:{n:"Serum Uric Acid",m:"Uricase",g:"RENAL FUNCTION TEST",u:"mg/dl",d:1,lo:3.5,hi:7.2,r:"3.5 - 7.2 mg/dl",rate:120},
-  CA:{n:"Serum Calcium",m:"Arsenazo III",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:1,lo:8.5,hi:10.5,r:"8.5 - 10.5 mg/dl",rate:150},
-  PHOS:{n:"Serum Phosphorus",m:"Phosphomolybdate",g:"BIO-CHEMISTRY (Routine)",u:"mg/dl",d:1,lo:2.5,hi:4.5,r:"2.5 - 4.5 mg/dl",rate:150},
+  // ---------------------------------------------------- 01. HAEMATOLOGY & BLOOD INDICES
+  HB: { n: "Haemoglobin", m: "Cyanmethemoglobin / Impedance", g: "HAEMATOLOGY", u: "g/dl", d: 1, lo: 12, hi: 15, r: "12 - 15 g/dl", panicLo: 6.0, panicHi: 20.0, bySex: { M: { lo: 13, hi: 17, r: "13 - 17 g/dl" }, F: { lo: 12, hi: 15, r: "12 - 15 g/dl" } }, rate: 80 },
+  TC: { n: "Total WBC Count", m: "Automated Cell Counter", g: "HAEMATOLOGY", u: "cells/cumm", d: 0, lo: 4000, hi: 11000, r: "4,000 - 11,000", panicLo: 2000, panicHi: 30000, rate: 80 },
+  RBC: { n: "Total RBC Count", m: "Automated Impedance", g: "HAEMATOLOGY", u: "million/cumm", d: 2, lo: 4.1, hi: 5.9, r: "4.1 - 5.9", bySex: { M: { lo: 4.5, hi: 5.9, r: "4.5 - 5.9" }, F: { lo: 4.1, hi: 5.1, r: "4.1 - 5.1" } }, rate: 80 },
+  PLT: { n: "Platelet Count", m: "Automated Impedance / Chamber", g: "HAEMATOLOGY", u: "lakhs/cumm", d: 2, lo: 1.5, hi: 4.5, r: "1.5 - 4.5 lakhs/cumm", panicLo: 0.25, panicHi: 10.0, rate: 100 },
+  PCV: { n: "PCV / Haematocrit", m: "Calculated", g: "HAEMATOLOGY", u: "%", d: 1, lo: 36, hi: 46, r: "36 - 46%", bySex: { M: { lo: 40, hi: 50, r: "40 - 50%" }, F: { lo: 36, hi: 46, r: "36 - 46%" } }, rate: 80 },
+  MCV: { n: "MCV", m: "Calculated", g: "HAEMATOLOGY", u: "fl", d: 1, lo: 80, hi: 100, r: "80 - 100 fl", rate: 0 },
+  MCH: { n: "MCH", m: "Calculated", g: "HAEMATOLOGY", u: "pg", d: 1, lo: 27, hi: 32, r: "27 - 32 pg", rate: 0 },
+  MCHC: { n: "MCHC", m: "Calculated", g: "HAEMATOLOGY", u: "g/dl", d: 1, lo: 32, hi: 36, r: "32 - 36 g/dl", rate: 0 },
+  RDW: { n: "RDW-CV", m: "Calculated", g: "HAEMATOLOGY", u: "%", d: 1, lo: 11.5, hi: 14.5, r: "11.5 - 14.5 %", rate: 0 },
+  MPV: { n: "Mean Platelet Volume (MPV)", m: "Calculated", g: "HAEMATOLOGY", u: "fl", d: 1, lo: 7.5, hi: 11.5, r: "7.5 - 11.5 fl", rate: 0 },
+  NEU: { n: "Neutrophils", m: "Manual / Counter", g: "HAEMATOLOGY", u: "%", d: 0, lo: 40, hi: 75, r: "40 - 75%", rate: 0 },
+  LYM: { n: "Lymphocytes", m: "Manual / Counter", g: "HAEMATOLOGY", u: "%", d: 0, lo: 20, hi: 45, r: "20 - 45%", rate: 0 },
+  EOS: { n: "Eosinophils", m: "Manual / Counter", g: "HAEMATOLOGY", u: "%", d: 0, lo: 1, hi: 6, r: "1 - 6%", rate: 0 },
+  MON: { n: "Monocytes", m: "Manual / Counter", g: "HAEMATOLOGY", u: "%", d: 0, lo: 2, hi: 10, r: "2 - 10%", rate: 0 },
+  BAS: { n: "Basophils", m: "Manual / Counter", g: "HAEMATOLOGY", u: "%", d: 0, hi: 1, r: "0 - 1%", rate: 0 },
+  ANC: { n: "Absolute Neutrophil Count", m: "Calculated", g: "HAEMATOLOGY", u: "cells/cumm", d: 0, lo: 1800, hi: 7700, r: "1,800 - 7,700", f: "TC * NEU / 100", rate: 0 },
+  ALC: { n: "Absolute Lymphocyte Count", m: "Calculated", g: "HAEMATOLOGY", u: "cells/cumm", d: 0, lo: 1000, hi: 4800, r: "1,000 - 4,800", f: "TC * LYM / 100", rate: 0 },
+  AEC: { n: "Absolute Eosinophil Count", m: "Calculated / Chamber", g: "HAEMATOLOGY", u: "cells/cumm", d: 0, lo: 40, hi: 440, r: "40 - 440", f: "TC * EOS / 100", rate: 60 },
+  NLR: { n: "Neutrophil / Lymphocyte Ratio", m: "Calculated", g: "HAEMATOLOGY", u: "", d: 2, hi: 3.0, r: "< 3.0", f: "NEU / LYM", rate: 0 },
+  ESR: { n: "ESR (Westergren 1 hr)", m: "Westergren Method", g: "HAEMATOLOGY", u: "mm/hr", d: 0, hi: 20, r: "0 - 20 mm/hr", bySex: { M: { hi: 15, r: "0 - 15 mm/hr" }, F: { hi: 20, r: "0 - 20 mm/hr" } }, rate: 60 },
+  RETIC: { n: "Reticulocyte Count", m: "Supravital Stain (BCB)", g: "HAEMATOLOGY", u: "%", d: 1, lo: 0.5, hi: 2.5, r: "0.5 - 2.5%", rate: 150 },
+  PS: { n: "Peripheral Smear Study", m: "Leishman's Staining", g: "HAEMATOLOGY", u: "", d: 0, r: "Normocytic Normochromic RBCs", rate: 200 },
+  BLGRP: { n: "Blood Group & Rh Typing", m: "Slide / Tube Agglutination", g: "HAEMATOLOGY", u: "", d: 0, opts: ["A Positive","A Negative","B Positive","B Negative","AB Positive","AB Negative","O Positive","O Negative"], ok: "O Positive", r: "Forward & Reverse Verified", rate: 100 },
 
-  // Haematology
-  HB:{n:"Haemoglobin",m:"Cyanmethemoglobin",g:"HAEMATOLOGY",u:"g/dl",d:1,lo:12,hi:15,r:"12 - 15 g/dl",bySex:{M:{lo:13,hi:17,r:"13 - 17 g/dl"},F:{lo:12,hi:15,r:"12 - 15 g/dl"}},rate:80},
-  TC:{n:"Total WBC Count",m:"Automated Cell Counter",g:"HAEMATOLOGY",u:"cells/cumm",d:0,lo:4000,hi:11000,r:"4,000 - 11,000",rate:80},
-  RBC:{n:"Total RBC Count",m:"Automated Impedance",g:"HAEMATOLOGY",u:"million/cumm",d:2,lo:4.1,hi:5.9,r:"4.1 - 5.9",rate:80},
-  PLT:{n:"Platelet Count",m:"Automated Impedance",g:"HAEMATOLOGY",u:"lakhs/cumm",d:2,lo:1.5,hi:4.5,r:"1.5 - 4.5 lakhs/cumm",rate:100},
-  PCV:{n:"PCV / Haematocrit",m:"Calculated",g:"HAEMATOLOGY",u:"%",d:1,lo:36,hi:46,r:"36 - 46%",rate:80},
-  MCV:{n:"MCV",m:"Calculated",g:"HAEMATOLOGY",u:"fl",d:1,lo:80,hi:100,r:"80 - 100 fl",rate:0},
-  MCH:{n:"MCH",m:"Calculated",g:"HAEMATOLOGY",u:"pg",d:1,lo:27,hi:32,r:"27 - 32 pg",rate:0},
-  MCHC:{n:"MCHC",m:"Calculated",g:"HAEMATOLOGY",u:"g/dl",d:1,lo:32,hi:36,r:"32 - 36 g/dl",rate:0},
-  RDW:{n:"RDW-CV",m:"Calculated",g:"HAEMATOLOGY",u:"%",d:1,lo:11.5,hi:14.5,r:"11.5 - 14.5 %",rate:0},
-  NEU:{n:"Neutrophils",m:"Manual / Counter",g:"HAEMATOLOGY",u:"%",d:0,lo:40,hi:75,r:"40 - 75%",rate:0},
-  LYM:{n:"Lymphocytes",m:"Manual / Counter",g:"HAEMATOLOGY",u:"%",d:0,lo:20,hi:45,r:"20 - 45%",rate:0},
-  EOS:{n:"Eosinophils",m:"Manual / Counter",g:"HAEMATOLOGY",u:"%",d:0,lo:1,hi:6,r:"1 - 6%",rate:0},
-  MON:{n:"Monocytes",m:"Manual / Counter",g:"HAEMATOLOGY",u:"%",d:0,lo:2,hi:10,r:"2 - 10%",rate:0},
-  BAS:{n:"Basophils",m:"Manual / Counter",g:"HAEMATOLOGY",u:"%",d:0,hi:1,r:"0 - 1%",rate:0},
-  ESR:{n:"ESR (Westergren)",m:"Westergren 1 hr",g:"HAEMATOLOGY",u:"mm/hr",d:0,hi:20,r:"0 - 20 mm/hr",rate:60},
+  // ---------------------------------------------------- 02. COAGULATION & CLOTTING
+  PT: { n: "Prothrombin Time (PT)", m: "Electromechanical / Optical", g: "COAGULATION PROFILE", u: "sec", d: 1, lo: 11.0, hi: 15.0, r: "11.0 - 15.0 sec", rate: 250 },
+  INR: { n: "INR (International Normalized Ratio)", m: "Calculated / ISI", g: "COAGULATION PROFILE", u: "", d: 2, lo: 0.8, hi: 1.2, r: "0.80 - 1.20", panicHi: 4.5, rate: 0 },
+  APTT: { n: "APTT", m: "Coagulometer", g: "COAGULATION PROFILE", u: "sec", d: 1, lo: 25.0, hi: 35.0, r: "25.0 - 35.0 sec", rate: 350 },
+  BT: { n: "Bleeding Time (Duke's)", m: "Duke's Filter Paper", g: "COAGULATION PROFILE", u: "min", d: 1, lo: 2.0, hi: 7.0, r: "2.0 - 7.0 min", rate: 60 },
+  CT: { n: "Clotting Time (Capillary)", m: "Capillary Tube", g: "COAGULATION PROFILE", u: "min", d: 1, lo: 4.0, hi: 9.0, r: "4.0 - 9.0 min", rate: 60 },
+  FIB: { n: "Fibrinogen", m: "Clauss Method", g: "COAGULATION PROFILE", u: "mg/dl", d: 0, lo: 200, hi: 400, r: "200 - 400 mg/dl", rate: 450 },
+  DDIMER: { n: "D-Dimer (Quantitative)", m: "Immunoturbidimetry", g: "COAGULATION PROFILE", u: "ng/ml", d: 0, hi: 500, r: "< 500 ng/ml", panicHi: 2000, rate: 900 },
 
-  // Liver Function
-  TBIL:{n:"Total Bilirubin",m:"DSA Method",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,lo:0.2,hi:1.2,r:"0.2 - 1.2 mg/dl",rate:100},
-  DBIL:{n:"Direct Bilirubin",m:"DSA Method",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,hi:0.3,r:"< 0.3 mg/dl",rate:100},
-  IBIL:{n:"Indirect Bilirubin",m:"Calculated",g:"LIVER FUNCTION TEST",u:"mg/dl",d:2,lo:0.2,hi:0.9,r:"0.2 - 0.9 mg/dl",f:"TBIL - DBIL",rate:0},
-  SGPT:{n:"SGPT (ALT)",m:"IFCC without Pyridoxal",g:"LIVER FUNCTION TEST",u:"U/L",d:0,hi:34,r:"< 34 U/L",rate:120},
-  SGOT:{n:"SGOT (AST)",m:"IFCC without Pyridoxal",g:"LIVER FUNCTION TEST",u:"U/L",d:0,hi:32,r:"< 32 U/L",rate:120},
-  ALP:{n:"Alkaline Phosphatase (ALP)",m:"p-NPP-AMP",g:"LIVER FUNCTION TEST",u:"U/L",d:0,lo:44,hi:147,r:"44 - 147 U/L",rate:120},
-  TP:{n:"Total Protein",m:"Biuret",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:6.0,hi:8.3,r:"6.0 - 8.3 g/dl",rate:100},
-  ALB:{n:"Albumin",m:"BCG Dye Binding",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:3.5,hi:5.2,r:"3.5 - 5.2 g/dl",rate:100},
-  GLOB:{n:"Globulin",m:"Calculated",g:"LIVER FUNCTION TEST",u:"g/dl",d:1,lo:2.0,hi:3.5,r:"2.0 - 3.5 g/dl",f:"TP - ALB",rate:0},
-  AGR:{n:"A / G Ratio",m:"Calculated",g:"LIVER FUNCTION TEST",u:"",d:2,lo:1.0,hi:2.1,r:"1.0 - 2.1",f:"ALB / GLOB",rate:0},
+  // ---------------------------------------------------- 03. BIOCHEMISTRY & DIABETES
+  GLU_F: { n: "Blood Glucose [Fasting]", m: "Hexokinase / GOD-POD", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, lo: 70, hi: 110, r: "70 - 110 mg/dl", panicLo: 50, panicHi: 400, rate: 80 },
+  GLU_PP: { n: "Blood Glucose [P P 2 hrs]", m: "Hexokinase / GOD-POD", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, lo: 70, hi: 140, r: "70 - 140 mg/dl", panicLo: 50, panicHi: 450, rate: 80 },
+  GLU_R: { n: "Blood Glucose [Random]", m: "Hexokinase / GOD-POD", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, lo: 70, hi: 140, r: "70 - 140 mg/dl", panicLo: 50, panicHi: 450, rate: 80 },
+  HBA1C: { n: "HbA1c (Glycated Haemoglobin)", m: "HPLC Certified", g: "BIO-CHEMISTRY (Routine)", u: "%", d: 1, hi: 5.7, r: "< 5.7% (Normal), 5.7-6.4% (Pre-diabetic), >=6.5% (Diabetic)", panicHi: 14.0, rate: 450 },
+  EAG: { n: "Mean Blood Glucose (eAG)", m: "ADAG Equation", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, hi: 117, r: "< 117 mg/dl", f: "28.7 * HBA1C - 46.7", rate: 0 },
+  GTT1: { n: "GTT — 1 Hour (75g Oral Glucose)", m: "Hexokinase", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, hi: 180, r: "< 180 mg/dl", rate: 90 },
+  GTT2: { n: "GTT — 2 Hours (75g Oral Glucose)", m: "Hexokinase", g: "BIO-CHEMISTRY (Routine)", u: "mg/dl", d: 0, hi: 140, r: "< 140 mg/dl", rate: 90 },
+  INSULIN: { n: "Fasting Serum Insulin", m: "Chemiluminescence (CLIA)", g: "BIO-CHEMISTRY (Routine)", u: "µIU/ml", d: 1, lo: 2.6, hi: 24.9, r: "2.6 - 24.9 µIU/ml", rate: 700 },
+  HOMAIR: { n: "HOMA-IR (Insulin Resistance)", m: "Calculated", g: "BIO-CHEMISTRY (Routine)", u: "", d: 2, hi: 2.0, r: "< 2.0", f: "GLU_F * INSULIN / 405", rate: 0 },
 
-  // Lipid Profile
-  CHOL:{n:"Total Cholesterol",m:"CHOD-PAP",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:200,r:"< 200 mg/dl",rate:150},
-  TG:{n:"Triglycerides",m:"GPO-PAP",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:150,r:"< 150 mg/dl",rate:150},
-  HDL:{n:"HDL Cholesterol",m:"Direct Clearance",g:"LIPID PROFILE",u:"mg/dl",d:0,lo:40,hi:60,r:"40 - 60 mg/dl",rate:150},
-  LDL:{n:"LDL Cholesterol",m:"Friedewald Formula",g:"LIPID PROFILE",u:"mg/dl",d:0,hi:100,r:"< 100 mg/dl",f:"CHOL - HDL - TG/5",rate:0},
-  VLDL:{n:"VLDL Cholesterol",m:"Calculated",g:"LIPID PROFILE",u:"mg/dl",d:0,lo:5,hi:40,r:"5 - 40 mg/dl",f:"TG / 5",rate:0},
-  CHOLHDL:{n:"Total Cholesterol / HDL Ratio",m:"Calculated",g:"LIPID PROFILE",u:"",d:2,hi:4.5,r:"< 4.5",f:"CHOL / HDL",rate:0},
+  // ---------------------------------------------------- 04. RENAL FUNCTION (RFT / KFT)
+  UREA: { n: "Blood Urea", m: "Urease / GLDH", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 0, lo: 15, hi: 45, r: "15 - 45 mg/dl", panicHi: 150, rate: 100 },
+  BUN: { n: "Blood Urea Nitrogen (BUN)", m: "Calculated", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 1, lo: 7, hi: 21, r: "7 - 21 mg/dl", f: "UREA / 2.14", rate: 0 },
+  CREAT: { n: "Serum Creatinine", m: "Enzymatic / Modified Jaffe", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 2, lo: 0.6, hi: 1.3, r: "0.6 - 1.3 mg/dl", panicHi: 6.0, bySex: { M: { lo: 0.7, hi: 1.3, r: "0.7 - 1.3 mg/dl" }, F: { lo: 0.6, hi: 1.1, r: "0.6 - 1.1 mg/dl" } }, rate: 120 },
+  UA: { n: "Serum Uric Acid", m: "Uricase / POD", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 1, lo: 3.5, hi: 7.2, r: "3.5 - 7.2 mg/dl", bySex: { M: { lo: 3.5, hi: 7.2, r: "3.5 - 7.2 mg/dl" }, F: { lo: 2.6, hi: 6.0, r: "2.6 - 6.0 mg/dl" } }, rate: 120 },
+  CA: { n: "Serum Calcium", m: "Arsenazo III", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 1, lo: 8.5, hi: 10.5, r: "8.5 - 10.5 mg/dl", panicLo: 6.5, panicHi: 13.5, rate: 150 },
+  PHOS: { n: "Serum Phosphorus", m: "Phosphomolybdate", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 1, lo: 2.5, hi: 4.5, r: "2.5 - 4.5 mg/dl", rate: 150 },
+  BUNCR: { n: "BUN / Creatinine Ratio", m: "Calculated", g: "RENAL FUNCTION TEST", u: "", d: 1, lo: 10, hi: 20, r: "10 - 20", f: "BUN / CREAT", rate: 0 },
+  CACORR: { n: "Corrected Calcium", m: "Payne's Formula", g: "RENAL FUNCTION TEST", u: "mg/dl", d: 1, lo: 8.5, hi: 10.5, r: "8.5 - 10.5 mg/dl", f: "CA + 0.8 * (4 - ALB)", rate: 0 },
 
-  // Thyroid Profile
-  T3:{n:"Total T3",m:"CLIA",g:"THYROID PROFILE",u:"ng/dl",d:0,lo:80,hi:200,r:"80 - 200 ng/dl",rate:200},
-  T4:{n:"Total T4",m:"CLIA",g:"THYROID PROFILE",u:"µg/dl",d:1,lo:5.1,hi:14.1,r:"5.1 - 14.1 µg/dl",rate:200},
-  TSH:{n:"TSH (Ultrasensitive)",m:"CLIA",g:"THYROID PROFILE",u:"µIU/ml",d:2,lo:0.27,hi:4.2,r:"0.27 - 4.2 µIU/ml",rate:250},
+  // ---------------------------------------------------- 05. LIVER FUNCTION (LFT)
+  TBIL: { n: "Total Bilirubin", m: "DSA Method", g: "LIVER FUNCTION TEST", u: "mg/dl", d: 2, lo: 0.2, hi: 1.2, r: "0.2 - 1.2 mg/dl", panicHi: 15.0, rate: 100 },
+  DBIL: { n: "Direct Bilirubin (Conjugated)", m: "DSA Method", g: "LIVER FUNCTION TEST", u: "mg/dl", d: 2, hi: 0.3, r: "< 0.3 mg/dl", rate: 100 },
+  IBIL: { n: "Indirect Bilirubin (Unconjugated)", m: "Calculated", g: "LIVER FUNCTION TEST", u: "mg/dl", d: 2, lo: 0.2, hi: 0.9, r: "0.2 - 0.9 mg/dl", f: "TBIL - DBIL", rate: 0 },
+  SGPT: { n: "SGPT (ALT)", m: "IFCC Kinetic without Pyridoxal", g: "LIVER FUNCTION TEST", u: "U/L", d: 0, hi: 45, r: "< 45 U/L", bySex: { M: { hi: 45, r: "< 45 U/L" }, F: { hi: 34, r: "< 34 U/L" } }, rate: 120 },
+  SGOT: { n: "SGOT (AST)", m: "IFCC Kinetic without Pyridoxal", g: "LIVER FUNCTION TEST", u: "U/L", d: 0, hi: 40, r: "< 40 U/L", bySex: { M: { hi: 40, r: "< 40 U/L" }, F: { hi: 32, r: "< 32 U/L" } }, rate: 120 },
+  ALP: { n: "Alkaline Phosphatase (ALP)", m: "p-NPP-AMP Kinetic", g: "LIVER FUNCTION TEST", u: "U/L", d: 0, lo: 44, hi: 147, r: "44 - 147 U/L", rate: 120 },
+  GGT: { n: "Gamma Glutamyl Transferase (GGT)", m: "Szasz-Persijn", g: "LIVER FUNCTION TEST", u: "U/L", d: 0, hi: 55, r: "< 55 U/L", bySex: { M: { hi: 55, r: "< 55 U/L" }, F: { hi: 38, r: "< 38 U/L" } }, rate: 200 },
+  TP: { n: "Total Protein", m: "Biuret Colorimetric", g: "LIVER FUNCTION TEST", u: "g/dl", d: 1, lo: 6.0, hi: 8.3, r: "6.0 - 8.3 g/dl", rate: 100 },
+  ALB: { n: "Albumin", m: "BCG Dye Binding", g: "LIVER FUNCTION TEST", u: "g/dl", d: 1, lo: 3.5, hi: 5.2, r: "3.5 - 5.2 g/dl", rate: 100 },
+  GLOB: { n: "Globulin", m: "Calculated", g: "LIVER FUNCTION TEST", u: "g/dl", d: 1, lo: 2.0, hi: 3.5, r: "2.0 - 3.5 g/dl", f: "TP - ALB", rate: 0 },
+  AGR: { n: "A / G Ratio", m: "Calculated", g: "LIVER FUNCTION TEST", u:"", d: 2, lo: 1.0, hi: 2.1, r: "1.0 - 2.1", f: "ALB / GLOB", rate: 0 },
 
-  // Electrolytes
-  NA:{n:"Serum Sodium",m:"ISE",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:135,hi:145,r:"135 - 145 mmol/L",rate:150},
-  K:{n:"Serum Potassium",m:"ISE",g:"ELECTROLYTES",u:"mmol/L",d:1,lo:3.5,hi:5.1,r:"3.5 - 5.1 mmol/L",rate:150},
-  CL:{n:"Serum Chloride",m:"ISE",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:98,hi:107,r:"98 - 107 mmol/L",rate:150},
-  BICARB:{n:"Serum Bicarbonate",m:"Enzymatic",g:"ELECTROLYTES",u:"mmol/L",d:0,lo:22,hi:29,r:"22 - 29 mmol/L",rate:150},
+  // ---------------------------------------------------- 06. LIPID PROFILE
+  CHOL: { n: "Total Cholesterol", m: "CHOD-PAP Enzymatic", g: "LIPID PROFILE", u: "mg/dl", d: 0, hi: 200, r: "< 200 mg/dl (Desirable)", rate: 150 },
+  TG: { n: "Triglycerides", m: "GPO-PAP Enzymatic", g: "LIPID PROFILE", u: "mg/dl", d: 0, hi: 150, r: "< 150 mg/dl (Normal)", panicHi: 800, rate: 150 },
+  HDL: { n: "HDL Cholesterol", m: "Direct Accelerator Clearance", g: "LIPID PROFILE", u: "mg/dl", d: 0, lo: 40, hi: 60, r: "> 40 mg/dl (Male), > 50 mg/dl (Female)", bySex: { M: { lo: 40, r: "> 40 mg/dl" }, F: { lo: 50, r: "> 50 mg/dl" } }, rate: 150 },
+  LDL: { n: "LDL Cholesterol", m: "Friedewald Calculated", g: "LIPID PROFILE", u: "mg/dl", d: 0, hi: 100, r: "< 100 mg/dl (Optimal)", f: "CHOL - HDL - TG/5", rate: 0 },
+  VLDL: { n: "VLDL Cholesterol", m: "Calculated", g: "LIPID PROFILE", u: "mg/dl", d: 0, lo: 5, hi: 40, r: "5 - 40 mg/dl", f: "TG / 5", rate: 0 },
+  NONHDL: { n: "Non-HDL Cholesterol", m: "Calculated", g: "LIPID PROFILE", u: "mg/dl", d: 0, hi: 130, r: "< 130 mg/dl", f: "CHOL - HDL", rate: 0 },
+  CHOLHDL: { n: "Total Cholesterol / HDL Ratio", m: "Calculated", g: "LIPID PROFILE", u: "", d: 2, hi: 4.5, r: "< 4.5", f: "CHOL / HDL", rate: 0 },
+  LDLHDL: { n: "LDL / HDL Ratio", m: "Calculated", g: "LIPID PROFILE", u: "", d: 2, hi: 3.5, r: "< 3.5", f: "LDL / HDL", rate: 0 },
 
-  // Urine Routine
-  U_ALB:{n:"Urine Albumin",m:"Dipstick / SSA",g:"URINE ROUTINE EXAMINATION",u:"",d:0,opts:["Nil","Trace","+","++","+++"],ok:"Nil",r:"Nil",rate:50},
-  U_SUG:{n:"Urine Sugar",m:"Benedict's",g:"URINE ROUTINE EXAMINATION",u:"",d:0,opts:["Nil","Trace","+","++","+++"],ok:"Nil",r:"Nil",rate:50},
-  U_PUS:{n:"Pus Cells",m:"Microscopy",g:"URINE ROUTINE EXAMINATION",u:"/hpf",d:0,r:"0 - 2 /hpf",rate:50},
-  U_EPI:{n:"Epithelial Cells",m:"Microscopy",g:"URINE ROUTINE EXAMINATION",u:"/hpf",d:0,r:"0 - 2 /hpf",rate:50},
+  // ---------------------------------------------------- 07. ELECTROLYTES
+  NA: { n: "Serum Sodium (Na+)", m: "ISE Direct", g: "ELECTROLYTES", u: "mmol/L", d: 0, lo: 135, hi: 145, r: "135 - 145 mmol/L", panicLo: 120, panicHi: 160, rate: 150 },
+  K: { n: "Serum Potassium (K+)", m: "ISE Direct", g: "ELECTROLYTES", u: "mmol/L", d: 1, lo: 3.5, hi: 5.1, r: "3.5 - 5.1 mmol/L", panicLo: 2.8, panicHi: 6.2, rate: 150 },
+  CL: { n: "Serum Chloride (Cl-)", m: "ISE Direct", g: "ELECTROLYTES", u: "mmol/L", d: 0, lo: 98, hi: 107, r: "98 - 107 mmol/L", rate: 150 },
+  BICARB: { n: "Serum Bicarbonate (HCO3-)", m: "Enzymatic PEPC", g: "ELECTROLYTES", u: "mmol/L", d: 0, lo: 22, hi: 29, r: "22 - 29 mmol/L", panicLo: 10, panicHi: 40, rate: 150 },
+  MG: { n: "Serum Magnesium", m: "Calmagite Method", g: "ELECTROLYTES", u: "mg/dl", d: 2, lo: 1.7, hi: 2.4, r: "1.7 - 2.4 mg/dl", rate: 250 },
+  ANGAP: { n: "Anion Gap", m: "Calculated", g: "ELECTROLYTES", u: "mmol/L", d: 0, lo: 8, hi: 16, r: "8 - 16 mmol/L", f: "NA - CL - BICARB", rate: 0 },
 
-  // Serology & Special
-  HBSAG:{n:"HBsAg (Rapid)",m:"Immunochromatography",g:"SEROLOGY",u:"",d:0,opts:["Non Reactive","Reactive"],ok:"Non Reactive",r:"Non Reactive",rate:200},
-  CRP:{n:"CRP (Quantitative)",m:"Immunoturbidimetry",g:"SEROLOGY",u:"mg/L",d:1,hi:6,r:"< 6 mg/L",rate:300},
-  WIDAL:{n:"Widal Reaction",m:"Slide Agglutination",g:"SEROLOGY",u:"",d:0,r:"Negative (< 1:80)",rate:150},
-  VITD:{n:"Vitamin D (25-OH)",m:"CLIA",g:"BIO-CHEMISTRY (Routine)",u:"ng/ml",d:1,lo:30,hi:100,r:"30 - 100 ng/ml",rate:800},
-  B12:{n:"Vitamin B12",m:"CLIA",g:"BIO-CHEMISTRY (Routine)",u:"pg/ml",d:0,lo:211,hi:911,r:"211 - 911 pg/ml",rate:750},
+  // ---------------------------------------------------- 08. THYROID PANEL
+  T3: { n: "Total Triiodothyronine (T3)", m: "Chemiluminescence (CLIA)", g: "THYROID PROFILE", u: "ng/dl", d: 0, lo: 80, hi: 200, r: "80 - 200 ng/dl", rate: 200 },
+  T4: { n: "Total Thyroxine (T4)", m: "Chemiluminescence (CLIA)", g: "THYROID PROFILE", u: "µg/dl", d: 1, lo: 5.1, hi: 14.1, r: "5.1 - 14.1 µg/dl", rate: 200 },
+  TSH: { n: "TSH (Ultrasensitive 3rd Gen)", m: "Chemiluminescence (CLIA)", g: "THYROID PROFILE", u: "µIU/ml", d: 2, lo: 0.27, hi: 4.2, r: "0.27 - 4.20 µIU/ml", panicHi: 25.0, rate: 250 },
+  FT3: { n: "Free T3 (FT3)", m: "Chemiluminescence (CLIA)", g: "THYROID PROFILE", u: "pg/ml", d: 2, lo: 2.0, hi: 4.4, r: "2.0 - 4.4 pg/ml", rate: 300 },
+  FT4: { n: "Free T4 (FT4)", m: "Chemiluminescence (CLIA)", g: "THYROID PROFILE", u: "ng/dl", d: 2, lo: 0.93, hi: 1.7, r: "0.93 - 1.70 ng/dl", rate: 300 },
+  ATPO: { n: "Anti-TPO Antibody", m: "CLIA", g: "THYROID PROFILE", u: "IU/ml", d: 1, hi: 34, r: "< 34 IU/ml", rate: 900 },
+
+  // ---------------------------------------------------- 09. CARDIAC & PANCREATIC
+  TROPI: { n: "Troponin I (High Sensitivity)", m: "Chemiluminescence / FIA", g: "CARDIAC PROFILE", u: "ng/ml", d: 3, hi: 0.04, r: "< 0.04 ng/ml (Negative)", panicHi: 0.04, rate: 900 },
+  TROPT: { n: "Troponin T (hs-TnT)", m: "ECLIA", g: "CARDIAC PROFILE", u: "ng/ml", d: 3, hi: 0.014, r: "< 0.014 ng/ml", panicHi: 0.014, rate: 900 },
+  CKMB: { n: "CK-MB (Mass / Kinetic)", m: "Immunoinhibition", g: "CARDIAC PROFILE", u: "U/L", d: 0, hi: 25, r: "< 25 U/L", panicHi: 50, rate: 400 },
+  CPK: { n: "CPK Total (Creatine Kinase)", m: "IFCC Kinetic", g: "CARDIAC PROFILE", u: "U/L", d: 0, lo: 25, hi: 195, r: "25 - 195 U/L", rate: 300 },
+  LDH: { n: "LDH (Lactate Dehydrogenase)", m: "IFCC Kinetic", g: "CARDIAC PROFILE", u: "U/L", d: 0, lo: 140, hi: 280, r: "140 - 280 U/L", rate: 300 },
+  HSCRP: { n: "hs-CRP (Cardiac Risk Marker)", m: "Immunoturbidimetry", g: "CARDIAC PROFILE", u: "mg/L", d: 2, hi: 1.0, r: "< 1.0 mg/L (Low Risk)", rate: 600 },
+  AMY: { n: "Serum Amylase", m: "CNPG3 Direct", g: "BIO-CHEMISTRY (Routine)", u: "U/L", d: 0, lo: 30, hi: 110, r: "30 - 110 U/L", panicHi: 300, rate: 300 },
+  LIP: { n: "Serum Lipase", m: "Colorimetric Enzymatic", g: "BIO-CHEMISTRY (Routine)", u: "U/L", d: 0, lo: 13, hi: 60, r: "13 - 60 U/L", panicHi: 200, rate: 350 },
+
+  // ---------------------------------------------------- 10. IRON STUDIES & VITAMINS
+  IRON: { n: "Serum Iron", m: "Ferrozine Colorimetric", g: "IRON STUDIES", u: "µg/dl", d: 0, lo: 50, hi: 175, r: "50 - 175 µg/dl", bySex: { M: { lo: 65, hi: 175, r: "65 - 175 µg/dl" }, F: { lo: 50, hi: 170, r: "50 - 170 µg/dl" } }, rate: 400 },
+  TIBC: { n: "Total Iron Binding Capacity (TIBC)", m: "Direct Saturation", g: "IRON STUDIES", u: "µg/dl", d: 0, lo: 250, hi: 450, r: "250 - 450 µg/dl", rate: 400 },
+  UIBC: { n: "UIBC", m: "Calculated", g: "IRON STUDIES", u: "µg/dl", d: 0, lo: 120, hi: 380, r: "120 - 380 µg/dl", f: "TIBC - IRON", rate: 0 },
+  TSAT: { n: "Transferrin Saturation (% TSAT)", m: "Calculated", g: "IRON STUDIES", u: "%", d: 1, lo: 20, hi: 50, r: "20 - 50%", f: "IRON / TIBC * 100", rate: 0 },
+  FERR: { n: "Serum Ferritin", m: "Chemiluminescence (CLIA)", g: "IRON STUDIES", u: "ng/ml", d: 1, lo: 13, hi: 400, r: "13 - 400 ng/ml", bySex: { M: { lo: 30, hi: 400, r: "30 - 400 ng/ml" }, F: { lo: 13, hi: 150, r: "13 - 150 ng/ml" } }, rate: 700 },
+  VITD: { n: "Vitamin D (25-OH Total)", m: "Chemiluminescence (CLIA)", g: "BIO-CHEMISTRY (Routine)", u: "ng/ml", d: 1, lo: 30, hi: 100, r: "30 - 100 ng/ml (Optimal), <20 (Deficient)", rate: 800 },
+  B12: { n: "Vitamin B12 (Cyanocobalamin)", m: "Chemiluminescence (CLIA)", g: "BIO-CHEMISTRY (Routine)", u: "pg/ml", d: 0, lo: 211, hi: 911, r: "211 - 911 pg/ml", rate: 750 },
+  FOLATE: { n: "Serum Folate", m: "CLIA", g: "BIO-CHEMISTRY (Routine)", u: "ng/ml", d: 1, lo: 3.1, hi: 20.5, r: "3.1 - 20.5 ng/ml", rate: 800 },
+
+  // ---------------------------------------------------- 11. SEROLOGY & VIRAL IMMUNOLOGY
+  HBSAG: { n: "HBsAg (Hepatitis B Surface Ag)", m: "Rapid Immunochromatography", g: "SEROLOGY", u: "", d: 0, opts: ["Non Reactive","Reactive"], ok: "Non Reactive", r: "Non Reactive", rate: 200 },
+  HCV: { n: "Anti-HCV (Hepatitis C Antibody)", m: "Rapid Immunochromatography", g: "SEROLOGY", u: "", d: 0, opts: ["Non Reactive","Reactive"], ok: "Non Reactive", r: "Non Reactive", rate: 300 },
+  HIV: { n: "HIV I & II (Antibody / Ag Combo)", m: "Rapid 4th Gen Tri-Dot", g: "SEROLOGY", u: "", d: 0, opts: ["Non Reactive","Reactive"], ok: "Non Reactive", r: "Non Reactive", rate: 300 },
+  VDRL: { n: "VDRL / RPR (Syphilis)", m: "Flocculation Antigen", g: "SEROLOGY", u: "", d: 0, opts: ["Non Reactive","Reactive"], ok: "Non Reactive", r: "Non Reactive", rate: 150 },
+  DENGUE_NS1: { n: "Dengue NS1 Antigen", m: "Rapid Immunochromatography", g: "SEROLOGY", u: "", d: 0, opts: ["Negative","Positive"], ok: "Negative", r: "Negative", rate: 400 },
+  DENGUE_IGM: { n: "Dengue IgM Antibody", m: "Rapid Immunochromatography", g: "SEROLOGY", u: "", d: 0, opts: ["Negative","Positive"], ok: "Negative", r: "Negative", rate: 350 },
+  DENGUE_IGG: { n: "Dengue IgG Antibody", m: "Rapid Immunochromatography", g: "SEROLOGY", u: "", d: 0, opts: ["Negative","Positive"], ok: "Negative", r: "Negative", rate: 350 },
+  MP: { n: "Malaria Parasite (Antigen & Smear)", m: "Dual Ag Card & Giemsa Microscopy", g: "SEROLOGY", u: "", d: 0, opts: ["Not Detected","P. falciparum Detected","P. vivax Detected"], ok: "Not Detected", r: "Not Detected", rate: 150 },
+  WIDAL: { n: "Widal Reaction (Typhoid)", m: "Slide Agglutination Test", g: "SEROLOGY", u: "", d: 0, r: "TO: < 1:80, TH: < 1:80 (Negative)", rate: 150 },
+  TYPHIDOT: { n: "Typhidot (IgM / IgG)", m: "Dot EIA", g: "SEROLOGY", u: "", d: 0, opts: ["Negative","IgM Positive","IgG Positive","Both Positive"], ok: "Negative", r: "Negative", rate: 400 },
+  CHIK: { n: "Chikungunya IgM", m: "Rapid Immunochromatography", g: "SEROLOGY", u: "", d: 0, opts: ["Negative","Positive"], ok: "Negative", r: "Negative", rate: 700 },
+  CRP: { n: "CRP (C-Reactive Protein)", m: "Immunoturbidimetry (Quantitative)", g: "SEROLOGY", u: "mg/L", d: 1, hi: 6.0, r: "< 6.0 mg/L", rate: 300 },
+  RA: { n: "Rheumatoid Factor (RA)", m: "Latex Agglutination", g: "SEROLOGY", u: "IU/ml", d: 1, hi: 20.0, r: "< 20.0 IU/ml", rate: 250 },
+  ASO: { n: "ASO Titre", m: "Latex Agglutination", g: "SEROLOGY", u: "IU/ml", d: 0, hi: 200, r: "< 200 IU/ml", rate: 250 },
+  UPT: { n: "Urine Pregnancy Test (UPT)", m: "Rapid Immunochromatography", g: "SEROLOGY", u: "", d: 0, opts: ["Negative","Positive"], ok: "Negative", r: "Negative", rate: 100 },
+
+  // ---------------------------------------------------- 12. HORMONES & ONCOLOGY
+  BHCG: { n: "Beta-hCG (Serum Quantitative)", m: "Chemiluminescence (CLIA)", g: "HORMONE ASSAY", u: "mIU/ml", d: 2, hi: 5.0, r: "< 5.0 mIU/ml (Non-pregnant)", rate: 700 },
+  PRL: { n: "Serum Prolactin", m: "Chemiluminescence (CLIA)", g: "HORMONE ASSAY", u: "ng/ml", d: 1, lo: 4.0, hi: 23.3, r: "4.0 - 23.3 ng/ml", bySex: { M: { lo: 4.0, hi: 15.2, r: "4.0 - 15.2 ng/ml" }, F: { lo: 4.8, hi: 23.3, r: "4.8 - 23.3 ng/ml" } }, rate: 450 },
+  FSH: { n: "Follicle Stimulating Hormone (FSH)", m: "CLIA", g: "HORMONE ASSAY", u: "mIU/ml", d: 2, lo: 1.5, hi: 12.5, r: "1.5 - 12.5 mIU/ml", rate: 450 },
+  LH: { n: "Luteinizing Hormone (LH)", m: "CLIA", g: "HORMONE ASSAY", u: "mIU/ml", d: 2, lo: 1.7, hi: 12.6, r: "1.7 - 12.6 mIU/ml", rate: 450 },
+  TESTO: { n: "Total Testosterone", m: "CLIA", g: "HORMONE ASSAY", u: "ng/dl", d: 1, lo: 249, hi: 836, r: "249 - 836 ng/dl (Male), 8 - 48 ng/dl (Female)", bySex: { M: { lo: 249, hi: 836, r: "249 - 836 ng/dl" }, F: { lo: 8, hi: 48, r: "8 - 48 ng/dl" } }, rate: 600 },
+  AMH: { n: "Anti-Müllerian Hormone (AMH)", m: "ECLIA", g: "HORMONE ASSAY", u: "ng/ml", d: 2, lo: 1.0, hi: 4.0, r: "1.0 - 4.0 ng/ml (Normal Ovarian Reserve)", rate: 1800 },
+  PSA: { n: "Prostate Specific Antigen (PSA Total)", m: "CLIA", g: "TUMOUR MARKERS", u: "ng/ml", d: 2, hi: 4.0, r: "< 4.0 ng/ml", bySex: { M: { hi: 4.0, r: "< 4.0 ng/ml" } }, rate: 700 },
+
+  // ---------------------------------------------------- 13. URINE ROUTINE (14 Parameters)
+  U_COL: { n: "Colour", m: "Visual", g: "URINE ROUTINE EXAMINATION", u: "", d: 0, opts: ["Pale Yellow","Straw","Deep Yellow","Amber","Reddish"], ok: "Pale Yellow", r: "Pale Yellow", rate: 0 },
+  U_APP: { n: "Appearance", m: "Visual", g: "URINE ROUTINE EXAMINATION", u: "", d: 0, opts: ["Clear","Slightly Hazy","Turbid"], ok: "Clear", r: "Clear", rate: 0 },
+  U_REACT: { n: "Reaction (pH)", m: "Indicator Strip", g: "URINE ROUTINE EXAMINATION", u: "", d: 1, lo: 4.6, hi: 8.0, r: "4.6 - 8.0", rate: 0 },
+  U_SG: { n: "Specific Gravity", m: "Refractometer / Strip", g: "URINE ROUTINE EXAMINATION", u: "", d: 3, lo: 1.005, hi: 1.030, r: "1.005 - 1.030", rate: 0 },
+  U_ALB: { n: "Albumin (Protein)", m: "Heat & Acetic Acid / Strip", g: "URINE ROUTINE EXAMINATION", u: "", d: 0, opts: ["Nil","Trace","+","++","+++","++++"], ok: "Nil", r: "Nil", rate: 50 },
+  U_SUG: { n: "Sugar (Glucose)", m: "Benedict's Qualitative", g: "URINE ROUTINE EXAMINATION", u: "", d: 0, opts: ["Nil","Trace","+","++","+++","++++"], ok: "Nil", r: "Nil", rate: 50 },
+  U_KET: { n: "Ketone Bodies (Acetone)", m: "Rothera's Nitroprusside", g: "URINE ROUTINE EXAMINATION", u: "", d: 0, opts: ["Nil","Trace","Present (+)","Present (++)"], ok: "Nil", r: "Nil", rate: 0 },
+  U_BS: { n: "Bile Salt", m: "Hay's Sulphur Test", g: "URINE ROUTINE EXAMINATION", u: "", d: 0, opts: ["Absent","Present"], ok: "Absent", r: "Absent", rate: 0 },
+  U_BP: { n: "Bile Pigment", m: "Fouchet's Barium Chloride", g: "URINE ROUTINE EXAMINATION", u: "", d: 0, opts: ["Absent","Present"], ok: "Absent", r: "Absent", rate: 0 },
+  U_URO: { n: "Urobilinogen", m: "Ehrlich's Reagent", g: "URINE ROUTINE EXAMINATION", u: "", d: 0, opts: ["Normal","Increased","Absent"], ok: "Normal", r: "Normal (< 1 mg/dl)", rate: 0 },
+  U_PUS: { n: "Pus Cells (Leukocytes)", m: "Centrifuged Microscopy", g: "URINE ROUTINE EXAMINATION", u: "/hpf", d: 0, r: "0 - 4 /hpf", rate: 50 },
+  U_EPI: { n: "Epithelial Cells", m: "Centrifuged Microscopy", g: "URINE ROUTINE EXAMINATION", u: "/hpf", d: 0, r: "0 - 5 /hpf", rate: 50 },
+  U_RBC: { n: "Red Blood Cells", m: "Centrifuged Microscopy", g: "URINE ROUTINE EXAMINATION", u: "/hpf", d: 0, r: "Nil /hpf", rate: 0 },
+  U_CAST: { n: "Casts", m: "Centrifuged Microscopy", g: "URINE ROUTINE EXAMINATION", u: "", d: 0, r: "Nil / Occasional Hyaline", rate: 0 },
+  U_CRYS: { n: "Crystals", m: "Centrifuged Microscopy", g: "URINE ROUTINE EXAMINATION", u: "", d: 0, r: "Nil Seen", rate: 0 },
+  U_MALB: { n: "Urine Microalbumin", m: "Immunoturbidimetry", g: "URINE ROUTINE EXAMINATION", u: "mg/L", d: 1, hi: 30.0, r: "< 30.0 mg/L", rate: 500 },
+
+  // ---------------------------------------------------- 14. STOOL ROUTINE
+  S_COL: { n: "Colour", m: "Macroscopic", g: "STOOL EXAMINATION", u: "", d: 0, opts: ["Yellowish Brown","Brown","Clay Coloured","Black (Tarry)"], ok: "Yellowish Brown", r: "Yellowish Brown", rate: 0 },
+  S_CONS: { n: "Consistency", m: "Macroscopic", g: "STOOL EXAMINATION", u: "", d: 0, opts: ["Formed","Semi-formed","Loose","Watery"], ok: "Formed", r: "Formed", rate: 0 },
+  S_MUC: { n: "Mucus", m: "Macroscopic", g: "STOOL EXAMINATION", u: "", d: 0, opts: ["Absent","Present"], ok: "Absent", r: "Absent", rate: 0 },
+  S_OVA: { n: "Ova / Cysts / Trophozoites", m: "Saline & Iodine Mount", g: "STOOL EXAMINATION", u: "", d: 0, opts: ["Not Seen","Giardia Seen","E. histolytica Seen","Ascaris Seen"], ok: "Not Seen", r: "Not Seen", rate: 0 },
+  S_PC: { n: "Pus Cells", m: "Microscopic", g: "STOOL EXAMINATION", u: "/hpf", d: 0, r: "Nil Seen", rate: 0 },
+  S_RBC: { n: "RBCs", m: "Microscopic", g: "STOOL EXAMINATION", u: "/hpf", d: 0, r: "Nil Seen", rate: 0 },
+  S_OB: { n: "Occult Blood (FOBT)", m: "Guaiac / Immunochemical", g: "STOOL EXAMINATION", u: "", d: 0, opts: ["Negative","Positive"], ok: "Negative", r: "Negative", rate: 200 },
+
+  // ---------------------------------------------------- 15. WHO SEMEN ANALYSIS
+  SEMEN_VOL: { n: "Volume", m: "Graduated Pipette", g: "SEMEN ANALYSIS", u: "ml", d: 1, lo: 1.5, hi: 5.0, r: "> 1.5 ml", rate: 0 },
+  SEMEN_LIQ: { n: "Liquefaction Time", m: "Incubation at 37°C", g: "SEMEN ANALYSIS", u: "min", d: 0, r: "Within 30 mins", rate: 0 },
+  SEMEN_VISC: { n: "Viscosity", m: "Drop Consistency", g: "SEMEN ANALYSIS", u: "", d: 0, opts: ["Normal","High Viscosity","Low"], ok: "Normal", r: "Normal", rate: 0 },
+  SEMEN_COUNT: { n: "Sperm Concentration", m: "Neubauer Haemocytometer", g: "SEMEN ANALYSIS", u: "million/ml", d: 1, lo: 15.0, hi: 150.0, r: ">= 15.0 million/ml", rate: 400 },
+  SEMEN_MOT_ACT: { n: "Rapid Progressive Motility (Grade A)", m: "Wet Mount 37°C", g: "SEMEN ANALYSIS", u: "%", d: 0, lo: 32, r: ">= 32%", rate: 0 },
+  SEMEN_MOT_SLUG: { n: "Non-Progressive Motility (Grade B)", m: "Wet Mount 37°C", g: "SEMEN ANALYSIS", u: "%", d: 0, r: "10 - 20%", rate: 0 },
+  SEMEN_MOT_NON: { n: "Immotile Sperm (Grade C)", m: "Wet Mount 37°C", g: "SEMEN ANALYSIS", u: "%", d: 0, hi: 20, r: "< 20%", rate: 0 },
+  SEMEN_NORM: { n: "Normal Sperm Morphology", m: "Kruger Strict Criteria", g: "SEMEN ANALYSIS", u: "%", d: 0, lo: 4, r: ">= 4% (Strict WHO 6th Ed.)", rate: 0 },
+  SEMEN_PUS: { n: "Pus Cells", m: "Microscopic", g: "SEMEN ANALYSIS", u: "/hpf", d: 0, r: "0 - 4 /hpf", rate: 0 }
 };
 
 const PANELS = {
-  "HbA1c": ["HBA1C", "EAG"],
+  "CBC (Complete Haemogram)": ["HB", "TC", "RBC", "PLT", "PCV", "MCV", "MCH", "MCHC", "RDW", "NEU", "LYM", "EOS", "MON", "BAS", "ESR"],
   "Blood Sugar F & PP": ["GLU_F", "GLU_PP"],
-  "CBC (Haemogram)": ["HB", "TC", "PLT", "PCV", "ESR", "NEU", "LYM", "EOS", "MON"],
-  "Lipid Profile": ["CHOL", "TG", "HDL", "LDL", "VLDL", "CHOLHDL"],
-  "Liver Function (LFT)": ["TBIL", "DBIL", "IBIL", "SGPT", "SGOT", "ALP", "TP", "ALB", "GLOB", "AGR"],
-  "Renal Function (RFT)": ["UREA", "BUN", "CREAT", "UA"],
-  "Thyroid Profile": ["T3", "T4", "TSH"],
-  "Electrolytes": ["NA", "K", "CL", "BICARB"],
-  "Urine Routine": ["U_ALB", "U_SUG", "U_PUS", "U_EPI"],
-  "Full Body Checkup": ["HB", "TC", "PLT", "GLU_F", "HBA1C", "UREA", "CREAT", "CHOL", "TG", "HDL", "LDL", "TBIL", "SGPT", "SGOT", "TSH"]
+  "HbA1c & Blood Glucose": ["HBA1C", "EAG"],
+  "Lipid Profile (Full 7 Parameters)": ["CHOL", "TG", "HDL", "LDL", "VLDL", "NONHDL", "CHOLHDL"],
+  "Liver Function Test (LFT)": ["TBIL", "DBIL", "IBIL", "SGPT", "SGOT", "ALP", "GGT", "TP", "ALB", "GLOB", "AGR"],
+  "Renal Function Test (RFT / KFT)": ["UREA", "BUN", "CREAT", "UA", "CA", "PHOS", "NA", "K"],
+  "Thyroid Profile (Total T3, T4, TSH)": ["T3", "T4", "TSH"],
+  "Free Thyroid Profile (FT3, FT4, TSH)": ["FT3", "FT4", "TSH"],
+  "Electrolytes Panel (Na, K, Cl, Bicarb)": ["NA", "K", "CL", "BICARB", "ANGAP"],
+  "Iron Studies & Ferritin": ["IRON", "TIBC", "UIBC", "TSAT", "FERR"],
+  "Coagulation Profile (PT/INR/APTT)": ["PT", "INR", "APTT", "BT", "CT"],
+  "Cardiac Risk & Troponin Panel": ["CHOL", "TG", "HDL", "LDL", "TROPI", "CKMB", "HSCRP", "GLU_F"],
+  "Fever / Monsoon Profile": ["HB", "TC", "PLT", "ESR", "MP", "DENGUE_NS1", "DENGUE_IGM", "WIDAL", "U_ALB", "U_SUG", "U_PUS"],
+  "Antenatal (ANC) Pregnancy Profile": ["BLGRP", "HB", "TC", "PLT", "GLU_R", "HIV", "HBSAG", "VDRL", "TSH", "U_ALB", "U_SUG", "U_PUS"],
+  "Pre-Operative Surgical Fitness": ["BLGRP", "HB", "TC", "PLT", "BT", "CT", "PT", "INR", "GLU_F", "UREA", "CREAT", "HIV", "HBSAG", "HCV", "U_ALB"],
+  "Diabetic Comprehensive Panel": ["GLU_F", "GLU_PP", "HBA1C", "EAG", "CHOL", "TG", "HDL", "LDL", "CREAT", "U_MALB"],
+  "Senior Citizen Master Health Check": ["HB", "TC", "PLT", "ESR", "GLU_F", "HBA1C", "UREA", "CREAT", "UA", "CA", "TBIL", "SGPT", "SGOT", "ALP", "CHOL", "TG", "HDL", "LDL", "TSH", "VITD", "B12", "PSA", "U_ALB", "U_SUG", "U_PUS"],
+  "Urine Routine Examination (14 Parameters)": ["U_COL", "U_APP", "U_REACT", "U_SG", "U_ALB", "U_SUG", "U_KET", "U_BS", "U_BP", "U_URO", "U_PUS", "U_EPI", "U_RBC", "U_CAST"],
+  "Stool Routine & Occult Blood": ["S_COL", "S_CONS", "S_MUC", "S_OVA", "S_PC", "S_RBC", "S_OB"],
+  "WHO Semen Analysis": ["SEMEN_VOL", "SEMEN_LIQ", "SEMEN_VISC", "SEMEN_COUNT", "SEMEN_MOT_ACT", "SEMEN_MOT_SLUG", "SEMEN_MOT_NON", "SEMEN_NORM", "SEMEN_PUS"]
 };
 
 // Staff accounts
@@ -1192,20 +1307,53 @@ function toggleKeypad() {
   if (kp) kp.style.display = kp.style.display === "grid" ? "none" : "grid";
 }
 
-function handleKeypadClick(k) {
-  const inp = document.getElementById("auth-pin-input");
-  if (!inp) return;
-  if (k === "C") {
-    inp.value = "";
-  } else if (k === "↵") {
+  const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const nextNo = String(51359 + jobs.length);
+
+  return {
+    id: Date.now(),
+    report_no: nextNo,
+    barcode: `SMP-${nextNo}`,
+    uhid: `UHID-${10000 + jobs.length}`,
+    date: dateStr,
+    collected_at: `${dateStr} ${timeStr}`,
+    reported_at: `${dateStr} ${timeStr}`,
+    name: "",
+    initial: "M",
+    mobile: "",
+    sex: "Male",
+    age: 30,
+    age_unit: "years",
+    referrer: "Self",
+    specimen: "Serum",
+    fasting_status: "Fasting (10-12 hrs)",
+    tests: ["HBA1C", "EAG"],
+    results: {},
+    status: "draft",
+    bill_paid: 450,
+    bill_mode: "Cash",
+    bill_disc: 0,
+    technologist: "SAHEED MOHAMED. P.",
+    pathologist: "Dr. K. V. RAMAN, MD (Path)"
+  };
+}
+
+function handleKeypadClick(key) {
+  const pinInput = document.getElementById("auth-pin-input");
+  if (!pinInput) return;
+  if (key === "C") {
+    pinInput.value = "";
+  } else if (key === "↵") {
     handleSignInSubmit();
   } else {
-    if (inp.value.length < 8) inp.value += k;
+    if (pinInput.value.length < 8) {
+      pinInput.value += key;
+    }
   }
 }
 
 /* --------------------------------------------------------------------------
-   01. Job Screen (Modernist Grid Layout)
+   01. Job Screen (Modernist Grid Layout with Medical Metadata & Panic Alerts)
    -------------------------------------------------------------------------- */
 
 function renderJobScreen(container) {
@@ -1219,6 +1367,21 @@ function renderJobScreen(container) {
   const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate || 100), 0);
   const netPayable = Math.max(0, subtotal - (activeJob.bill_disc || 0));
 
+  // Medical Panic / Critical Alert Detection
+  let panicAlerts = [];
+  activeJob.tests.forEach(code => {
+    const t = TESTS[code];
+    const val = activeJob.results[code];
+    if (t && val && !isNaN(val)) {
+      const num = parseFloat(val);
+      if (t.panicLo !== undefined && num <= t.panicLo) {
+        panicAlerts.push({ name: t.n, val: `${num} ${t.u}`, reason: `CRITICALLY LOW (≤ ${t.panicLo} ${t.u})` });
+      } else if (t.panicHi !== undefined && num >= t.panicHi) {
+        panicAlerts.push({ name: t.n, val: `${num} ${t.u}`, reason: `CRITICALLY HIGH (≥ ${t.panicHi} ${t.u})` });
+      }
+    }
+  });
+
   let resultsHTML = activeJob.tests.map(code => {
     const t = TESTS[code];
     if (!t) return "";
@@ -1226,9 +1389,15 @@ function renderJobScreen(container) {
     let flagHTML = "";
     if (val && !isNaN(val) && (t.hi !== undefined || t.lo !== undefined)) {
       const num = parseFloat(val);
-      if (t.hi !== undefined && num > t.hi) flagHTML = '<div class="flag-badge flag-H">HIGH</div>';
-      else if (t.lo !== undefined && num < t.lo) flagHTML = '<div class="flag-badge flag-L">LOW</div>';
-      else flagHTML = '<div class="flag-badge flag-N">NORMAL</div>';
+      if ((t.panicHi !== undefined && num >= t.panicHi) || (t.panicLo !== undefined && num <= t.panicLo)) {
+        flagHTML = '<div class="flag-badge" style="background:#991b1b; color:#ffffff; font-weight:800; border:1px solid #7f1d1d;">🚨 CRITICAL</div>';
+      } else if (t.hi !== undefined && num > t.hi) {
+        flagHTML = '<div class="flag-badge flag-H">HIGH</div>';
+      } else if (t.lo !== undefined && num < t.lo) {
+        flagHTML = '<div class="flag-badge flag-L">LOW</div>';
+      } else {
+        flagHTML = '<div class="flag-badge flag-N">NORMAL</div>';
+      }
     } else if (t.opts && val) {
       flagHTML = val === t.ok ? '<div class="flag-badge flag-N">NORMAL</div>' : '<div class="flag-badge flag-H">ABNORMAL</div>';
     }
@@ -1237,7 +1406,7 @@ function renderJobScreen(container) {
     let inputField = "";
     if (t.opts) {
       inputField = `
-        <select class="field-input" onchange="onResultInput('${code}', this.value)" style="height:38px; font-weight:800; font-size:14px;">
+        <select class="field-input" onchange="onResultInput('${code}', this.value)" style="height:38px; font-weight:800; font-size:13.5px;">
           <option value="">— Select —</option>
           ${t.opts.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join("")}
         </select>
@@ -1256,7 +1425,7 @@ function renderJobScreen(container) {
           <div style="font-size:13.5px; font-weight:700; ${isCalc?'font-style:italic; color:var(--text-muted);':''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
             ${t.n}
           </div>
-          <div style="font-size:10.5px; color:var(--text-dim);">${t.m || 'Standard Method'}</div>
+          <div style="font-size:10.5px; color:var(--text-dim);">${t.m || 'Standard Method'} · <span style="color:var(--text-muted);">${t.g}</span></div>
         </div>
         <div>${inputField}</div>
         <div style="font-size:11.5px; color:var(--text-muted);">${t.u || '—'}</div>
@@ -1281,8 +1450,8 @@ function renderJobScreen(container) {
       </div>
       <div class="v-divider"></div>
       <div class="stat-block">
-        <span class="stat-label">Due Date</span>
-        <span style="font-size:13px; font-weight:700;">${activeJob.date} · <span style="color:var(--accent-amber);">in 6h</span></span>
+        <span class="stat-label">Tube Specimen</span>
+        <span style="font-size:13px; font-weight:700; color:var(--accent-red);">${activeJob.specimen || 'Serum'}</span>
       </div>
       <div class="v-divider"></div>
       <div style="display:flex; align-items:center; gap:12px;">
@@ -1308,8 +1477,8 @@ function renderJobScreen(container) {
       <div class="left-col-sidebar">
         <!-- Patient Details Form -->
         <div style="padding:14px 16px 12px; border-bottom:1px solid var(--border-light);">
-          <div style="display:flex; align-items:baseline; margin-bottom:12px;">
-            <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;">Patient</div>
+          <div style="display:flex; align-items:baseline; margin-bottom:10px;">
+            <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;">Patient Info</div>
             <div style="margin-left:auto; font-size:11px; font-weight:700; color:var(--accent-red); cursor:pointer;" onclick="setTab('patients')">Patient history →</div>
           </div>
 
@@ -1325,7 +1494,7 @@ function renderJobScreen(container) {
             </div>
           </div>
 
-          <div style="display:grid; grid-template-columns:1fr 80px 84px; gap:10px;">
+          <div style="display:grid; grid-template-columns:1fr 80px 84px; gap:10px; margin-top:8px;">
             <div class="field-box">
               <label class="stat-label">Mobile <span style="color:var(--accent-red);">*</span></label>
               <input type="text" class="field-input ${isMobileSet?'':'req-missing'}" value="${activeJob.mobile}" placeholder="10-digit Mobile" oninput="activeJob.mobile=this.value; updateJobNotes();">
@@ -1344,7 +1513,41 @@ function renderJobScreen(container) {
             </div>
           </div>
 
-          <div class="field-box">
+          <!-- Medical Specimen Type & Fasting Status -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+            <div class="field-box">
+              <label class="stat-label">Specimen Sample</label>
+              <select class="field-input" onchange="activeJob.specimen=this.value;">
+                <option value="Serum" ${activeJob.specimen==='Serum'?'selected':''}>Serum (Red / Gold)</option>
+                <option value="EDTA Whole Blood" ${activeJob.specimen==='EDTA Whole Blood'?'selected':''}>EDTA Whole Blood (Purple)</option>
+                <option value="Citrate Plasma" ${activeJob.specimen==='Citrate Plasma'?'selected':''}>Citrate Plasma (Blue)</option>
+                <option value="Fluoride Plasma" ${activeJob.specimen==='Fluoride Plasma'?'selected':''}>Fluoride Plasma (Grey)</option>
+                <option value="Spot Urine" ${activeJob.specimen==='Spot Urine'?'selected':''}>Spot Clean Catch Urine</option>
+                <option value="24-Hr Urine" ${activeJob.specimen==='24-Hr Urine'?'selected':''}>24-Hour Urine</option>
+                <option value="Stool Specimen" ${activeJob.specimen==='Stool Specimen'?'selected':''}>Stool Specimen</option>
+                <option value="Semen Sample" ${activeJob.specimen==='Semen Sample'?'selected':''}>Semen Sample</option>
+                <option value="Body Fluid" ${activeJob.specimen==='Body Fluid'?'selected':''}>Body Fluid / Swab</option>
+              </select>
+            </div>
+            <div class="field-box">
+              <label class="stat-label">Fasting Status</label>
+              <select class="field-input" onchange="activeJob.fasting_status=this.value;">
+                <option value="Fasting (10-12 hrs)" ${activeJob.fasting_status==='Fasting (10-12 hrs)'?'selected':''}>Fasting (10-12 hrs)</option>
+                <option value="Post-Prandial (2 hrs)" ${activeJob.fasting_status==='Post-Prandial (2 hrs)'?'selected':''}>Post-Prandial (2 hrs)</option>
+                <option value="Random / Non-fasting" ${activeJob.fasting_status==='Random / Non-fasting'?'selected':''}>Random / Non-fasting</option>
+                <option value="GTT 1-Hour" ${activeJob.fasting_status==='GTT 1-Hour'?'selected':''}>GTT 1-Hour</option>
+                <option value="GTT 2-Hours" ${activeJob.fasting_status==='GTT 2-Hours'?'selected':''}>GTT 2-Hours</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Barcode Tube & UHID Identification Tag -->
+          <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-alt); padding:5px 8px; margin-top:8px; border:1px dashed var(--border);">
+            <span style="font-size:11px; font-weight:700; color:var(--text-dim);">🏷️ Barcode: <b style="color:var(--text); font-family:monospace;">${activeJob.barcode || ('SMP-' + activeJob.report_no)}</b></span>
+            <span style="font-size:11px; font-weight:700; color:var(--text-dim);">UHID: <b style="color:var(--text); font-family:monospace;">${activeJob.uhid || ('UHID-' + activeJob.report_no)}</b></span>
+          </div>
+
+          <div class="field-box" style="margin-top:8px;">
             <label class="stat-label">Referred by Doctor</label>
             <select class="field-input" onchange="activeJob.referrer=this.value;">
               <option value="Self">Self</option>
@@ -1358,16 +1561,16 @@ function renderJobScreen(container) {
         <!-- Tests Selector Section -->
         <div style="padding:14px 16px; flex:1; overflow:auto;">
           <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;">
-            <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;">Tests Catalog</div>
+            <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;">Pathology Catalog</div>
             <div style="font-size:11px; color:var(--text-muted);">${total} chosen · ${total} results</div>
           </div>
 
           <div style="margin-bottom:10px;">
-            <input type="text" class="field-input" id="test-search-inp" placeholder="Type to add test (e.g. HBA1C, CBC, LFT)..." oninput="searchTestQuick(this.value)">
+            <input type="text" class="field-input" id="test-search-inp" placeholder="Type to add test (e.g. CBC, HBA1C, LFT, PT, TROP, HIV)..." oninput="searchTestQuick(this.value)">
             <div id="search-quick-res" style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;"></div>
           </div>
 
-          <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Quick Panels</div>
+          <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Clinical Panels & Profiles (${Object.keys(PANELS).length})</div>
           <div style="display:flex; flex-wrap:wrap; gap:6px;">
             ${Object.keys(PANELS).map(p => `
               <button class="panel-tag-btn" onclick="addPanel('${p}')">+ ${p}</button>
@@ -1376,7 +1579,7 @@ function renderJobScreen(container) {
         </div>
       </div>
 
-      <!-- Center Column (Net Payable Band & Results Table) -->
+      <!-- Center Column (Net Payable Band, Panic Banner & Results Table) -->
       <div class="center-col-results">
         <!-- Net Payable Band -->
         <div class="net-payable-band">
@@ -1404,6 +1607,19 @@ function renderJobScreen(container) {
           </div>
         </div>
 
+        <!-- Real-time Medical Critical / Panic Value Alert Banner -->
+        ${panicAlerts.length > 0 ? `
+          <div style="background:#fee2e2; border-bottom:2px solid #ef4444; color:#991b1b; padding:10px 18px; display:flex; align-items:center; gap:12px;">
+            <span style="font-size:22px;">🚨</span>
+            <div>
+              <div style="font-size:12px; font-weight:800; letter-spacing:.05em; text-transform:uppercase;">CRITICAL PANIC VALUE DETECTED — NOTIFY CLINICIAN</div>
+              <div style="font-size:11.5px; font-weight:600; margin-top:2px;">
+                ${panicAlerts.map(a => `<b>${a.name}:</b> ${a.val} (<span style="color:#b91c1c;">${a.reason}</span>)`).join(" · ")}
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Results Table Header & Rows -->
         <div class="results-header-row">
           <div class="results-header-cell">Test Description & Method</div>
@@ -1415,12 +1631,12 @@ function renderJobScreen(container) {
         </div>
 
         <div style="flex:1; overflow:auto;">
-          ${total === 0 ? '<div style="text-align:center; padding:60px; color:var(--text-muted); font-size:14px;">No tests added to this job yet. Click a quick panel on the left or search a test.</div>' : resultsHTML}
+          ${total === 0 ? '<div style="text-align:center; padding:60px; color:var(--text-muted); font-size:14px;">No tests added to this job yet. Click a clinical panel on the left or search a test.</div>' : resultsHTML}
         </div>
 
         <!-- Bottom Save Strip -->
         <div style="height:48px; border-top:2px solid var(--border); display:flex; align-items:center; padding:0 18px; gap:12px; background:var(--bg);">
-          <div style="font-size:11.5px; color:var(--text-muted);">Each box saves as you leave it. Nothing waits for a Save.</div>
+          <div style="font-size:11.5px; color:var(--text-muted);">Each box saves automatically. Tube Barcode: <b>${activeJob.barcode || ('SMP-' + activeJob.report_no)}</b></div>
           <div style="margin-left:auto; display:flex; gap:8px;">
             <button class="btn-m" onclick="saveJobLocal()">Save</button>
             <button class="btn-m" onclick="openBillModal()">Bill</button>
@@ -2262,18 +2478,57 @@ function loadSampleData() {
 function openReportPreview(job) {
   const isHbA1c = job.tests.includes("HBA1C");
 
-  let rowsHTML = job.tests.map(code => {
+  // Group tests by clinical department
+  const groups = {};
+  job.tests.forEach(code => {
     const t = TESTS[code];
-    if (!t) return "";
-    const val = job.results[code] || "—";
-    return `
+    if (!t) return;
+    const g = t.g || "OTHER INVESTIGATIONS";
+    if (!groups[g]) groups[g] = [];
+    groups[g].push({ code, test: t, val: job.results[code] || "—" });
+  });
+
+  let rowsHTML = "";
+  for (const [groupName, testList] of Object.entries(groups)) {
+    rowsHTML += `
       <tr>
-        <td style="font-weight:600; padding:8px 0;">${t.n}</td>
-        <td style="font-weight:800; font-size:14px; text-align:center; padding:8px 0;">${val} ${t.u}</td>
-        <td style="color:#4A5157; text-align:right; padding:8px 0;">${t.r}</td>
+        <td colspan="3" style="font-weight:800; color:#0E4D92; padding:12px 0 6px; font-size:12px; text-transform:uppercase; border-bottom:1.5px solid #c9dff7;">
+          ${groupName}
+        </td>
       </tr>
     `;
-  }).join("");
+    testList.forEach(({ code, test: t, val }) => {
+      let isPanic = false;
+      let isHigh = false;
+      let isLow = false;
+      if (val && !isNaN(val)) {
+        const num = parseFloat(val);
+        if ((t.panicHi !== undefined && num >= t.panicHi) || (t.panicLo !== undefined && num <= t.panicLo)) {
+          isPanic = true;
+        } else if (t.hi !== undefined && num > t.hi) {
+          isHigh = true;
+        } else if (t.lo !== undefined && num < t.lo) {
+          isLow = true;
+        }
+      }
+      const valDisplay = val !== "—" ? `${val} ${t.u || ''}` : "—";
+      const highlightStyle = isPanic ? "background:#fee2e2; color:#991b1b; font-weight:800; padding:2px 6px; border-radius:3px;" : (isHigh || isLow ? "color:#c1121f; font-weight:800;" : "font-weight:700;");
+
+      rowsHTML += `
+        <tr style="border-bottom:1px solid #eceff1;">
+          <td style="padding:7px 0;">
+            <div style="font-weight:600; color:#201e1d;">${t.n}</div>
+            <div style="font-size:10px; color:#616A72;">Method: ${t.m || 'Standard'}</div>
+          </td>
+          <td style="font-size:13.5px; text-align:center; padding:7px 0;">
+            <span style="${highlightStyle}">${valDisplay}</span>
+            ${isPanic ? '<span style="font-size:10px; background:#991b1b; color:#fff; padding:1px 4px; border-radius:2px; margin-left:4px;">CRITICAL</span>' : ''}
+          </td>
+          <td style="color:#4A5157; text-align:right; padding:7px 0; font-size:12px; font-variant-numeric:tabular-nums;">${t.r || '—'}</td>
+        </tr>
+      `;
+    });
+  }
 
   let letterheadHTML = "";
   if (letterheadStyle === "modern") {
@@ -2332,17 +2587,19 @@ function openReportPreview(job) {
     <div class="report-page" id="printable-report">
       ${letterheadHTML}
 
-      <!-- Metadata Header Block -->
+      <!-- Metadata Header Block (NABL / Clinical Compliant) -->
       <div class="meta-grid">
-        <div class="meta-row"><span class="meta-k">Report No:</span><span class="meta-v">${job.report_no}</span></div>
-        <div class="meta-row"><span class="meta-k">Sample Collected:</span><span class="meta-v">${job.collected_at || job.date}</span></div>
+        <div class="meta-row"><span class="meta-k">Report No:</span><span class="meta-v"><b>${job.report_no}</b></span></div>
+        <div class="meta-row"><span class="meta-k">Barcode / UHID:</span><span class="meta-v"><b>${job.barcode || ('SMP-' + job.report_no)}</b> / ${job.uhid || ('UHID-' + job.report_no)}</span></div>
         <div class="meta-row"><span class="meta-k">Date:</span><span class="meta-v">${job.date}</span></div>
 
-        <div class="meta-row"><span class="meta-k">Name:</span><span class="meta-v">${job.name} .${job.initial}.</span></div>
-        <div class="meta-row"><span class="meta-k">Age / Sex:</span><span class="meta-v">${job.age} ${job.age_unit} / ${job.sex}</span></div>
-        <div class="meta-row"><span class="meta-k">Reported:</span><span class="meta-v">${job.reported_at || job.date}</span></div>
+        <div class="meta-row"><span class="meta-k">Patient Name:</span><span class="meta-v"><b>${job.name} .${job.initial}.</b></span></div>
+        <div class="meta-row"><span class="meta-k">Age / Sex:</span><span class="meta-v">${job.age} ${job.age_unit} / <b>${job.sex}</b></span></div>
+        <div class="meta-row"><span class="meta-k">Sample Specimen:</span><span class="meta-v"><b>${job.specimen || 'Serum'}</b></span></div>
 
-        <div class="meta-row"><span class="meta-k">Ref. by Dr:</span><span class="meta-v">${job.referrer || 'Self'}</span></div>
+        <div class="meta-row"><span class="meta-k">Ref. by Doctor:</span><span class="meta-v"><b>${job.referrer || 'Self'}</b></span></div>
+        <div class="meta-row"><span class="meta-k">Fasting Status:</span><span class="meta-v">${job.fasting_status || 'Fasting (10-12 hrs)'}</span></div>
+        <div class="meta-row"><span class="meta-k">Sample Collected:</span><span class="meta-v">${job.collected_at || job.date}</span></div>
       </div>
 
       <!-- Results Table -->
@@ -2355,11 +2612,6 @@ function openReportPreview(job) {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td colspan="3" style="font-weight:800; color:#0E4D92; padding:12px 0 6px; font-size:12px; text-transform:uppercase;">
-              BIO-CHEMISTRY (Routine)
-            </td>
-          </tr>
           ${rowsHTML}
         </tbody>
       </table>
