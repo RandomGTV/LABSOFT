@@ -20,7 +20,7 @@ from PyQt6.QtGui import QFont, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QComboBox, QCompleter, QFrame, QGridLayout, QGroupBox, QHBoxLayout, QLabel,
     QLayout, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QProgressBar,
-    QScrollArea, QSizePolicy, QSpinBox, QVBoxLayout, QWidget,
+    QScrollArea, QSizePolicy, QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
 
 from .. import services
@@ -799,6 +799,16 @@ class JobScreen(QWidget):
         inner.addWidget(self.blockers)
         lay.addWidget(block)
 
+        block, inner = self._counsel_block("Clinical Remarks & Smear Impression")
+        self.remarks_edit = QTextEdit()
+        self.remarks_edit.setFixedHeight(72)
+        self.remarks_edit.setPlaceholderText("Enter clinical notes or click 'Smart-Phrases'...")
+        self.remarks_edit.textChanged.connect(self._remarks_changed)
+        inner.addWidget(self.remarks_edit)
+        self.smart_counsel_btn = button("✨ Smart-Phrases Library", "quiet", self._open_smart_phrases)
+        inner.addWidget(self.smart_counsel_btn)
+        lay.addWidget(block)
+
         block, inner = self._counsel_block("Last visit")
         self.last_visit = label("No earlier visit.", "hint")
         self.last_visit.setWordWrap(True)
@@ -833,6 +843,8 @@ class JobScreen(QWidget):
         self.test_ids = []
         self.rows = {}
         self.name_edit.clear()
+        if hasattr(self, 'remarks_edit'):
+            self.remarks_edit.clear()
         self.initial_edit.clear()
         self.printed_name.setText("")
         self.phone_edit.clear()
@@ -879,6 +891,8 @@ class JobScreen(QWidget):
 
         self.test_ids = [t["id"] for t in q.job_tests(job_id)]
         self.history_button.setEnabled(True)
+        if hasattr(self, 'remarks_edit'):
+            self.remarks_edit.setPlainText(job.get('remarks') or '')
         self.repeat_row.setVisible(bool(self._previous_test_ids()))
         self.name_matches.hide()      # leftover suggestions belong to the old job
 
@@ -933,6 +947,8 @@ class JobScreen(QWidget):
         self.age_unit.setCurrentText((p["age_unit"] or "Years").title())
         self.name_matches.hide()
         self.history_button.setEnabled(True)
+        if hasattr(self, 'remarks_edit'):
+            self.remarks_edit.setPlainText(job.get('remarks') or '')
         self.repeat_row.setVisible(bool(self._previous_test_ids()))
         self.test_search.setFocus()
         self.message.setText(f"Loaded {p['name']} — details filled in from their last visit.")
@@ -1516,6 +1532,8 @@ class JobScreen(QWidget):
         referrer_id = self._resolve_referrer()
         self.job_id = q.create_job(self.patient_id, self.test_ids, referrer_id)
         self.history_button.setEnabled(True)
+        if hasattr(self, 'remarks_edit'):
+            self.remarks_edit.setPlainText(job.get('remarks') or '')
 
         # Re-key the existing rows onto the real job_test ids. Rebuilding the
         # grid here would destroy the very box being typed into: it swallowed
@@ -1709,16 +1727,20 @@ class JobScreen(QWidget):
         }
         WhatsAppDialog(self, data, "\n".join(lines)).exec()
 
+    def _remarks_changed(self) -> None:
+        if getattr(self, "_loading", False):
+            return
+        if self.job_id:
+            q.update_job(self.job_id, remarks=self.remarks_edit.toPlainText().strip())
+
     def _open_smart_phrases(self) -> None:
         def insert_cb(phrase: str):
-            if not self.job_id:
-                if not self._ensure_job(silent=True):
-                    return
-            job = q.get_job(self.job_id) or {}
-            curr = (job.get("remarks") or "").strip()
-            new_remarks = f"{curr}\n\n{phrase}".strip() if curr else phrase
-            q.update_job(self.job_id, remarks=new_remarks)
-            self.message.setText("✓ Clinical smart-phrase inserted into report remarks.")
+            curr = self.remarks_edit.toPlainText().strip()
+            new_text = f"{curr}\n\n{phrase}".strip() if curr else phrase
+            self.remarks_edit.setPlainText(new_text)
+            if self.job_id:
+                q.update_job(self.job_id, remarks=new_text)
+            self.message.setText("✓ Clinical smart-phrase inserted into remarks.")
             self.message.setStyleSheet(f"color: {style.GREEN}; font-weight: 600;")
         SmartPhrasesDialog(self, insert_cb).exec()
 
