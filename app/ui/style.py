@@ -626,47 +626,9 @@ QGroupBox::title {{
 #counselBlock {{ border-bottom: 1px solid {LINE}; }}
 #groupRow   {{ background: {FILL}; }}
 
-/* ── The Work queue's board ────────────────────────────────────────────
-   A filter bar on paper, a strip of scopes on the ground, the board itself,
-   and a foot bar. Every row of the board is drawn by BoardDelegate, which
-   reads these same tokens at paint time, so a theme change carries. */
-#filterBar {{ background: {PANEL}; border-bottom: 2px solid {RULE}; }}
-#scopeStrip {{ background: {BG}; border-bottom: 1px solid {LINE}; }}
-#boardTable {{ background: {PANEL}; border: 0; }}
-/* No font rules here on purpose: a stylesheet cannot set letter-spacing, and
-   whatever it does set would override the font the header is given in code. */
-#boardTable QHeaderView::section {{
-    background: {FILL};
-    color: {INK2};
-    border: 0;
-    border-bottom: 2px solid {RULE};
-    padding: 0;
-}}
-/* The scope chips are the tabs of the board: chosen is filled ink, the rest
-   are quiet text. No colour, because the accent belongs to Open. */
-#scopeStrip QPushButton {{
-    background: transparent; border: 1px solid transparent; color: {INK3};
-    padding: 4px 12px; font-weight: 700; font-size: 9.5pt; min-height: 20px;
-}}
-#scopeStrip QPushButton:hover {{ color: {INK}; background: {LINE2}; }}
-#scopeStrip QPushButton:checked {{
-    background: {INK}; border-color: {INK}; color: {ON_INK};
-}}
-#scopeStrip QPushButton:focus {{ border: 2px solid {BRAND}; padding: 3px 11px; }}
-
 QLabel[role="micro"] {{
     color: {INK3}; font-size: 7.5pt; font-weight: 700; text-transform: uppercase;
 }}
-/* The four numbers over the board. The label is small and quiet, the number
-   is the largest thing on the screen after the patient's name, and the note
-   under it says what the number means without needing a legend. */
-QLabel[role="statlabel"] {{
-    color: {INK3}; font-size: 7pt; font-weight: 800; text-transform: uppercase;
-}}
-QLabel[role="statvalue"] {{ font-size: 19.5pt; font-weight: 800; color: {INK}; }}
-QLabel[role="statvalue"][alert="true"] {{ color: {ACCENT_INK}; }}
-QLabel[role="statnote"] {{ color: {INK3}; font-size: 8.5pt; }}
-QLabel[role="foot"] {{ color: {INK3}; font-size: 8.5pt; }}
 QLabel[role="stat"] {{ font-size: 12.5pt; font-weight: 700; }}
 QLabel[role="money"] {{ font-size: 25pt; font-weight: 800; }}
 QLabel[role="railvalue"] {{ font-size: 12.5pt; font-weight: 800; }}

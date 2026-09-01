@@ -901,37 +901,15 @@ def list_jobs(scope: str = "today", term: str = "", limit: int = 500) -> List[di
 
 
 def queue_counts() -> Dict[str, int]:
-    """The numbers along the top of the work queue.
-
-    ``waiting`` and ``in_progress`` split ``pending`` in two, because "nothing
-    typed yet" and "half typed" are different problems at the bench: the first
-    is waiting for a sample, the second is waiting for a person.
-    """
     q = _row(
         "SELECT "
         " (SELECT COUNT(*) FROM jobs WHERE date(received_at)=date('now','localtime')) AS today, "
         " (SELECT COUNT(*) FROM jobs WHERE status IN ('draft','in_progress')) AS pending, "
-        " (SELECT COUNT(*) FROM jobs WHERE status='draft') AS waiting, "
-        " (SELECT COUNT(*) FROM jobs WHERE status='in_progress') AS in_progress, "
         " (SELECT COUNT(*) FROM jobs WHERE status IN ('draft','in_progress') "
         "   AND due_at < datetime('now','localtime')) AS overdue, "
-        " (SELECT COUNT(*) FROM jobs WHERE status='ready') AS ready, "
-        " (SELECT COUNT(*) FROM jobs) AS total"
+        " (SELECT COUNT(*) FROM jobs WHERE status='ready') AS ready"
     )
     return {k: int(v or 0) for k, v in (q or {}).items()}
-
-
-def oldest_overdue_at() -> Optional[str]:
-    """When the longest-waiting late job was due, or None if nothing is late.
-
-    "2 overdue" tells the operator there is a problem; "oldest 1h 12m" tells
-    them how big it is, which is what decides whether it can wait.
-    """
-    r = _row(
-        "SELECT MIN(due_at) AS d FROM jobs "
-        "WHERE status IN ('draft','in_progress') "
-        "  AND due_at < datetime('now','localtime')")
-    return (r or {}).get("d")
 
 
 def patient_jobs(patient_id: int) -> List[dict]:
