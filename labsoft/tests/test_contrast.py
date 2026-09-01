@@ -44,9 +44,10 @@ def contrast(a: str, b: str) -> float:
     ("hint text on panel",   style.INK3,  style.PANEL),
     ("hint text on page",    style.INK3,  style.BG),
     ("table header",         style.INK3,  "#FAFBFC"),
-    ("section heading",      style.BRAND, style.PANEL),
-    ("white on primary",     "#FFFFFF",   style.BRAND),
-    ("white on go button",   "#FFFFFF",   style.GREEN),
+    ("section heading",      style.INK,   style.PANEL),
+    ("text on primary",      style.LIGHT["ON_INK"],     style.INK),
+    ("text on the go button", style.LIGHT["ON_ACCENT"], style.LIGHT["ACCENT_INK"]),
+    ("accent as text",       style.LIGHT["ACCENT_INK"], style.PANEL),
     ("error text",           style.RED,   style.PANEL),
     ("warning text",         style.AMBER, style.PANEL),
     ("success text",         style.GREEN, style.PANEL),
@@ -56,15 +57,16 @@ def test_text_meets_aa(name, fg, bg):
     assert ratio >= TEXT_MIN, f"{name}: {ratio:.2f}:1 (needs {TEXT_MIN}:1)"
 
 
-@pytest.mark.parametrize("flag,chip_bg", [
-    ("H", "#FDECEB"),
-    ("L", "#EAF1FC"),
-    ("A", "#FDF5E3"),
-    ("N", "#EAF5EE"),
-])
-def test_result_flags_are_readable_on_their_chips(flag, chip_bg):
-    ratio = contrast(style.FLAG_COLOURS[flag], chip_bg)
-    assert ratio >= TEXT_MIN, f"flag {flag}: {ratio:.2f}:1"
+@pytest.mark.parametrize("flag", ["H", "L", "A", "N"])
+def test_result_flags_are_readable_on_their_chips(flag):
+    """Measured against the chip's real ground, in both themes."""
+    for table, palette in ((style.FLAG_FILL_LIGHT, style.LIGHT),
+                           (style.FLAG_FILL_DARK, style.DARK)):
+        bg, _edge = table[flag]
+        colour = {"H": palette["RED"], "L": palette["BLUE"],
+                  "A": palette["AMBER"], "N": palette["GREEN"]}[flag]
+        ratio = contrast(colour, bg)
+        assert ratio >= TEXT_MIN, f"flag {flag} on {bg}: {ratio:.2f}:1"
 
 
 # The night theme gets measured too. A dark theme nobody can read at 2 a.m.
@@ -76,8 +78,8 @@ def test_result_flags_are_readable_on_their_chips(flag, chip_bg):
     ("hint text on page",  style.DARK["INK3"],  style.DARK["BG"]),
     ("table header",       style.DARK["INK3"],  style.DARK["HEADER_BG"]),
     ("section heading",    style.DARK["BRAND"], style.DARK["PANEL"]),
-    ("text on primary",    style.DARK["BG"],    style.DARK["BRAND"]),
-    ("text on go button",  style.DARK["BG"],    style.DARK["GREEN"]),
+    ("text on primary",    style.DARK["ON_INK"],    style.DARK["INK"]),
+    ("text on go button",  style.DARK["ON_ACCENT"], style.DARK["ACCENT_INK"]),
     ("error text",         style.DARK["RED"],   style.DARK["PANEL"]),
     ("warning text",       style.DARK["AMBER"], style.DARK["PANEL"]),
     ("success text",       style.DARK["GREEN"], style.DARK["PANEL"]),

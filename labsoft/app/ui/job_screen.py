@@ -15,11 +15,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QPoint, QRect, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QComboBox, QCompleter, QFrame, QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QProgressBar,
+    QLayout, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QProgressBar,
     QScrollArea, QSizePolicy, QSpinBox, QVBoxLayout, QWidget,
 )
 
@@ -28,9 +28,85 @@ from ..core import turnaround
 from ..db import queries as q
 from . import style
 from .widgets import (
-    FlagLabel, SearchBox, age_unit_combo, button, column, confirm, error,
-    field_label, hline, info, label, row, sex_combo, warn,
+    EllipsisLabel, FlagLabel, SearchBox, age_unit_combo, button, column,
+    confirm, error, field_label, hline, info, label, row, sex_combo, warn,
 )
+
+
+#: Result-field column widths, in pixels. The header row and every result row
+#: use the same numbers, which is the only way a QGridLayout and a separate
+#: header bar can stay in step.
+LEFT_RAIL_W = 400
+RESULT_W = 150
+UNIT_W = 78
+RANGE_W = 132
+FLAG_W = 78
+MENU_W = 34
+ROW_H = 52
+
+
+class FlowLayout(QLayout):
+    """Left-to-right layout that wraps, for the panel buttons.
+
+    Qt has no flow layout of its own, and a QHBoxLayout of twelve panel names
+    either overflows the rail or squeezes every button until the labels elide.
+    """
+
+    def __init__(self, parent=None, spacing: int = 7):
+        super().__init__(parent)
+        self._items: List = []
+        self._space = spacing
+        self.setContentsMargins(0, 0, 0, 0)
+
+    def addItem(self, item):                      # noqa: N802 - Qt naming
+        self._items.append(item)
+
+    def count(self) -> int:
+        return len(self._items)
+
+    def itemAt(self, index):                      # noqa: N802
+        return self._items[index] if 0 <= index < len(self._items) else None
+
+    def takeAt(self, index):                      # noqa: N802
+        return self._items.pop(index) if 0 <= index < len(self._items) else None
+
+    def expandingDirections(self):                # noqa: N802
+        return Qt.Orientation(0)
+
+    def hasHeightForWidth(self) -> bool:          # noqa: N802
+        return True
+
+    def heightForWidth(self, width: int) -> int:  # noqa: N802
+        return self._layout(QRect(0, 0, width, 0), test_only=True)
+
+    def setGeometry(self, rect):                  # noqa: N802
+        super().setGeometry(rect)
+        self._layout(rect, test_only=False)
+
+    def sizeHint(self):                           # noqa: N802
+        return self.minimumSize()
+
+    def minimumSize(self):                        # noqa: N802
+        size = QSize()
+        for item in self._items:
+            size = size.expandedTo(item.minimumSize())
+        return size
+
+    def _layout(self, rect, test_only: bool) -> int:
+        x, y, line_height = rect.x(), rect.y(), 0
+        for item in self._items:
+            hint = item.sizeHint()
+            next_x = x + hint.width() + self._space
+            if next_x - self._space > rect.right() and line_height > 0:
+                x = rect.x()
+                y = y + line_height + self._space
+                next_x = x + hint.width() + self._space
+                line_height = 0
+            if not test_only:
+                item.setGeometry(QRect(QPoint(x, y), hint))
+            x = next_x
+            line_height = max(line_height, hint.height())
+        return y + line_height - rect.y()
 
 
 class ResultRow:
@@ -43,7 +119,7 @@ class ResultRow:
         rtype = (test["result_type"] or "numeric").strip().lower()
         self.is_heading = (rtype == "heading")
 
-        self.name_label = QLabel(test["name"])
+        self.name_label = EllipsisLabel(test["name"])
         # Stated outright rather than inherited, so no theme can render these
         # dark-on-dark.
         self.name_label.setStyleSheet(f"color: {style.INK}; background: transparent;")
@@ -92,7 +168,11 @@ class ResultRow:
             e.editingFinished.connect(on_changed)
             self.editor = e
 
-        self.editor.setFixedWidth(132)
+        # The value is what the row is for, so it gets the size to say so:
+        # a 40px box against an 11px unit and range.
+        self.editor.setFixedWidth(RESULT_W)
+        if not self.is_heading:
+            self.editor.setFixedHeight(40)
         # Named for assistive technology: without this a screen reader announces
         # a row of identical unlabelled edit boxes.
         self.editor.setAccessibleName(f"{test['name']} result")
@@ -101,10 +181,25 @@ class ResultRow:
             f"Enter the {test['name']} result{' in ' + unit if unit else ''}")
 
         self.unit_label = QLabel(test["unit"] or "")
-        self.unit_label.setStyleSheet(f"color: {style.INK3}; background: transparent;")
+        self.unit_label.setFixedWidth(UNIT_W)
+        self.unit_label.setStyleSheet(
+            f"color: {style.INK3}; background: transparent; font-size: 8.5pt;")
         self.range_label = QLabel("")
-        self.range_label.setStyleSheet(f"color: {style.INK3}; background: transparent;")
+        self.range_label.setFixedWidth(RANGE_W)
+        self.range_label.setStyleSheet(
+            f"color: {style.INK3}; background: transparent; font-size: 8.5pt;")
         self.flag_label = FlagLabel()
+        self.flag_label.setFixedWidth(FLAG_W)
+
+        # How the value was arrived at, under the name. It answers the question
+        # a clinician rings up to ask, without anybody opening the test master.
+        method = (test.get("formula") or "").strip()
+        self.method_label = QLabel(f"Calculated · {method}" if method else "")
+        self.method_label.setProperty("role", "method")
+        self.method_label.setStyleSheet(
+            f"color: {style.INK3}; background: transparent; font-size: 8pt;")
+        self.method_label.setVisible(bool(method))
+
         self.not_done = bool(test.get("not_done"))
 
     def set_not_done(self, flag: bool) -> None:
@@ -155,38 +250,146 @@ class JobScreen(QWidget):
 
     # ------------------------------------------------------------------ build
     def _build(self) -> None:
+        """The screen, in four surfaces of falling weight.
+
+        A status rail states where the job stands; an ink money band states
+        what is owed; a white field takes the results; a quiet column on the
+        right carries what is blocking, what happened last visit, and the
+        keys. Reception reads the rail, the technologist reads the field, and
+        neither has to hunt through boxes of equal weight to find their half
+        of the screen.
+        """
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(14, 12, 14, 10)
-        outer.setSpacing(10)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
 
-        outer.addWidget(self._build_header())
-        outer.addWidget(self._build_patient())
-        outer.addWidget(self._build_tests())
-        # Billing sits between choosing tests and typing results, because the
-        # lab wants the money settled at the counter before work starts. It
-        # warns loudly but never blocks: an urgent case must not wait on
-        # paperwork.
-        outer.addWidget(self._build_bill())
-        outer.addWidget(self._build_results(), 1)
-        outer.addWidget(self._build_actions())
+        outer.addWidget(self._build_status_rail())
 
-    def _build_header(self) -> QWidget:
-        self.title = label("New Job", "h1")
-        self.report_no_label = label("", "hint")
-        self.due_label = label("", "hint")
+        body = QWidget()
+        body_lay = QHBoxLayout(body)
+        body_lay.setContentsMargins(0, 0, 0, 0)
+        body_lay.setSpacing(0)
+        body_lay.addWidget(self._build_left_rail())
+
+        right = QWidget()
+        right_lay = QVBoxLayout(right)
+        right_lay.setContentsMargins(0, 0, 0, 0)
+        right_lay.setSpacing(0)
+        right_lay.addWidget(self._build_bill())
+        right_lay.addWidget(self._build_results(), 1)
+        body_lay.addWidget(right, 1)
+
+        outer.addWidget(body, 1)
+
+    # -- the rail across the top ---------------------------------------
+    def _build_status_rail(self) -> QWidget:
+        """Report number, patient, due, state, progress, and the way out.
+
+        One region instead of four: the number was top-left, the state
+        top-right, the counter bottom-right and the blocker below that, so
+        answering "where is this job?" meant reading three corners.
+        """
+        rail = QFrame()
+        rail.setObjectName("statusRail")
+        rail.setFixedHeight(64)
+        lay = QHBoxLayout(rail)
+        lay.setContentsMargins(0, 0, 16, 0)
+        lay.setSpacing(16)
+
+        # Who this job is for, on the same filled ground as the column beneath
+        # it, so the two read as one panel rather than two strips that happen
+        # to touch.
+        who = QFrame()
+        who.setObjectName("railLeft")
+        who.setFixedWidth(LEFT_RAIL_W)
+        who_lay = QHBoxLayout(who)
+        who_lay.setContentsMargins(16, 8, 12, 8)
+        who_lay.setSpacing(14)
+
+        self.report_no_label = label("—", "railvalue")
+        who_lay.addLayout(self._rail_item("Report no", self.report_no_label))
+        who_lay.addWidget(self._rail_divider())
+
+        self.title = EllipsisLabel("New job")
+        self.title.setProperty("role", "railname")
+        who_lay.addLayout(self._rail_item("Patient", self.title), 1)
+        who_lay.addWidget(self._rail_divider())
+
+        self.due_label = EllipsisLabel("—")
+        self.due_label.setProperty("role", "hint")
+        self.due_label.setMinimumWidth(120)
+        who_lay.addLayout(self._rail_item("Due", self.due_label), 1)
+        lay.addWidget(who)
+
         self.status_label = label("", "hint")
-        return row(self.title, 14, self.report_no_label, self.due_label,
-                   None, self.status_label)
+        self.progress_label = label("", "hint")
+        self.progress = QProgressBar()
+        self.progress.setTextVisible(False)
+        self.progress.setFixedHeight(5)
+        self.progress.setFixedWidth(150)
+        self.progress.hide()
+
+        state = QVBoxLayout()
+        state.setContentsMargins(0, 0, 0, 0)
+        state.setSpacing(3)
+        state.addWidget(self.status_label)
+        state.addWidget(self.progress_label)
+        state.addWidget(self.progress)
+        lay.addLayout(state)
+
+        lay.addStretch(1)
+        self.message = label("", "hint")
+        self.message.setWordWrap(True)
+        self.message.setMaximumWidth(260)
+        lay.addWidget(self.message)
+
+        self.clear_button = button("New job", "", self.new_job,
+                                   "Start a fresh job  (F2)")
+        self.preview_button = button("Preview", "", self.preview,
+                                     "Look at the report before sending it", "F8")
+        self.verify_button = button("Check && make report", "go", self.verify,
+                                    "Check every test is filled in, then make the report",
+                                    "F9")
+        for b in (self.clear_button, self.preview_button, self.verify_button):
+            lay.addWidget(b)
+        return rail
+
+    def _rail_item(self, caption: str, value: QWidget) -> QVBoxLayout:
+        col = QVBoxLayout()
+        col.setContentsMargins(0, 0, 0, 0)
+        col.setSpacing(1)
+        col.addWidget(label(caption, "micro"))
+        col.addWidget(value)
+        return col
+
+    def _rail_divider(self) -> QWidget:
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.VLine)
+        line.setFixedWidth(1)
+        line.setStyleSheet(f"color: {style.LINE}; background: {style.LINE};")
+        return line
+
+    # -- the left rail: who, and what they are having ------------------
+    def _build_left_rail(self) -> QWidget:
+        rail = QFrame()
+        rail.setObjectName("leftRail")
+        rail.setFixedWidth(LEFT_RAIL_W)
+        lay = QVBoxLayout(rail)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        lay.addWidget(self._build_patient())
+        lay.addWidget(self._build_tests(), 1)
+        return rail
 
     def _build_patient(self) -> QWidget:
-        box = QGroupBox("Patient")
-        grid = QGridLayout(box)
-        grid.setContentsMargins(14, 16, 14, 12)
-        grid.setHorizontalSpacing(12)
-        grid.setVerticalSpacing(6)
+        box = QFrame()
+        box.setObjectName("patientBlock")
+        lay = QVBoxLayout(box)
+        lay.setContentsMargins(16, 14, 16, 12)
+        lay.setSpacing(9)
 
         self.name_edit = QLineEdit()
-        self.name_edit.setPlaceholderText("Patient name (Required)")
+        self.name_edit.setPlaceholderText("Patient name")
         self.name_edit.setAccessibleName("Patient name")
         self.name_edit.textEdited.connect(self._on_name_typed)
         self.name_edit.textEdited.connect(lambda _t: self._refresh_printed_name())
@@ -197,9 +400,7 @@ class JobScreen(QWidget):
         self.initial_edit.setPlaceholderText("M")
         self.initial_edit.setAccessibleName("Patient initial")
         self.initial_edit.setMaxLength(4)
-        self.initial_edit.setMaximumWidth(64)
-        self.initial_edit.setToolTip(
-            "The letter between the names — FARAS .M. Kutty")
+        self.initial_edit.setToolTip("The letter between the names — FARAS .M. Kutty")
         self.initial_edit.textEdited.connect(lambda _t: self._refresh_printed_name())
 
         self.name_matches = QListWidget()
@@ -208,14 +409,12 @@ class JobScreen(QWidget):
         self.name_matches.itemClicked.connect(self._pick_existing_patient)
 
         self.phone_edit = QLineEdit()
-        self.phone_edit.setPlaceholderText("Mobile number (Required)")
+        self.phone_edit.setPlaceholderText("Mobile number")
         self.phone_edit.setAccessibleName("Patient mobile number")
-        self.phone_edit.setMaximumWidth(190)
         self.phone_edit.textEdited.connect(lambda _t: self._refresh_printed_name())
 
         self.sex_combo = sex_combo()
         self.sex_combo.setAccessibleName("Patient sex")
-        self.sex_combo.setMaximumWidth(120)
         self.sex_combo.currentTextChanged.connect(lambda _t: self._recalc())
         self.sex_combo.currentTextChanged.connect(
             lambda _t: self._refresh_printed_name())
@@ -223,45 +422,48 @@ class JobScreen(QWidget):
         self.age_spin = QSpinBox()
         self.age_spin.setAccessibleName("Patient age")
         self.age_spin.setRange(0, 130)
-        self.age_spin.setMaximumWidth(80)
         self.age_spin.valueChanged.connect(lambda _v: self._recalc())
 
         self.age_unit = age_unit_combo()
-        self.age_unit.setMaximumWidth(100)
         self.age_unit.currentTextChanged.connect(lambda _t: self._recalc())
 
         # A chooser, not a free-text box: a doctor picked from the list carries
         # their hospital and commission with them, where a retyped name makes a
         # second doctor who happens to be spelled the same.
         self.referrer_combo = QComboBox()
-        self.referrer_combo.setMinimumWidth(230)
         self.referrer_combo.setAccessibleName("Referring doctor")
         self.referrer_combo.activated.connect(self._referrer_chosen)
 
-        self.history_button = button("Patient history", "quiet", self._open_history)
+        self.history_button = button("Patient history →", "quiet", self._open_history)
         self.history_button.setEnabled(False)
 
-        self.printed_name = label("", "hint")
+        lay.addWidget(row(label("Patient", "micro"), None, self.history_button))
 
-        grid.addWidget(field_label('Name <span style="color:#E5484D; font-weight:bold;">*</span>'), 0, 0)
-        grid.addWidget(field_label("Initial"), 0, 1)
-        grid.addWidget(field_label('Mobile <span style="color:#E5484D; font-weight:bold;">*</span>'), 0, 2)
-        grid.addWidget(field_label('Sex <span style="color:#E5484D; font-weight:bold;">*</span>'), 0, 3)
-        grid.addWidget(field_label("Age"), 0, 4)
-        grid.addWidget(field_label("Referred by Dr"), 0, 6)
-
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(10)
+        grid.setVerticalSpacing(4)
+        grid.addWidget(label("Name", "micro"), 0, 0)
+        grid.addWidget(label("Initial", "micro"), 0, 1)
         grid.addWidget(self.name_edit, 1, 0)
         grid.addWidget(self.initial_edit, 1, 1)
-        grid.addWidget(self.phone_edit, 1, 2)
-        grid.addWidget(self.sex_combo, 1, 3)
-        grid.addWidget(self.age_spin, 1, 4)
-        grid.addWidget(self.age_unit, 1, 5)
-        grid.addWidget(self.referrer_combo, 1, 6)
-        grid.addWidget(self.history_button, 1, 7)
-        grid.addWidget(self.printed_name, 2, 0, 1, 3)
-        grid.addWidget(self.name_matches, 3, 0, 1, 3)
+        grid.addWidget(label("Mobile", "micro"), 2, 0)
+        grid.addWidget(label("Sex", "micro"), 2, 1)
+        grid.addWidget(self.phone_edit, 3, 0)
+        grid.addWidget(self.sex_combo, 3, 1)
+        grid.addWidget(label("Age", "micro"), 4, 0)
+        grid.addWidget(label("Referred by", "micro"), 4, 1)
+        age_row = row(self.age_spin, self.age_unit)
+        grid.addWidget(age_row, 5, 0)
+        grid.addWidget(self.referrer_combo, 5, 1)
         grid.setColumnStretch(0, 3)
-        grid.setColumnStretch(6, 2)
+        grid.setColumnStretch(1, 2)
+        self.initial_edit.setMaximumWidth(84)
+        lay.addLayout(grid)
+
+        self.printed_name = label("", "hint")
+        self.printed_name.setWordWrap(True)
+        lay.addWidget(self.printed_name)
+        lay.addWidget(self.name_matches)
         return box
 
     def printed_name_text(self) -> str:
@@ -271,9 +473,9 @@ class JobScreen(QWidget):
     def _refresh_printed_name(self) -> None:
         """Show what will print, or what is still needed before it can.
 
-        The missing-field note lives beside the boxes rather than only in the
-        dialog at the end, so nobody types a full set of results and only then
-        discovers the job cannot be finished.
+        Beside the boxes rather than only in the dialog at the end, so nobody
+        types a full set of results and only then discovers the job cannot be
+        finished.
         """
         shown = self.printed_name_text()
         initial = self.initial_edit.text().strip()
@@ -282,38 +484,33 @@ class JobScreen(QWidget):
         problem = self.patient_problem()
         if problem and self.name_edit.text().strip():
             self.printed_name.setText(
-                "   ·   ".join(x for x in (printed, f"Still needed:  {problem[0]}") if x))
+                "   ·   ".join(x for x in
+                               (printed, f"Still needed:  {problem[0]}") if x))
             self.printed_name.setStyleSheet(
                 f"color: {style.AMBER}; font-weight: 600;")
-            return
-
-        self.printed_name.setStyleSheet("")
-        self.printed_name.setProperty("role", "hint")
-        self.printed_name.setText(printed)
+        else:
+            self.printed_name.setStyleSheet("")
+            self.printed_name.setProperty("role", "hint")
+            self.printed_name.setText(printed)
+        self._refresh_counsel()
 
     def _build_tests(self) -> QWidget:
-        box = QGroupBox("Tests")
+        box = QFrame()
+        box.setObjectName("testsBlock")
         lay = QVBoxLayout(box)
-        lay.setContentsMargins(14, 16, 14, 12)
+        lay.setContentsMargins(16, 14, 16, 12)
         lay.setSpacing(8)
 
-        self.panel_bar = QWidget()
-        self.panel_layout = QHBoxLayout(self.panel_bar)
-        self.panel_layout.setContentsMargins(0, 0, 0, 0)
-        self.panel_layout.setSpacing(7)
-        lay.addWidget(self.panel_bar)
-
+        self.tests_count = label("", "hint")
         self.repeat_button = button(
-            "Repeat last visit's tests", "",
-            self._repeat_last_tests,
+            "Repeat last visit", "", self._repeat_last_tests,
             "Add exactly the tests this patient had last time")
-        # Wrapped in a row so it keeps its natural width instead of stretching
-        # across the whole band.
         self.repeat_row = row(self.repeat_button, None)
         self.repeat_row.hide()
+        lay.addWidget(row(label("Tests", "micro"), 8, self.tests_count, None))
         lay.addWidget(self.repeat_row)
 
-        self.test_search = SearchBox("Type a test name or code, then press Enter to add…")
+        self.test_search = SearchBox("Type to add a test — filters as you type")
         self.test_search.searched.connect(self._search_tests)
         self.test_search.returnPressed.connect(self._add_first_match)
 
@@ -325,30 +522,56 @@ class JobScreen(QWidget):
 
         lay.addWidget(self.test_search)
         lay.addWidget(self.test_matches)
+
+        # The panel buttons wrap, so the rail can be narrow without them
+        # spilling off the side.
+        self.panel_bar = QWidget()
+        self.panel_layout = FlowLayout(self.panel_bar, spacing=7)
+        lay.addWidget(self.panel_bar)
+        lay.addStretch(1)
         return box
 
+    # -- the money band ------------------------------------------------
     def _build_bill(self) -> QWidget:
-        self.bill_box = QGroupBox("Bill")
+        """What is owed, in ink, at the size the counter argues about."""
+        self.bill_box = QFrame()
+        self.bill_box.setObjectName("moneyBand")
+        self.bill_box.setFixedHeight(96)
         lay = QHBoxLayout(self.bill_box)
-        lay.setContentsMargins(14, 16, 14, 12)
-        lay.setSpacing(12)
+        lay.setContentsMargins(20, 12, 20, 12)
+        lay.setSpacing(28)
 
-        self.bill_summary = label("", "")
-        self.bill_summary.setStyleSheet("font-size: 12pt; font-weight: 700;")
+        self.bill_summary = label("—", "money")
+        net = QVBoxLayout()
+        net.setContentsMargins(0, 0, 0, 0)
+        net.setSpacing(0)
+        net.addWidget(label("Net payable", "micro"))
+        net.addWidget(self.bill_summary)
+        lay.addLayout(net)
+
+        self.bill_stats: Dict[str, QLabel] = {}
+        for caption in ("Charged", "Discount", "Paid", "Outstanding"):
+            value = label("—", "stat")
+            self.bill_stats[caption] = value
+            col = QVBoxLayout()
+            col.setContentsMargins(0, 0, 0, 0)
+            col.setSpacing(0)
+            col.addWidget(label(caption, "micro"))
+            col.addWidget(value)
+            lay.addLayout(col)
+
+        lay.addStretch(1)
         self.bill_hint = label("", "hint")
-
-        inner = QVBoxLayout()
-        inner.setSpacing(2)
-        inner.addWidget(self.bill_summary)
-        inner.addWidget(self.bill_hint)
-        lay.addLayout(inner, 1)
+        self.bill_hint.setWordWrap(True)
+        self.bill_hint.setMaximumWidth(230)
+        lay.addWidget(self.bill_hint)
 
         self.bill_print_button = button(
             "Print bill…", "", self._print_bill,
             "Show the receipt, then print, save or send it")
-        lay.addWidget(self.bill_print_button)
         self.bill_button2 = button("Make the bill", "primary", self._open_bill,
                                    "Record what is being charged", "F4")
+        lay.addWidget(self.bill_print_button)
         lay.addWidget(self.bill_button2)
         return self.bill_box
 
@@ -363,110 +586,215 @@ class JobScreen(QWidget):
         # Nothing to print until the job exists and has tests on it.
         self.bill_print_button.setEnabled(bool(self.job_id and self.test_ids))
 
+        def stats(charged="—", discount="—", paid="—", outstanding="—",
+                  due=False) -> None:
+            for caption, text in (("Charged", charged), ("Discount", discount),
+                                  ("Paid", paid), ("Outstanding", outstanding)):
+                cell = self.bill_stats[caption]
+                cell.setText(text)
+                loud = due and caption in ("Discount", "Outstanding")
+                cell.setStyleSheet(
+                    f"color: {style.BRAND if loud else style.ON_INK}; "
+                    f"font-size: 12.5pt; font-weight: 700;")
+
         if not self.job_id:
-            self.bill_summary.setText("No bill yet")
-            self.bill_summary.setStyleSheet(
-                f"font-size: 12pt; font-weight: 700; color: {style.INK3};")
+            self.bill_summary.setText("—")
             self.bill_hint.setText(
                 "Choose the tests, then make the bill before starting work.")
             self.bill_button2.setText("Make the bill")
+            stats()
             return
 
         bill = q.get_bill(self.job_id)
         if not bill:
             expected = sum(int(i["rate_paise"]) for i in
                            services.suggest_bill_items(self.job_id))
-            self.bill_summary.setText(
-                f"Not billed yet   ·   about {billing.format_rupees(expected)}")
-            self.bill_summary.setStyleSheet(
-                f"font-size: 12pt; font-weight: 700; color: {style.AMBER};")
-            self.bill_hint.setText("Press F4 to make the bill and take payment.")
+            self.bill_summary.setText(billing.format_rupees(expected))
+            self.bill_hint.setText("Not billed yet — F4 takes payment.")
             self.bill_button2.setText("Make the bill")
+            stats(charged=billing.format_rupees(expected),
+                  outstanding=billing.format_rupees(expected), due=True)
             return
 
         totals = q.bill_totals(self.job_id)
         paid = totals.balance_paise <= 0
-        self.bill_summary.setText(
-            f"{billing.format_rupees(totals.net_paise)}"
-            f"   ·   paid {billing.format_rupees(totals.paid_paise)}"
-            + ("" if paid else
-               f"   ·   {billing.format_rupees(totals.balance_paise)} still due"))
-        self.bill_summary.setStyleSheet(
-            f"font-size: 12pt; font-weight: 700; "
-            f"color: {style.GREEN if paid else style.AMBER};")
+        self.bill_summary.setText(billing.format_rupees(totals.net_paise))
         self.bill_hint.setText("Paid in full." if paid else "Balance outstanding.")
         self.bill_button2.setText("Open the bill")
+        stats(charged=billing.format_rupees(totals.gross_paise),
+              discount=("—" if not totals.discount_paise
+                        else "− " + billing.format_rupees(totals.discount_paise)),
+              paid=billing.format_rupees(totals.paid_paise),
+              outstanding=billing.format_rupees(max(0, totals.balance_paise)),
+              due=not paid)
 
+    def _refresh_counsel(self) -> None:
+        """Fill the right-hand column: what is blocking, and what came before.
+
+        This is the material an operator would otherwise have to ask someone
+        for -- and the reason a wide monitor no longer ends in half a screen
+        of nothing.
+        """
+        blockers: List[str] = []
+        problem = self.patient_problem()
+        if problem:
+            blockers.append(f"·  {problem[0][0].upper()}{problem[0][1:]} is "
+                            f"needed before this job can be finished.")
+        if self.job_id:
+            _complete, missing = q.job_is_complete(self.job_id)
+            for name in missing[:3]:
+                blockers.append(f"·  {name} has no value yet.")
+            if len(missing) > 3:
+                blockers.append(f"·  … and {len(missing) - 3} more still empty.")
+            if not q.get_bill(self.job_id):
+                blockers.append("·  No bill has been made for this job.")
+        if not blockers:
+            blockers.append("Nothing — this job is ready to go.")
+        else:
+            blockers.append("")
+            blockers.append("Everything typed so far is already saved. "
+                            "Leaving now loses nothing.")
+        self.blockers.setText("\n".join(blockers))
+        self.blockers.setStyleSheet(
+            f"color: {style.AMBER if problem else style.INK2};")
+
+        self.last_visit.setText(self._last_visit_text())
+
+    def _last_visit_text(self) -> str:
+        if not self.patient_id:
+            return "No earlier visit."
+        earlier = [j for j in q.patient_jobs(self.patient_id)
+                   if j["id"] != self.job_id]
+        if not earlier:
+            return "No earlier visit."
+        last = earlier[0]
+        lines = [turnaround.format_date(q.to_dt(last["received_at"]))]
+        for t in q.job_tests(last["id"])[:4]:
+            r = (q.results_for_job(last["id"]) or {}).get(t["job_test_id"]) or {}
+            shown = (r.get("display_value") or "").strip()
+            if shown:
+                lines.append(f"{t['name']}   {shown}")
+        return "\n".join(lines)
+
+    # -- the results field, and the column of counsel beside it --------
     def _build_results(self) -> QWidget:
-        self.results_box = QGroupBox("Results")
+        wrap = QWidget()
+        wrap_lay = QHBoxLayout(wrap)
+        wrap_lay.setContentsMargins(0, 0, 0, 0)
+        wrap_lay.setSpacing(0)
+
+        self.results_box = QFrame()
+        self.results_box.setObjectName("resultsField")
         lay = QVBoxLayout(self.results_box)
-        lay.setContentsMargins(10, 16, 10, 10)
-        lay.setSpacing(6)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+
+        head = QFrame()
+        head.setObjectName("resultsHead")
+        head.setFixedHeight(30)
+        head_lay = QHBoxLayout(head)
+        head_lay.setContentsMargins(18, 0, 18, 0)
+        head_lay.setSpacing(12)
+        for caption, width in (("Test", 0), ("Result", RESULT_W),
+                               ("Unit", UNIT_W), ("Normal range", RANGE_W),
+                               ("Flag", FLAG_W)):
+            cell = label(caption, "micro")
+            if width:
+                cell.setFixedWidth(width)
+            head_lay.addWidget(cell, 1 if not width else 0)
+        head_lay.addSpacing(MENU_W)
+        lay.addWidget(head)
 
         self.empty_hint = label(
             "No tests chosen yet.\n\n"
-            "Click one of the panel buttons above, or type a test name — the "
-            "result boxes appear here.",
+            "Click a panel on the left, or type a test name — the result boxes "
+            "appear here.\n\n"
+            "F2 starts a new job.",
             "hint")
         self.empty_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lay.addWidget(self.empty_hint)
+        lay.addWidget(self.empty_hint, 1)
 
         self.scroll = QScrollArea()
         self.scroll.setObjectName("resultsScroll")
         self.scroll.setWidgetResizable(True)
         self.scroll.setFrameShape(QFrame.Shape.NoFrame)
-        # Both the scroll area and its inner widget need an explicit background,
-        # or the system theme shows through and the panel turns black.
         self.scroll.setAutoFillBackground(True)
         self.grid_host = QWidget()
         self.grid_host.setObjectName("resultsHost")
         self.grid_host.setAutoFillBackground(True)
         self.grid = QGridLayout(self.grid_host)
-        self.grid.setContentsMargins(4, 4, 4, 4)
+        self.grid.setContentsMargins(0, 0, 0, 0)
         self.grid.setHorizontalSpacing(12)
-        self.grid.setVerticalSpacing(3)
+        self.grid.setVerticalSpacing(0)
         self.scroll.setWidget(self.grid_host)
         self.scroll.hide()
         lay.addWidget(self.scroll, 1)
 
-        self.progress = QProgressBar()
-        self.progress.setTextVisible(False)
-        self.progress.setFixedHeight(3)
-        self.progress.setStyleSheet(f"""
-            QProgressBar {{
-                border: none;
-                background: {style.LINE};
-                border-radius: 1px;
-            }}
-            QProgressBar::chunk {{
-                background: {style.BRAND};
-                border-radius: 1px;
-            }}
-        """)
-        self.progress.hide()
-        lay.addWidget(self.progress)
-        return self.results_box
+        foot = QFrame()
+        foot.setObjectName("footBar")
+        foot.setFixedHeight(52)
+        foot_lay = QHBoxLayout(foot)
+        foot_lay.setContentsMargins(18, 0, 18, 0)
+        foot_lay.setSpacing(9)
+        foot_lay.addWidget(label(
+            "Each box saves as you leave it. Nothing waits for a Save.", "hint"))
+        foot_lay.addStretch(1)
+        self.save_button = button("Save", "", self.save,
+                                  "Save without producing a report", "Ctrl+S")
+        self.bill_button = button("Bill", "", self._open_bill,
+                                  "Record charges (optional)", "F4")
+        foot_lay.addWidget(self.save_button)
+        foot_lay.addWidget(self.bill_button)
+        lay.addWidget(foot)
 
-    def _build_actions(self) -> QWidget:
-        self.message = label("", "hint")
-        self.progress_label = label("", "hint")
-        self.save_button = button("Save", "", self.save, "Save without producing a report",
-                                  "Ctrl+S")
-        self.bill_button = button("Bill", "", self._open_bill, "Record charges (optional)",
-                                  "F4")
-        self.preview_button = button("Preview", "", self.preview,
-                                     "Look at the report before sending it", "F8")
-        self.verify_button = button("Check && make report", "go", self.verify,
-                                    "Check every test is filled in, then make the report",
-                                    "F9")
-        # No F2 here: the main window already owns F2. Two widgets claiming the
-        # same shortcut makes Qt call it ambiguous and fire neither, which left
-        # the advertised F2 doing nothing at all.
-        self.clear_button = button("New job", "", self.new_job,
-                                   "Start a fresh job  (F2)")
-        return row(self.clear_button, self.save_button, self.bill_button,
-                   self.preview_button, None,
-                   self.message, 10, self.progress_label, 10, self.verify_button)
+        wrap_lay.addWidget(self.results_box, 1)
+        wrap_lay.addWidget(self._build_counsel())
+        return wrap
+
+    def _build_counsel(self) -> QWidget:
+        """The third rail: what is blocking, what happened last time, the keys.
+
+        A wide monitor used to end in half a screen of nothing. This is the
+        material an operator would otherwise have to ask someone for.
+        """
+        panel = QFrame()
+        panel.setObjectName("counsel")
+        panel.setFixedWidth(292)
+        lay = QVBoxLayout(panel)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+
+        block, inner = self._counsel_block("Before it can go")
+        self.blockers = label("", "hint")
+        self.blockers.setWordWrap(True)
+        inner.addWidget(self.blockers)
+        lay.addWidget(block)
+
+        block, inner = self._counsel_block("Last visit")
+        self.last_visit = label("No earlier visit.", "hint")
+        self.last_visit.setWordWrap(True)
+        inner.addWidget(self.last_visit)
+        lay.addWidget(block)
+
+        block, inner = self._counsel_block("Keyboard")
+        for key, what in (("F2", "New job"), ("F4", "Bill"),
+                          ("F8", "Preview"), ("F9", "Check & make report"),
+                          ("Tab", "Next result box")):
+            line = row(label(key, "field"), 10, label(what, "hint"), None)
+            inner.addWidget(line)
+        lay.addWidget(block)
+
+        lay.addStretch(1)
+        return panel
+
+    def _counsel_block(self, caption: str):
+        block = QFrame()
+        block.setObjectName("counselBlock")
+        inner = QVBoxLayout(block)
+        inner.setContentsMargins(16, 14, 16, 14)
+        inner.setSpacing(7)
+        inner.addWidget(label(caption, "micro"))
+        return block, inner
 
     # -------------------------------------------------------------- lifecycle
     def new_job(self) -> None:
@@ -487,8 +815,8 @@ class JobScreen(QWidget):
         self.name_matches.hide()
         self.history_button.setEnabled(False)
         self.repeat_row.hide()
-        self.title.setText("New Job")
-        self.report_no_label.setText("")
+        self.title.setText("New job")
+        self.report_no_label.setText("—")
         self.due_label.setText("")
         self.status_label.setText("")
         self.message.setText("")
@@ -634,7 +962,6 @@ class JobScreen(QWidget):
             b = button(p["name"].replace("&", "&&"), "panel")
             b.clicked.connect(lambda _c=False, pid=p["id"]: self._add_panel(pid))
             self.panel_layout.addWidget(b)
-        self.panel_layout.addStretch(1)
 
     def _previous_test_ids(self) -> List[int]:
         """The tests from this patient's most recent job."""
@@ -840,13 +1167,15 @@ class JobScreen(QWidget):
         for t in tests:
             group = (t["group_name"] or "").strip()
             if group and group != last_group:
-                gl = QLabel(group)
-                f = QFont()
-                f.setBold(True)
-                f.setPointSizeF(9.5)
-                gl.setFont(f)
-                gl.setStyleSheet(f"color: {style.BRAND}; padding-top: 9px;")
-                self.grid.addWidget(gl, r, 0, 1, 6)
+                # A filled strip, not coloured text: it separates two sections
+                # without spending the accent, which belongs to actions.
+                strip = QFrame()
+                strip.setObjectName("groupRow")
+                strip.setFixedHeight(28)
+                sl = QHBoxLayout(strip)
+                sl.setContentsMargins(18, 0, 18, 0)
+                sl.addWidget(label(group, "group"))
+                self.grid.addWidget(strip, r, 0, 1, 6)
                 last_group = group
                 r += 1
 
@@ -855,17 +1184,27 @@ class JobScreen(QWidget):
             if t["id"] in carried and carried[t["id"]]:
                 rr.set_value(carried[t["id"]])
 
+            # Name over method, so the row reads downwards in one column and
+            # the value keeps the eye's line across.
+            name_cell = QWidget()
+            name_lay = QVBoxLayout(name_cell)
+            name_lay.setContentsMargins(18, 0, 0, 0)
+            name_lay.setSpacing(0)
+            name_lay.addWidget(rr.name_label)
+            name_lay.addWidget(rr.method_label)
+
             if rr.is_heading:
-                self.grid.addWidget(rr.name_label, r, 0, 1, 5)
+                self.grid.addWidget(name_cell, r, 0, 1, 5)
             else:
-                self.grid.addWidget(rr.name_label, r, 0)
+                self.grid.addWidget(name_cell, r, 0)
                 self.grid.addWidget(rr.editor, r, 1)
                 self.grid.addWidget(rr.unit_label, r, 2)
                 self.grid.addWidget(rr.range_label, r, 3)
                 self.grid.addWidget(rr.flag_label, r, 4)
+                self.grid.setRowMinimumHeight(r, ROW_H)
 
             menu_button = button("⋯", "quiet")
-            menu_button.setFixedWidth(34)
+            menu_button.setFixedWidth(MENU_W)
             menu_button.setToolTip("More for this test")
             menu_button.clicked.connect(
                 lambda _c=False, jt=t["job_test_id"], b=menu_button: self._row_menu(jt, b))
@@ -875,21 +1214,13 @@ class JobScreen(QWidget):
                 rr.set_not_done(True)
             r += 1
 
-        # Name column sized to its content rather than stretched, so the result
-        # box sits beside the test it belongs to instead of drifting right.
-        self.grid.setColumnMinimumWidth(0, 250)
-        self.grid.setColumnStretch(0, 0)
-        self.grid.setColumnStretch(1, 0)
-        self.grid.setColumnMinimumWidth(2, 66)
-        self.grid.setColumnStretch(2, 0)
-        self.grid.setColumnMinimumWidth(3, 150)
-        # The flag belongs beside the value it describes, so the spare width goes
-        # to an empty column on the right rather than pushing the flags away
-        # across a wide gap.
-        self.grid.setColumnStretch(3, 0)
-        self.grid.setColumnStretch(4, 0)
-        self.grid.setColumnStretch(5, 0)
-        self.grid.setColumnStretch(6, 1)
+        # The name column takes the slack; every other column is the width its
+        # header says it is, so the two line up down the screen.
+        self.grid.setColumnStretch(0, 1)
+        for column_index, width in ((1, RESULT_W), (2, UNIT_W),
+                                    (3, RANGE_W), (4, FLAG_W), (5, MENU_W)):
+            self.grid.setColumnMinimumWidth(column_index, width)
+            self.grid.setColumnStretch(column_index, 0)
         self.grid.setRowStretch(r, 1)
         self._update_actions()
         self._refresh_bill()
@@ -980,6 +1311,11 @@ class JobScreen(QWidget):
         else:
             self.verify_button.setToolTip("Produce the report PDF")
 
+        self.tests_count.setText(
+            f"{len(self.test_ids)} chosen · {total} result{'s' if total != 1 else ''}"
+            if self.test_ids else "")
+        self._refresh_counsel()
+
         if total:
             self.progress_label.setText(f"{done} of {total} entered")
             self.progress_label.setStyleSheet(
@@ -995,14 +1331,16 @@ class JobScreen(QWidget):
         if not job:
             return
         # The name as it will print, so the heading and the report agree.
-        self.title.setText(f"Job — {job['name_at_test'] or job['patient_name']}")
+        # No "Job —" prefix: the rail already has a PATIENT caption above it.
+        self.title.setText(job["name_at_test"] or job["patient_name"] or "—")
         rev = int(job["revision_no"] or 1)
         suffix = "" if rev <= 1 else f"  (revision {rev})"
-        self.report_no_label.setText(f"Report No {job['report_no']}{suffix}")
+        self.report_no_label.setText(f"{job['report_no']}{suffix}")
         due = q.to_dt(job["due_at"])
         if due:
             late = turnaround.is_overdue(due, job["status"])
-            text = f"Due {turnaround.format_dt(due)} · {turnaround.humanise_delta(due)}"
+            # No "Due" prefix -- the caption above the value already says it.
+            text = f"{turnaround.format_dt(due)} · {turnaround.humanise_delta(due)}"
             self.due_label.setText(text)
             self.due_label.setStyleSheet(
                 f"color: {style.RED}; font-weight: 600;" if late else "")
@@ -1014,11 +1352,11 @@ class JobScreen(QWidget):
             st_type = "ready"
         elif "sent" in st:
             st_type = "sent"
-        self.status_label.setProperty("role", f"pill_{st_type}")
-        self.status_label.setText(f" {turnaround.status_label(job['status'])} ")
-        if self.status_label.style() is not None:
-            self.status_label.style().unpolish(self.status_label)
-            self.status_label.style().polish(self.status_label)
+        fg, bg, edge = style.status_fill(st_type)
+        self.status_label.setText(turnaround.status_label(job["status"]).upper())
+        self.status_label.setStyleSheet(
+            f"color: {fg}; background: {bg}; border: 1px solid {edge}; "
+            f"padding: 2px 9px; font-size: 8pt; font-weight: 800;")
 
     # ------------------------------------------------------------- actions
     def patient_problem(self) -> Optional[Tuple[str, QWidget]]:

@@ -232,20 +232,21 @@ def make_job(env, screen, codes=("GLU_F",)):
 
 
 def test_the_bill_band_sits_above_the_results(app_env):
+    """Money is settled at the counter before the work starts, so the band
+    carrying it comes before the field the results go into."""
     env, _app = app_env
     from app.ui.job_screen import JobScreen
 
     screen = JobScreen()
-    order = []
-    layout = screen.layout()
-    for i in range(layout.count()):
-        w = layout.itemAt(i).widget()
-        if w is not None and hasattr(w, "title"):
-            order.append(w.title())
-    assert "Bill" in order and "Results" in order
-    assert order.index("Bill") < order.index("Results"), \
-        "billing must come before results"
-    assert order.index("Tests") < order.index("Bill")
+    column = screen.bill_box.parentWidget().layout()
+    order = [column.itemAt(i).widget() for i in range(column.count())]
+
+    assert screen.bill_box in order, "the bill band is not in this column"
+    band_at = order.index(screen.bill_box)
+    results_at = next(i for i, w in enumerate(order)
+                      if w is not None and screen.results_box in
+                      w.findChildren(type(screen.results_box)) + [w])
+    assert band_at < results_at, "billing must come before results"
     screen.deleteLater()
 
 
@@ -256,7 +257,10 @@ def test_the_bill_band_says_when_nothing_is_billed(app_env):
     screen = JobScreen()
     make_job(env, screen)
     screen._refresh_bill()
-    assert "Not billed" in screen.bill_summary.text()
+    band = screen.bill_summary.text() + " " + screen.bill_hint.text()
+    assert "Not billed" in band
+    assert screen.bill_stats["Outstanding"].text() != "—", \
+        "the band should show what is owed, not a dash"
     screen.deleteLater()
 
 

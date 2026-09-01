@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from typing import Optional, Sequence
 
 APP_NAME = "LabSoft"
 APP_VERSION = "1.0.0"
@@ -70,13 +71,98 @@ def patients_dir() -> Path:
     return _ensure(base_dir() / "patients")
 
 
-def patient_dir(patient_id: int = 0, name: str = "", phone: str = "") -> Path:
-    """Each patient has their own folder named with their name inside the patients directory."""
+def patient_name_part(name: str) -> str:
+    """The readable half of a patient folder's name."""
     import re
 
-    safe_name = re.sub(r'[\\/:*?"<>|]+', '', (name or "Unknown")).strip()
-    safe_name = re.sub(r"\s+", " ", safe_name)[:80].rstrip(" .") or "Unknown"
-    return _ensure(patients_dir() / safe_name)
+    safe = re.sub(r'[\\/:*?"<>|]+', '', (name or "Unknown")).strip()
+    return re.sub(r"\s+", " ", safe)[:80].rstrip(" .") or "Unknown"
+
+
+def patient_dir(patient_id: int = 0, name: str = "", phone: str = "",
+                also_known_as: Optional[Sequence[str]] = None) -> Path:
+    """One folder per patient: ``patients/<Name> #<id>``.
+
+    The id is not decoration. Two people genuinely are called Anil Sharma, and
+    without something unique they share a folder -- one patient opening it sees
+    the other's reports, and the second details card overwrites the first.
+
+    The id also keeps the folder findable when the name is corrected later: an
+    existing folder carrying this id is renamed rather than abandoned, so a
+    patient's history never splits in two.
+    """
+    readable = patient_name_part(name)
+    if not patient_id:
+        return _ensure(patients_dir() / readable)
+
+    root = patients_dir()
+    canonical = root / f"{readable} #{int(patient_id)}"
+    if canonical.exists():
+        return canonical
+
+    marker = f" #{int(patient_id)}"
+    for existing in sorted(root.iterdir()) if root.exists() else []:
+        # Same patient, different spelling of their name: move it, don't
+        # start a second folder beside it.
+        if existing.is_dir() and existing.name.endswith(marker):
+            return _rename_patient_dir(existing, canonical)
+
+    # Installations filed before the id was part of the name. There may be more
+    # than one such folder for the same person: reports were filed under the
+    # printed name ("rajeev .H") while the details card went under the plain
+    # one ("rajeev"). Adopt the first and fold the rest into it, so nothing
+    # already on disk is left stranded.
+    candidates = [readable]
+    for alias in (also_known_as or []):
+        alias = patient_name_part(alias)
+        if alias and alias not in candidates:
+            candidates.append(alias)
+
+    legacy = [root / c for c in candidates if (root / c).is_dir()]
+    if not legacy:
+        return _ensure(canonical)
+
+    home = _rename_patient_dir(legacy[0], canonical)
+    for stray in legacy[1:]:
+        _merge_patient_dir(stray, home)
+    return home
+
+
+def _merge_patient_dir(stray: Path, home: Path) -> None:
+    """Move one folder's files into another, then drop the empty shell.
+
+    Nothing is overwritten: a name already taken in the destination keeps a
+    suffix. Two files with the same name are two different pieces of a
+    patient's history, and deciding which to discard is not this function's
+    business.
+    """
+    try:
+        for item in sorted(stray.iterdir()):
+            if not item.is_file():
+                continue
+            target = home / item.name
+            n = 2
+            while target.exists():
+                target = home / f"{item.stem} ({n}){item.suffix}"
+                n += 1
+            item.rename(target)
+        stray.rmdir()
+    except OSError:
+        pass          # a locked file must never cost the operator their folder
+
+
+def _rename_patient_dir(old: Path, new: Path) -> Path:
+    """Move a patient's folder, and carry on with the old one if we cannot.
+
+    A rename fails when a report in the folder is open in a PDF reader. Losing
+    the report because the folder could not be tidied would be a far worse
+    outcome than an untidy folder name.
+    """
+    try:
+        old.rename(new)
+        return new
+    except OSError:
+        return old
 
 
 def _ensure(p: Path) -> Path:

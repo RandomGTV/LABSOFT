@@ -181,12 +181,21 @@ def test_long_test_names_do_not_collide_with_the_result_box(dark_app, env):
     # Force the layout to compute geometry directly. processEvents() would also
     # flush every deleteLater() queued by earlier tests, which tears down widgets
     # this one is still holding.
-    screen.grid_host.adjustSize()
+    # show() forces a real layout pass over the whole tree; the name now sits
+    # in a cell with its own layout, and grid.activate() alone does not reach
+    # inside it. processEvents() would flush deleteLater() calls from earlier
+    # tests and tear down widgets this one still holds.
+    screen.show()
     screen.grid.activate()
-
     for rr in screen.rows.values():
-        name_right = rr.name_label.geometry().right()
-        editor_left = rr.editor.geometry().left()
+        rr.name_label.parentWidget().layout().activate()
+
+    host = screen.grid_host
+    for rr in screen.rows.values():
+        # Mapped into a common parent: the name now sits in a cell of its own,
+        # so its raw geometry is relative to that cell, not to the grid.
+        name_right = rr.name_label.mapTo(host, rr.name_label.rect().topRight()).x()
+        editor_left = rr.editor.mapTo(host, rr.editor.rect().topLeft()).x()
         assert name_right <= editor_left, \
             f"'{rr.test['name']}' overlaps its result box"
     screen.deleteLater()

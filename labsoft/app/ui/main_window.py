@@ -90,14 +90,14 @@ class MainWindow(QMainWindow):
         if user:
             self.who_label = QLabel(f"  {user.label}  ")
             self.who_label.setStyleSheet(
-                f"color: {style.BRAND}; font-weight: 700;")
+                f"color: {style.INK}; font-weight: 700;")
             bar.addPermanentWidget(self.who_label)
-            sign_out = QLabel('<a href="#" style="color:%s">Sign out</a>' % style.BRAND)
+            sign_out = QLabel('<a href="#" style="color:%s">Sign out</a>' % style.INK2)
             sign_out.setOpenExternalLinks(False)
             sign_out.linkActivated.connect(self._sign_out)
             bar.addPermanentWidget(sign_out)
         bar.addPermanentWidget(self.backup_label)
-        about_link = QLabel('<a href="#" style="color:%s; text-decoration:none; font-weight:600;">ⓘ About</a>' % style.BRAND)
+        about_link = QLabel('<a href="#" style="color:%s; text-decoration:none; font-weight:600;">ⓘ About</a>' % style.INK2)
         about_link.setOpenExternalLinks(False)
         about_link.linkActivated.connect(self._show_about)
         bar.addPermanentWidget(about_link)

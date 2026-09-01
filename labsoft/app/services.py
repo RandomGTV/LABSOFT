@@ -269,8 +269,17 @@ def pdf_filename(job: dict) -> str:
 
 
 def patient_folder(patient_id: int) -> Path:
+    """The one folder holding everything for this patient.
+
+    The printed name is offered as an alias so that folders created by earlier
+    versions -- which filed reports under "Anil .K. Sharma" and the details
+    card under "Anil Sharma" -- are found and folded together rather than
+    orphaned.
+    """
     p = q.get_patient(patient_id) or {}
-    return config.patient_dir(patient_id, p.get("name", ""), p.get("phone", ""))
+    return config.patient_dir(
+        patient_id, p.get("name", ""), p.get("phone", ""),
+        also_known_as=[q.patient_full_name(p)])
 
 
 def write_patient_summary(patient_id: int) -> Path:
@@ -312,10 +321,15 @@ def write_patient_summary(patient_id: int) -> Path:
 
 
 def report_path_for(job: dict) -> Path:
-    """Where a job's PDF belongs: in its patient's named folder."""
-    folder = config.patient_dir(job["patient_id"],
-                                job.get("name_at_test") or job.get("patient_name", ""),
-                                job.get("patient_phone", ""))
+    """Where a job's PDF belongs: in its patient's folder.
+
+    The folder is resolved through patient_folder() from the patient id, not
+    from the job's name-at-test. Those two strings differ the moment a patient
+    has an initial -- the job carries "Anil .K. Sharma" and the record carries
+    "Anil Sharma" -- and the reports were being filed in one folder while the
+    details card was written into another.
+    """
+    folder = patient_folder(job["patient_id"])
     when = q.to_dt(job.get("reported_at")) or q.to_dt(job.get("received_at")) \
         or datetime.now()
     rev = int(job.get("revision_no") or 1)

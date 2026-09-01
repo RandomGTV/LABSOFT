@@ -299,6 +299,36 @@ def test_header_setting_does_not_affect_the_whatsapp_pdf(app):
     assert abs(with_header - path2.stat().st_size) < with_header * 0.35
 
 
+def test_preprinted_paper_still_leaves_the_top_blank_when_printing(app):
+    """The setting is not ignored -- it is simply scoped to paper.
+
+    print_header off means "there is preprinted stationery in the tray", which
+    is true of the printer and false of a file sent on WhatsApp.
+    """
+    from app.output import report as rpt
+
+    q, s = app
+    q.set_setting("print_header", "0")
+    _p, jid = make_job(q, ["GLU_F"])
+    m = jt_map(q, jid)
+    s.recalculate(jid, {m["GLU_F"]: "105"})
+    data = s.build_report_data(jid)
+
+    blank = rpt.render_pages(data, width_px=500)          # follows the setting
+    printed = rpt.render_pages(data, width_px=500, with_header=True)
+
+    # Compare the top band of both renders rather than guessing at one pixel:
+    # the letterhead has been several colours over the life of this program.
+    def inked(image, rows=90):
+        return sum(1 for y in range(rows) for x in range(0, image.width(), 4)
+                   if image.pixelColor(x, y).lightness() < 235)
+
+    assert inked(blank[0]) == 0, \
+        "preprinted mode should leave the top of the page empty"
+    assert inked(printed[0]) > 50, \
+        "with the letterhead on, that band should carry the lab's heading"
+
+
 def test_hba1c_and_mean_blood_glucose_calculation(app):
     q, s = app
     _p, jid = make_job(q, ["HBA1C", "MBG"])

@@ -94,27 +94,79 @@ class FlagLabel(QLabel):
         self.setFont(f)
 
     def set_flag(self, flag: str) -> None:
+        """A square block, edged in its own colour.
+
+        Square because it is the house rule, and edged because the word inside
+        must survive a photocopy, a projector, and an operator who cannot tell
+        the red one from the blue one.
+        """
         text = style.FLAG_TEXT.get(flag, "")
         colour = style.FLAG_COLOURS.get(flag, style.INK3)
         self.setText(text)
         if not text:
             self.setStyleSheet("")
             return
-        is_dark = style.CURRENT_THEME == "dark"
-        if is_dark:
-            bg = {"H": "#3A2326", "L": "#22303F", "A": "#38301E", "N": "#1F3229"}.get(flag, "")
-        else:
-            bg = {"H": "#FDECEB", "L": "#EAF1FC", "A": "#FDF5E3", "N": "#EAF5EE"}.get(flag, "")
+        bg, edge = style.flag_fill(flag)
         self.setStyleSheet(
-            f"color: {colour}; background: {bg}; border-radius: 10px; padding: 2px 8px; font-weight: 700;")
+            f"color: {colour}; background: {bg}; border: 1px solid {edge}; "
+            f"border-radius: 0; padding: 2px 8px; font-weight: 800;")
 
 
 def status_pill(text: str, status_type: str = "draft") -> QLabel:
-    """A rounded status pill for job status (draft, prog, ready, sent)."""
-    lab = QLabel(text)
+    """The job-state block: draft, prog, ready or sent.
+
+    Named "pill" from when it was rounded; it is a square block now, drawn the
+    same way as a result flag so the two read as one family.
+    """
+    lab = QLabel(text.upper())
     lab.setAlignment(Qt.AlignmentFlag.AlignCenter)
     lab.setProperty("role", f"pill_{status_type}")
+    fg, bg, edge = style.status_fill(status_type)
+    f = QFont()
+    f.setBold(True)
+    f.setPointSizeF(8.5)
+    lab.setFont(f)
+    lab.setStyleSheet(
+        f"color: {fg}; background: {bg}; border: 1px solid {edge}; "
+        f"border-radius: 0; padding: 3px 10px; font-weight: 800;")
     return lab
+
+
+class EllipsisLabel(QLabel):
+    """A label that shortens its text to fit instead of pushing its neighbours.
+
+    A QLabel is never smaller than its text, so one long test name -- "Total
+    Cholesterol / HDL Ratio" -- widened the whole name column and shoved every
+    result box across the screen. This one keeps the full text for the tooltip
+    and draws as much of it as the column allows.
+    """
+
+    def __init__(self, text: str = ""):
+        super().__init__()
+        self._full = text or ""
+        self.setSizePolicy(QSizePolicy.Policy.Ignored,
+                           QSizePolicy.Policy.Preferred)
+        self.setText(self._full)
+
+    def setText(self, text: str) -> None:      # noqa: N802 - Qt naming
+        self._full = text or ""
+        if self._full:
+            self.setToolTip(self._full)
+        self._draw()
+
+    def full_text(self) -> str:
+        return self._full
+
+    def resizeEvent(self, event):              # noqa: N802
+        super().resizeEvent(event)
+        self._draw()
+
+    def _draw(self) -> None:
+        metrics = self.fontMetrics()
+        room = max(0, self.width() - 2)
+        shown = (metrics.elidedText(self._full, Qt.TextElideMode.ElideRight, room)
+                 if room > 24 else self._full)
+        super().setText(shown)
 
 
 class SearchBox(QLineEdit):

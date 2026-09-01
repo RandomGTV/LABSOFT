@@ -235,8 +235,17 @@ class _Renderer:
                         int(Qt.AlignmentFlag.AlignCenter), name)
 
     def draw_header(self) -> float:
-        """Returns the y position (mm) where content may start."""
-        if not self.with_header or not self.d.flag_on("print_header"):
+        """Returns the y position (mm) where content may start.
+
+        Whether the letterhead is drawn is decided by ``with_header`` and by
+        nothing else. This used to consult the print_header setting as well,
+        which meant a caller asking outright for a letterhead was overruled --
+        and the PDF sent to the patient came out with a blank top and no lab
+        name on it, because a setting about the paper in the tray reached the
+        file. The setting belongs where the decision is made: the defaults in
+        write_pdf and print_report.
+        """
+        if not self.with_header:
             try:
                 blank_h = float(self.d.setting("blank_header_mm", str(BLANK_HEADER_H)) or BLANK_HEADER_H)
             except ValueError:
@@ -587,14 +596,14 @@ class _Renderer:
         note = self.d.setting("footer_note")
         y = PAGE_H - MARGIN_B - 1
         f = self.font(SANS, 6.5)
-        if note and self.with_header and self.d.flag_on("print_header"):
+        if note and self.with_header:
             self.text(MARGIN_L, y, note, f, GREY)
         if self.total_pages > 1:
             self.text(PAGE_W - MARGIN_R - 40, y, f"Page {self.page} of {self.total_pages}",
                       f, GREY, align="right", width_mm=40)
 
         # Bottom disclaimer strip (blue banner) only when printing on plain paper
-        if self.with_header and self.d.flag_on("print_disclaimer") and self.d.flag_on("print_header"):
+        if self.with_header and self.d.flag_on("print_disclaimer"):
             disc_text = (self.d.setting("disclaimer_text") or "").strip()
             if disc_text:
                 strip_h = 7.0
@@ -959,14 +968,18 @@ def paint_report(painter: QPainter, data: ReportData, dpmm: float,
 # --------------------------------------------------------------------------
 
 def write_pdf(data: ReportData, path: Union[Path, str], dpi: int = 300,
-              with_header: Optional[bool] = None) -> Path:
-    """Produce the file.
+              with_header: bool = True) -> Path:
+    """Produce the file. It carries the letterhead unless told otherwise.
+
+    A *file* is not a sheet of paper. print_header off means "there is
+    preprinted stationery in the printer", which is true of the printer and
+    false of a PDF going out on WhatsApp or into the patient's folder -- that
+    one has to identify the laboratory on its own, because nothing is going to
+    be underneath it. Paper follows the setting; see print_report.
 
     Writes to a temporary name and moves it into place, so an interrupted
     write never leaves a half-finished PDF where a complete one is expected.
     """
-    if with_header is None:
-        with_header = data.flag_on("print_header")
     _require_qt_application()
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)

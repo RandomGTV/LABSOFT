@@ -151,7 +151,8 @@ def test_report_is_filed_in_the_patients_own_folder(env):
     assert path.exists()
     assert path.parent.parent.name == "patients"
     assert "FARAS" in path.parent.name
-    assert "9876543210" in path.parent.name
+    assert path.parent.name.endswith(f"#{_pid}"), \
+        "the folder needs something unique to this patient in its name"
     assert path.name.endswith(".pdf")
     assert "51359" in path.name
 
@@ -187,6 +188,64 @@ def test_every_visit_lands_in_the_same_folder(env):
     folder = services.patient_folder(pid)
     pdfs = sorted(folder.glob("*.pdf"))
     assert len(pdfs) == 2, "the second visit was filed somewhere else"
+
+
+def test_a_patient_with_an_initial_gets_one_folder_not_two(env):
+    """Reports were filed under the printed name and the card under the plain
+    one, so every patient with an initial had two folders and the Patients tab
+    opened the empty one."""
+    from app import services
+
+    pid, jid = finished_job(env, name="Anil Sharma", phone="9988776655")
+    env.save_patient({"id": pid, "initial": "K"})
+    env.update_job(jid, name_at_test=env.full_name("Anil Sharma", "K"))
+    report = services.generate_pdf(jid)
+
+    assert report.parent == services.patient_folder(pid), \
+        "the report and the patient card went to different folders"
+    assert list(services.patient_folder(pid).glob("*.pdf")), \
+        "Open folder shows a folder with no reports in it"
+
+
+def test_the_folder_survives_the_name_being_corrected(env):
+    """A name fixed after the first visit must not scatter the reports."""
+    from app import services
+
+    pid, first = finished_job(env, name="Ramesh Kumr", phone="9000000033")
+    services.generate_pdf(first)
+
+    env.save_patient({"id": pid, "name": "Ramesh Kumar"})
+    ids = [env.get_test_by_code("HB")["id"]]
+    second = env.create_job(pid, ids)
+    m = {t["code"]: t["job_test_id"] for t in env.job_tests(second)}
+    services.recalculate(second, {m["HB"]: "13.5"})
+    services.generate_pdf(second)
+
+    folder = services.patient_folder(pid)
+    assert len(list(folder.glob("*.pdf"))) == 2, \
+        "correcting the name left the earlier report in an orphaned folder"
+
+
+def test_an_existing_split_folder_is_folded_back_into_one(env):
+    """The shape found on the lab's own PC: reports filed under the printed
+    name, the details card under the plain one, neither carrying an id."""
+    from app import config, services
+
+    pid, jid = finished_job(env, name="rajeev", phone="9000000044")
+    env.save_patient({"id": pid, "initial": "H"})
+
+    root = config.patients_dir()
+    (root / "rajeev").mkdir(parents=True, exist_ok=True)
+    (root / "rajeev" / "_patient details.txt").write_text("old card", encoding="utf-8")
+    (root / "rajeev .H").mkdir(parents=True, exist_ok=True)
+    (root / "rajeev .H" / "Report_51369.pdf").write_bytes(b"%PDF-1.4 old report")
+
+    folder = services.patient_folder(pid)
+
+    names = {f.name for f in folder.iterdir()}
+    assert "Report_51369.pdf" in names, "the earlier report was left behind"
+    assert "_patient details.txt" in names
+    assert not (root / "rajeev .H").exists(), "the stray folder is still there"
 
 
 def test_two_patients_with_the_same_name_get_separate_folders(env):
