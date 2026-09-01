@@ -376,8 +376,8 @@ class ModernLoginDialog(QDialog):
 
         self.su_role = QComboBox()
         self.su_role.setFixedHeight(32)
-        self.su_role.addItem("Reception", auth.ROLE_RECEPTION)
-        self.su_role.addItem("Technologist", auth.ROLE_TECHNOLOGIST)
+        self.su_role.addItem("Reception", auth.ROLE_STAFF)
+        self.su_role.addItem("Technologist", auth.ROLE_STAFF)
         self.su_role.addItem("Administrator", auth.ROLE_ADMIN)
         ur_grid.addWidget(self.su_role, 1, 1)
         lay.addLayout(ur_grid)
@@ -481,7 +481,7 @@ class ModernLoginDialog(QDialog):
     def _do_sign_up(self):
         name = self.su_name.text().strip()
         username = self.su_username.text().strip().lower()
-        role = self.su_role.currentData() or auth.ROLE_RECEPTION
+        role = self.su_role.currentData() or auth.ROLE_STAFF
         pin = self.su_pin.text().strip()
         pin2 = self.su_pin2.text().strip()
 
@@ -501,7 +501,8 @@ class ModernLoginDialog(QDialog):
             return
 
         try:
-            uid = q.create_user(username, name, pin, role, auth.ALL_PERMISSIONS if role == auth.ROLE_ADMIN else [auth.PERM_JOB, auth.PERM_RESULTS])
+            perms = auth.ALL_PERMISSIONS if role == auth.ROLE_ADMIN else auth.STAFF_DEFAULT
+            uid = q.create_user(username, name, pin, role, perms)
             user = q.get_user(uid)
             auth.set_current(user)
             self.user = user
