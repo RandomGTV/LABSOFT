@@ -200,6 +200,12 @@ class ResultRow:
             f"color: {style.INK3}; background: transparent; font-size: 8pt;")
         self.method_label.setVisible(bool(method))
 
+        # Delta check label for historical comparison
+        self.delta_label = QLabel("")
+        self.delta_label.setStyleSheet(
+            "color: #1d4ed8; background: #eff6ff; border-radius: 2px; padding: 1px 4px; font-size: 8pt; font-weight: 700;")
+        self.delta_label.setVisible(False)
+
         self.not_done = bool(test.get("not_done"))
 
     def set_not_done(self, flag: bool) -> None:
@@ -688,6 +694,22 @@ class JobScreen(QWidget):
         lay = QVBoxLayout(self.results_box)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
+
+        self.panic_banner = QFrame()
+        self.panic_banner.setStyleSheet(
+            "background-color: #fee2e2; border-bottom: 2px solid #ef4444; border-top: 1px solid #ef4444;")
+        self.panic_banner.setFixedHeight(40)
+        panic_lay = QHBoxLayout(self.panic_banner)
+        panic_lay.setContentsMargins(18, 2, 18, 2)
+        panic_icon = QLabel("🚨")
+        panic_icon.setStyleSheet("font-size: 13pt; background: transparent;")
+        self.panic_text = QLabel("")
+        self.panic_text.setStyleSheet(
+            "color: #991b1b; font-weight: 800; font-size: 8.5pt; background: transparent;")
+        panic_lay.addWidget(panic_icon)
+        panic_lay.addWidget(self.panic_text, 1)
+        self.panic_banner.hide()
+        lay.addWidget(self.panic_banner)
 
         head = QFrame()
         head.setObjectName("resultsHead")
@@ -1184,14 +1206,24 @@ class JobScreen(QWidget):
             if t["id"] in carried and carried[t["id"]]:
                 rr.set_value(carried[t["id"]])
 
+            # Delta Check historical lookup
+            if self.patient_id and t.get("id"):
+                prevs = q.previous_results(self.patient_id, t["id"], before_job=self.job_id, limit=1)
+                if prevs and prevs[0].get("display_value"):
+                    pv = prevs[0]
+                    date_str = str(pv.get("received_at", ""))[:10] if pv.get("received_at") else ""
+                    rr.delta_label.setText(f"Δ Prev: {pv['display_value']} ({date_str})")
+                    rr.delta_label.setVisible(True)
+
             # Name over method, so the row reads downwards in one column and
             # the value keeps the eye's line across.
             name_cell = QWidget()
             name_lay = QVBoxLayout(name_cell)
             name_lay.setContentsMargins(18, 0, 0, 0)
-            name_lay.setSpacing(0)
+            name_lay.setSpacing(1)
             name_lay.addWidget(rr.name_label)
             name_lay.addWidget(rr.method_label)
+            name_lay.addWidget(rr.delta_label)
 
             if rr.is_heading:
                 self.grid.addWidget(name_cell, r, 0, 1, 5)
@@ -1283,6 +1315,34 @@ class JobScreen(QWidget):
                     rr.editor.setToolTip(data["error"])
             rr.range_label.setText(data["range_text"])
             rr.flag_label.set_flag(data["flag"])
+
+        # Scan for Panic / Critical laboratory values
+        panic_items = []
+        for jt, rr in self.rows.items():
+            val = rr.value()
+            t = rr.test
+            if val:
+                try:
+                    num = float(val)
+                    code = (t.get("code") or "").upper()
+                    if code in ("GLU_F", "GLU_R", "GLU_PP") and (num < 50 or num > 400):
+                        panic_items.append(f"{t['name']}: {num} mg/dl")
+                    elif code == "K" and (num < 2.8 or num > 6.2):
+                        panic_items.append(f"Potassium: {num} mmol/L")
+                    elif code == "HB" and num < 6.0:
+                        panic_items.append(f"Haemoglobin: {num} g/dl")
+                    elif code == "PLT" and num < 0.25:
+                        panic_items.append(f"Platelets: {num} lakhs")
+                    elif code in ("TROPI", "TROPT") and num > 0.04:
+                        panic_items.append(f"{t['name']}: {num} (Critical)")
+                except ValueError:
+                    pass
+
+        if panic_items:
+            self.panic_text.setText("CRITICAL PANIC VALUE DETECTED — NOTIFY CLINICIAN:  " + " · ".join(panic_items))
+            self.panic_banner.show()
+        else:
+            self.panic_banner.hide()
 
         self._refresh_header()
         self._update_actions()

@@ -135,16 +135,50 @@ class SendDialog(QDialog):
         self._check_phone()
         self.phone_edit.textChanged.connect(lambda _t: self._check_phone())
 
-        reported = q.to_dt(self.job.get("reported_at"))
-        self.message_edit.setPlainText(snd.format_message(
-            self.settings.get("whatsapp_template", ""),
-            name=self.job.get("name_at_test") or self.job.get("patient_name") or "",
-            lab=(self.settings.get("lab_name_prefix", "") + " " +
-                 self.settings.get("lab_name", "")).strip(),
-            report_no=self.job.get("report_no"),
-            date=turnaround.format_date(reported),
-            phone=self.settings.get("lab_phone", "").replace("Ph :", "").strip(),
-        ))
+        # Structured Clinical Results Summary
+        stored = q.results_for_job(self.job_id)
+        test_lines = []
+        for jt in stored.values():
+            name = jt.get("test_name") or jt.get("name")
+            val = jt.get("display_value") or jt.get("raw_value")
+            u = jt.get("unit") or ""
+            if name and val:
+                test_lines.append(f"• *{name}:* {val} {u}".strip())
+
+        test_summary = "\n".join(test_lines)
+        lab_full = (self.settings.get("lab_name_prefix", "") + " " +
+                    self.settings.get("lab_name", "")).strip()
+        name_str = self.job.get("name_at_test") or self.job.get("patient_name") or ""
+        rep_no = self.job.get("report_no") or ""
+        date_str = turnaround.format_date(reported)
+        phone_str = self.settings.get("lab_phone", "").replace("Ph :", "").strip()
+
+        if test_summary:
+            msg = (
+                f"🏥 *{lab_full}*\n"
+                f"*Diagnostic Investigation Report*\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"👤 *Patient:* {name_str}\n"
+                f"📋 *Report No:* #{rep_no}\n"
+                f"📅 *Date:* {date_str}\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"*INVESTIGATION RESULTS:*\n"
+                f"{test_summary}\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"🔒 _Official digital report generated & verified._\n"
+                f"📞 {phone_str}"
+            )
+        else:
+            msg = snd.format_message(
+                self.settings.get("whatsapp_template", ""),
+                name=name_str,
+                lab=lab_full,
+                report_no=rep_no,
+                date=date_str,
+                phone=phone_str,
+            )
+
+        self.message_edit.setPlainText(msg)
 
     def _check_phone(self) -> None:
         number = snd.normalise_phone(self.phone_edit.text(),

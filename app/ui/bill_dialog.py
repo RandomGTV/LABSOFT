@@ -74,9 +74,10 @@ class BillDialog(QDialog):
                           button("Add payment", "", self._add_payment),
                           button("Remove selected", "quiet", self._remove_payment), None))
 
-        lay.addWidget(row(button("Print bill…", "", self._print),
+        lay.addWidget(row(button("🖨️ Print A4 Invoice", "primary", self._print_a4),
+                          button("🧾 Print 80mm POS Slip", "", self._print_pos),
                           None, button("Close", "", self.reject),
-                          button("Save bill", "primary", self._save)))
+                          button("Save bill", "", self._save)))
 
     # ------------------------------------------------------------------ data
     def _load(self) -> None:
@@ -161,16 +162,23 @@ class BillDialog(QDialog):
         self._recalc()
         return bill_id
 
-    def _print(self) -> None:
-        """Save what is on screen first, then show the receipt.
-
-        Saving first is the point: a printed bill that disagrees with the
-        stored one is worse than no printed bill at all.
-        """
+    def _print_a4(self) -> None:
         from .bill_preview import BillPreviewDialog
-
         self._save()
         BillPreviewDialog(self.job_id, self).exec()
+
+    def _print_pos(self) -> None:
+        from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
+        from ..output import receipt as rcpt
+        self._save()
+        printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+        if QPrintDialog(printer, self).exec() == QPrintDialog.DialogCode.Accepted:
+            try:
+                data = services.build_bill_data(self.job_id)
+                rcpt.print_bill(data, printer, with_header=True)
+                info(self, "Receipt Printed", "80mm POS thermal receipt sent to printer.")
+            except Exception as exc:
+                error(self, "Printing failed", str(exc))
 
     def _add_payment(self) -> None:
         amount = billing.to_paise(self.pay_amount.value())
