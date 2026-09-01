@@ -948,7 +948,7 @@ class JobScreen(QWidget):
         self.name_matches.hide()
         self.history_button.setEnabled(True)
         if hasattr(self, 'remarks_edit'):
-            self.remarks_edit.setPlainText(job.get('remarks') or '')
+            self.remarks_edit.clear()
         self.repeat_row.setVisible(bool(self._previous_test_ids()))
         self.test_search.setFocus()
         self.message.setText(f"Loaded {p['name']} — details filled in from their last visit.")
@@ -1532,8 +1532,8 @@ class JobScreen(QWidget):
         referrer_id = self._resolve_referrer()
         self.job_id = q.create_job(self.patient_id, self.test_ids, referrer_id)
         self.history_button.setEnabled(True)
-        if hasattr(self, 'remarks_edit'):
-            self.remarks_edit.setPlainText(job.get('remarks') or '')
+        if hasattr(self, 'remarks_edit') and self.remarks_edit.toPlainText().strip():
+            q.update_job(self.job_id, remarks=self.remarks_edit.toPlainText().strip())
 
         # Re-key the existing rows onto the real job_test ids. Rebuilding the
         # grid here would destroy the very box being typed into: it swallowed
