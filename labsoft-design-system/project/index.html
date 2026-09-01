@@ -655,6 +655,93 @@
     .modal-dialog-body { background: none !important; padding: 0 !important; }
     .report-page { box-shadow: none !important; margin: 0 !important; width: 100% !important; padding: 10mm !important; page-break-after: always; }
   }
+
+  /* Speed-Keyboard HUD */
+  .keyboard-hud-bar {
+    height: 30px;
+    background: #181615;
+    color: #e5e5e5;
+    border-top: 1px solid #333;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 14px;
+    font-size: 11px;
+    overflow-x: auto;
+    white-space: nowrap;
+    z-index: 100;
+  }
+  .hud-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: background .1s ease;
+  }
+  .hud-item:hover { background: #333; }
+  .hud-item kbd {
+    background: #ec3013;
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-family: inherit;
+  }
+
+  /* Phlebotomy Tube Sticker (50mm x 25mm) */
+  .tube-label-sticker {
+    width: 65mm;
+    height: 32mm;
+    border: 2px dashed #0A3668;
+    background: #ffffff;
+    color: #000000;
+    padding: 3mm 4mm;
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    margin: 0 auto;
+  }
+
+  /* Department header in results */
+  .dept-header-strip {
+    background: var(--surface-alt);
+    border-bottom: 1.5px solid var(--border);
+    border-top: 1px solid var(--border-light);
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+
+  /* Analytics KPI cards */
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .kpi-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .kpi-val {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
 </style>
 </head>
 <body>
@@ -902,6 +989,30 @@ let DOCTORS = JSON.parse(localStorage.getItem("labsoft_docs_v2") || "null") || [
   { id: 3, name: "Dr. Reena Thomas", qual: "MBBS, MS", spec: "Gynaecologist", hosp: "Mother Care Hospital", phone: "9800055566", pct: 12 }
 ];
 
+
+// Laboratory Customization & Branding Configuration
+let LAB_CONFIG = JSON.parse(localStorage.getItem("labsoft_config_v2") || "null") || {
+  prefix: "NEW",
+  name: "MITHRA",
+  subtitle: "MEDICAL LABORATORY",
+  tagline: "ACCURACY • CARE • TRUST",
+  address_1: "Chettiyankinar Road, Kuttippala",
+  address_2: "Opp. Govt. Ayurveda Dispensary, Malappuram Dt, Pin: 676501",
+  phone: "+91 81578 87311, 95266 77311",
+  email: "mithralab12020@gmail.com",
+  gstin: "32AABCN1234F1Z5",
+  license: "KL-MAL-2024-LAB-0981",
+  sig1_name: "SAHEED MOHAMED. P.",
+  sig1_qual: "BScMLT",
+  sig1_role: "Technologist",
+  sig2_name: "FATTIMATH SAKIRA. M.",
+  sig2_qual: "MScMicrobiology",
+  sig2_role: "Microbiologist",
+  sig3_name: "ABDUNNASER MAYYERI",
+  sig3_qual: "DMLT BScMLT",
+  sig3_role: "Lab Incharge"
+};
+
 let currentTab = "job";
 let currentTheme = localStorage.getItem("labsoft_theme_v2") || "light";
 let letterheadStyle = localStorage.getItem("labsoft_lh_v2") || "classic";
@@ -943,6 +1054,8 @@ function saveState() {
   localStorage.setItem("labsoft_lh_v2", letterheadStyle);
   localStorage.setItem("labsoft_docs_v2", JSON.stringify(DOCTORS));
   localStorage.setItem("labsoft_staff_v2", JSON.stringify(STAFF_ACCOUNTS));
+
+  localStorage.setItem("labsoft_config_v2", JSON.stringify(LAB_CONFIG));
 }
 
 function applyTheme() {
@@ -1095,16 +1208,30 @@ function render() {
 
     <!-- Navigation Tabs -->
     <nav class="nav-bar">
-      <button class="nav-tab ${currentTab==='job'?'active':''}" onclick="setTab('job')">01. Job (F2)</button>
-      <button class="nav-tab ${currentTab==='queue'?'active':''}" onclick="setTab('queue')">02. Work Queue</button>
-      <button class="nav-tab ${currentTab==='patients'?'active':''}" onclick="setTab('patients')">03. Patients</button>
-      <button class="nav-tab ${currentTab==='doctors'?'active':''}" onclick="setTab('doctors')">04. Doctors</button>
-      <button class="nav-tab ${currentTab==='tests'?'active':''}" onclick="setTab('tests')">05. Tests</button>
-      <button class="nav-tab ${currentTab==='billing'?'active':''}" onclick="setTab('billing')">06. Billing</button>
-      <button class="nav-tab ${currentTab==='summaries'?'active':''}" onclick="setTab('summaries')">07. Summaries</button>
-      <button class="nav-tab ${currentTab==='staff'?'active':''}" onclick="setTab('staff')">08. Staff</button>
-      <button class="nav-tab ${currentTab==='settings'?'active':''}" onclick="setTab('settings')">09. Settings</button>
+      <button class="nav-tab ${currentTab==='job'?'active':''}" onclick="setTab('job')">01. 🧭 Job (F2)</button>
+      <button class="nav-tab ${currentTab==='queue'?'active':''}" onclick="setTab('queue')">02. 📋 Queue</button>
+      <button class="nav-tab ${currentTab==='patients'?'active':''}" onclick="setTab('patients')">03. 👥 Patients</button>
+      <button class="nav-tab ${currentTab==='doctors'?'active':''}" onclick="setTab('doctors')">04. 🩺 Doctors</button>
+      <button class="nav-tab ${currentTab==='tests'?'active':''}" onclick="setTab('tests')">05. 🧪 Catalog</button>
+      <button class="nav-tab ${currentTab==='billing'?'active':''}" onclick="setTab('billing')">06. 💳 Billing (F4)</button>
+      <button class="nav-tab ${currentTab==='analytics'?'active':''}" onclick="setTab('analytics')">07. 📊 Analytics (F10)</button>
+      <button class="nav-tab ${currentTab==='summaries'?'active':''}" onclick="setTab('summaries')">08. 📑 Summaries</button>
+      <button class="nav-tab ${currentTab==='staff'?'active':''}" onclick="setTab('staff')">09. 🛡️ Staff</button>
+      <button class="nav-tab ${currentTab==='settings'?'active':''}" onclick="setTab('settings')">10. ⚙️ Settings</button>
     </nav>
+
+    
+    <!-- Speed-Keyboard HUD Bar -->
+    <div class="keyboard-hud-bar">
+      <span class="hud-item" onclick="newJob()"><kbd>F2</kbd> 👤 New Job</span>
+      <span class="hud-item" onclick="setTab('job'); setTimeout(()=>document.getElementById('test-search-inp')?.focus(), 50);"><kbd>F3</kbd> 🧪 Add Test</span>
+      <span class="hud-item" onclick="openBillModal()"><kbd>F4</kbd> 💳 Settle Bill</span>
+      <span class="hud-item" onclick="openTubeLabelModal(activeJob)"><kbd>F7</kbd> 🏷️ Tube Label</span>
+      <span class="hud-item" onclick="openWhatsAppDispatchModal(activeJob)"><kbd>F8</kbd> 📱 WhatsApp</span>
+      <span class="hud-item" onclick="openReportPreview(activeJob)"><kbd>F9</kbd> 🖨️ Report Print</span>
+      <span class="hud-item" onclick="setTab('analytics')"><kbd>F10</kbd> 📊 Day-Book</span>
+      <span class="hud-item" onclick="closeModal()"><kbd>Esc</kbd> ✕ Close</span>
+    </div>
 
     <!-- Main Active Workspace -->
     <main id="main-content" style="flex:1; display:flex; flex-direction:column; min-height:0;">
@@ -1118,6 +1245,7 @@ function render() {
   else if (currentTab === "doctors") renderDoctorsScreen(main);
   else if (currentTab === "tests") renderTestsScreen(main);
   else if (currentTab === "billing") renderBillingScreen(main);
+  else if (currentTab === "analytics") renderAnalyticsScreen(main);
   else if (currentTab === "summaries") renderSummariesScreen(main);
   else if (currentTab === "staff") renderStaffScreen(main);
   else if (currentTab === "settings") renderSettingsScreen(main);
@@ -1370,7 +1498,7 @@ function renderJobScreen(container) {
   const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate || 100), 0);
   const netPayable = Math.max(0, subtotal - (activeJob.bill_disc || 0));
 
-  // Medical Panic / Critical Alert Detection
+  // Panic Alert Detection
   let panicAlerts = [];
   activeJob.tests.forEach(code => {
     const t = TESTS[code];
@@ -1385,68 +1513,91 @@ function renderJobScreen(container) {
     }
   });
 
-  let resultsHTML = activeJob.tests.map(code => {
+  // Group tests by Department / Clinical Group
+  const groups = {};
+  activeJob.tests.forEach(code => {
     const t = TESTS[code];
-    if (!t) return "";
-    const val = activeJob.results[code] || "";
-    let flagHTML = "";
-    if (val && !isNaN(val) && (t.hi !== undefined || t.lo !== undefined)) {
-      const num = parseFloat(val);
-      if ((t.panicHi !== undefined && num >= t.panicHi) || (t.panicLo !== undefined && num <= t.panicLo)) {
-        flagHTML = '<div class="flag-badge" style="background:#991b1b; color:#ffffff; font-weight:800; border:1px solid #7f1d1d;">🚨 CRITICAL</div>';
-      } else if (t.hi !== undefined && num > t.hi) {
-        flagHTML = '<div class="flag-badge flag-H">HIGH</div>';
-      } else if (t.lo !== undefined && num < t.lo) {
-        flagHTML = '<div class="flag-badge flag-L">LOW</div>';
-      } else {
-        flagHTML = '<div class="flag-badge flag-N">NORMAL</div>';
-      }
-    } else if (t.opts && val) {
-      flagHTML = val === t.ok ? '<div class="flag-badge flag-N">NORMAL</div>' : '<div class="flag-badge flag-H">ABNORMAL</div>';
-    }
-    const isCalc = Boolean(t.f);
+    if (!t) return;
+    const g = t.g || "General Routine";
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(code);
+  });
 
-    let inputField = "";
-    if (t.opts) {
-      inputField = `
-        <select class="field-input" onchange="onResultInput('${code}', this.value)" style="height:38px; font-weight:800; font-size:13.5px;">
-          <option value="">— Select —</option>
-          ${t.opts.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join("")}
-        </select>
-      `;
-    } else {
-      inputField = `
-        <div class="res-input-box ${isCalc?'calc-box':''}">
-          <input type="text" value="${val}" ${isCalc?'readonly':''} oninput="onResultInput('${code}', this.value)" placeholder="${isCalc?'Auto':'—'}">
-        </div>
-      `;
-    }
-
-    // Historical Delta Check Lookup
-    let deltaHTML = "";
-    if (activeJob.mobile || activeJob.name) {
-      const prev = jobs.find(j => j.id !== activeJob.id && (j.mobile === activeJob.mobile || (j.name && j.name.toLowerCase() === activeJob.name.toLowerCase())) && j.results[code]);
-      if (prev && prev.results[code]) {
-        deltaHTML = `<span style="font-size:10px; color:#1d4ed8; background:#eff6ff; padding:1px 5px; border-radius:2px; margin-left:6px; font-weight:700;" title="Previous result from ${prev.date}">Δ Prev: ${prev.results[code]} (${prev.date})</span>`;
-      }
-    }
-
-    return `
-      <div class="results-data-row">
-        <div style="min-width:0;">
-          <div style="font-size:13.5px; font-weight:700; ${isCalc?'font-style:italic; color:var(--text-muted);':''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-            ${t.n}
-          </div>
-          <div style="font-size:10.5px; color:var(--text-dim);">${t.m || 'Standard Method'} · <span style="color:var(--text-muted);">${t.g}</span>${deltaHTML}</div>
-        </div>
-        <div>${inputField}</div>
-        <div style="font-size:11.5px; color:var(--text-muted);">${t.u || '—'}</div>
-        <div style="font-size:11.5px; color:var(--text-muted); font-variant-numeric:tabular-nums;">${t.r || '—'}</div>
-        <div>${flagHTML}</div>
-        <div><button class="btn-m" style="border:none; color:var(--accent-red); padding:0; width:24px; height:24px;" onclick="removeTest('${code}')" title="Remove test">✕</button></div>
+  let resultsHTML = "";
+  Object.keys(groups).forEach(gName => {
+    const gCodes = groups[gName];
+    resultsHTML += `
+      <div class="dept-header-strip">
+        <span style="font-weight:800; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--brand-blue);">
+          🧬 ${gName} (${gCodes.length} tests)
+        </span>
+        <button class="btn-m" style="padding:2px 8px; font-size:10px; color:var(--accent-red); border:1px solid #fca5a5; background:var(--surface);" onclick="removeGroup('${gName}')" title="Remove entire ${gName} department">
+          🗑️ Remove Group
+        </button>
       </div>
     `;
-  }).join("");
+
+    gCodes.forEach(code => {
+      const t = TESTS[code];
+      const val = activeJob.results[code] || "";
+      let flagHTML = "";
+      if (val && !isNaN(val) && (t.hi !== undefined || t.lo !== undefined)) {
+        const num = parseFloat(val);
+        if ((t.panicHi !== undefined && num >= t.panicHi) || (t.panicLo !== undefined && num <= t.panicLo)) {
+          flagHTML = '<div class="flag-badge" style="background:#991b1b; color:#ffffff; font-weight:800; border:1px solid #7f1d1d;">🚨 CRITICAL</div>';
+        } else if (t.hi !== undefined && num > t.hi) {
+          flagHTML = '<div class="flag-badge flag-H">HIGH</div>';
+        } else if (t.lo !== undefined && num < t.lo) {
+          flagHTML = '<div class="flag-badge flag-L">LOW</div>';
+        } else {
+          flagHTML = '<div class="flag-badge flag-N">NORMAL</div>';
+        }
+      } else if (t.opts && val) {
+        flagHTML = val === t.ok ? '<div class="flag-badge flag-N">NORMAL</div>' : '<div class="flag-badge flag-H">ABNORMAL</div>';
+      }
+      const isCalc = Boolean(t.f);
+
+      let inputField = "";
+      if (t.opts) {
+        inputField = `
+          <select class="field-input" onchange="onResultInput('${code}', this.value)" style="height:38px; font-weight:800; font-size:13.5px;">
+            <option value="">— Select —</option>
+            ${t.opts.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join("")}
+          </select>
+        `;
+      } else {
+        inputField = `
+          <div class="res-input-box ${isCalc?'calc-box':''}">
+            <input type="text" value="${val}" ${isCalc?'readonly':''} oninput="onResultInput('${code}', this.value)" placeholder="${isCalc?'Auto':'—'}">
+          </div>
+        `;
+      }
+
+      let deltaHTML = "";
+      if (activeJob.mobile || activeJob.name) {
+        const prev = jobs.find(j => j.id !== activeJob.id && (j.mobile === activeJob.mobile || (j.name && j.name.toLowerCase() === activeJob.name.toLowerCase())) && j.results[code]);
+        if (prev && prev.results[code]) {
+          deltaHTML = `<span style="font-size:10px; color:#1d4ed8; background:#eff6ff; padding:1px 5px; border-radius:2px; margin-left:6px; font-weight:700;" title="Previous result from ${prev.date}">Δ Prev: ${prev.results[code]} (${prev.date})</span>`;
+        }
+      }
+
+      resultsHTML += `
+        <div class="results-data-row">
+          <div style="min-width:0;">
+            <div style="font-size:13.5px; font-weight:700; ${isCalc?'font-style:italic; color:var(--text-muted);':''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              ${t.n}
+            </div>
+            <div style="font-size:10.5px; color:var(--text-dim);">${t.m || 'Standard Method'} · <span style="color:var(--text-muted);">${t.g}</span>${deltaHTML}</div>
+          </div>
+          <div>${inputField}</div>
+          <div style="font-size:11.5px; color:var(--text-muted);">${t.u || '—'}</div>
+          <div style="font-size:11.5px; color:var(--text-muted); font-variant-numeric:tabular-nums;">${t.r || '—'}</div>
+          <div>${flagHTML}</div>
+          <div><button class="btn-m" style="border:none; color:var(--accent-red); padding:0; width:24px; height:24px;" onclick="removeTest('${code}')" title="Remove single test">✕</button></div>
+        </div>
+      `;
+    });
+  });
 
   container.innerHTML = `
     <!-- 03. Job Banner / Status Region -->
@@ -1468,252 +1619,117 @@ function renderJobScreen(container) {
       <div class="v-divider"></div>
       <div style="display:flex; align-items:center; gap:12px;">
         <span class="status-pill ${ready?'sp-ready':'sp-prog'}">${ready?'READY TO SEND':'IN PROGRESS'}</span>
-        <div>
-          <div style="font-size:12px; font-weight:800;">${done} of ${total} results entered</div>
-          <div style="width:140px; height:5px; background:var(--surface-alt); margin-top:3px;">
-            <div style="width:${total>0?(done/total)*100:0}%; height:5px; background:var(--border);"></div>
-          </div>
-        </div>
+        ${activeJob.revision > 1 ? `<span class="status-pill" style="background:#fef3c7; color:#b45309; border:1px solid #f59e0b;">REV ${activeJob.revision}</span>` : ''}
       </div>
-
-      <div style="margin-left:auto; display:flex; align-items:center; gap:9px;">
-        <button class="btn-m" onclick="newJob()">New job · F2</button>
-        <button class="btn-m" onclick="openReportPreview(activeJob)">Preview · F8</button>
-        <button class="btn-m primary" ${ready?'':'disabled'} onclick="verifyAndCompleteJob()">Check & make report · F9</button>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <button class="btn-m" onclick="openTubeLabelModal(activeJob)" title="Print 50mm x 25mm Tube Barcode Sticker [F7]">🏷️ Vial Label (F7)</button>
+        <button class="btn-m" onclick="openBillModal()" title="Settle Bill & Invoicing [F4]">💳 Bill (F4)</button>
+        <button class="btn-m primary" onclick="openReportPreview(activeJob)" title="Print Official A4 Diagnostic Report [F9]">🖨️ Report (F9)</button>
+        <button class="btn-m" style="background:#25D366; color:#ffffff; font-weight:700; border:none;" onclick="openWhatsAppDispatchModal(activeJob)" title="Dispatch Structured WhatsApp Report [F8]">📱 WhatsApp (F8)</button>
       </div>
     </div>
 
-    <!-- 04. Split Pane Workspace -->
-    <div class="job-split-pane">
-      <!-- Left Sidebar (Patient & Tests) -->
-      <div class="left-col-sidebar">
-        <!-- Patient Details Form -->
-        <div style="padding:14px 16px 12px; border-bottom:1px solid var(--border-light);">
-          <div style="display:flex; align-items:baseline; margin-bottom:10px;">
-            <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;">Patient Info</div>
-            <div style="margin-left:auto; font-size:11px; font-weight:700; color:var(--accent-red); cursor:pointer;" onclick="setTab('patients')">Patient history →</div>
-          </div>
+    <!-- Panic / Critical Medical Alert Banner -->
+    ${panicAlerts.length > 0 ? `
+      <div style="background:#fee2e2; border-bottom:2px solid #ef4444; padding:8px 18px; display:flex; align-items:center; gap:12px;">
+        <span style="font-size:16px;">🚨</span>
+        <div style="font-size:12px; font-weight:800; color:#991b1b;">
+          CRITICAL PANIC VALUES DETECTED — CLINICAL ALERT:
+          ${panicAlerts.map(a => `<span style="background:#b91c1c; color:#fff; padding:2px 6px; border-radius:3px; margin:0 4px;">${a.name}: ${a.val} (${a.reason})</span>`).join("")}
+        </div>
+      </div>
+    ` : ''}
 
-          <div style="display:grid; grid-template-columns:1fr 84px; gap:10px;">
-            <div class="field-box">
-              <label class="stat-label">Name <span style="color:var(--accent-red);">*</span></label>
-              <input type="text" class="field-input ${isNameSet?'':'req-missing'}" value="${activeJob.name}" placeholder="Patient name" oninput="activeJob.name=this.value; searchPatientAutocomplete(this.value); updateJobNotes();">
-              <div id="patient-hits" style="position:relative; z-index:20;"></div>
-            </div>
-            <div class="field-box">
-              <label class="stat-label">Initial</label>
-              <input type="text" class="field-input" value="${activeJob.initial}" placeholder="M" maxlength="4" oninput="activeJob.initial=this.value; updateJobNotes();">
-            </div>
+    <!-- 04. 3-Column Workspace -->
+    <div class="workspace-grid">
+      <!-- Left Column: Patient & Test Selector -->
+      <div class="col-side">
+        <div class="sec-title">01. PATIENT REGISTRATION</div>
+        <div class="side-form-group">
+          <div><label class="stat-label">Full Name</label><input type="text" class="field-input" value="${activeJob.name}" oninput="activeJob.name=this.value; saveState();" placeholder="Patient name"></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div><label class="stat-label">Initial</label><input type="text" class="field-input" value="${activeJob.initial}" oninput="activeJob.initial=this.value; saveState();" placeholder="M"></div>
+            <div><label class="stat-label">Sex</label><select class="field-input" onchange="activeJob.sex=this.value; saveState();"><option value="Male" ${activeJob.sex==='Male'?'selected':''}>Male</option><option value="Female" ${activeJob.sex==='Female'?'selected':''}>Female</option><option value="Other" ${activeJob.sex==='Other'?'selected':''}>Other</option></select></div>
           </div>
-
-          <div style="display:grid; grid-template-columns:1fr 80px 84px; gap:10px; margin-top:8px;">
-            <div class="field-box">
-              <label class="stat-label">Mobile <span style="color:var(--accent-red);">*</span></label>
-              <input type="text" class="field-input ${isMobileSet?'':'req-missing'}" value="${activeJob.mobile}" placeholder="10-digit Mobile" oninput="activeJob.mobile=this.value; updateJobNotes();">
-            </div>
-            <div class="field-box">
-              <label class="stat-label">Sex <span style="color:var(--accent-red);">*</span></label>
-              <select class="field-input" onchange="activeJob.sex=this.value; updateJobNotes();">
-                <option value="Male" ${activeJob.sex==='Male'?'selected':''}>Male</option>
-                <option value="Female" ${activeJob.sex==='Female'?'selected':''}>Female</option>
-                <option value="Other" ${activeJob.sex==='Other'?'selected':''}>Other</option>
-              </select>
-            </div>
-            <div class="field-box">
-              <label class="stat-label">Age</label>
-              <input type="number" class="field-input" value="${activeJob.age}" oninput="activeJob.age=parseInt(this.value)||0;">
-            </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div><label class="stat-label">Age</label><input type="number" class="field-input" value="${activeJob.age}" oninput="activeJob.age=this.value; saveState();"></div>
+            <div><label class="stat-label">Unit</label><select class="field-input" onchange="activeJob.age_unit=this.value; saveState();"><option value="years" ${activeJob.age_unit==='years'?'selected':''}>years</option><option value="months" ${activeJob.age_unit==='months'?'selected':''}>months</option><option value="days" ${activeJob.age_unit==='days'?'selected':''}>days</option></select></div>
           </div>
-
-          <!-- Medical Specimen Type & Fasting Status -->
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
-            <div class="field-box">
-              <label class="stat-label">Specimen Sample</label>
-              <select class="field-input" onchange="activeJob.specimen=this.value;">
-                <option value="Serum" ${activeJob.specimen==='Serum'?'selected':''}>Serum (Red / Gold)</option>
-                <option value="EDTA Whole Blood" ${activeJob.specimen==='EDTA Whole Blood'?'selected':''}>EDTA Whole Blood (Purple)</option>
-                <option value="Citrate Plasma" ${activeJob.specimen==='Citrate Plasma'?'selected':''}>Citrate Plasma (Blue)</option>
-                <option value="Fluoride Plasma" ${activeJob.specimen==='Fluoride Plasma'?'selected':''}>Fluoride Plasma (Grey)</option>
-                <option value="Spot Urine" ${activeJob.specimen==='Spot Urine'?'selected':''}>Spot Clean Catch Urine</option>
-                <option value="24-Hr Urine" ${activeJob.specimen==='24-Hr Urine'?'selected':''}>24-Hour Urine</option>
-                <option value="Stool Specimen" ${activeJob.specimen==='Stool Specimen'?'selected':''}>Stool Specimen</option>
-                <option value="Semen Sample" ${activeJob.specimen==='Semen Sample'?'selected':''}>Semen Sample</option>
-                <option value="Body Fluid" ${activeJob.specimen==='Body Fluid'?'selected':''}>Body Fluid / Swab</option>
-              </select>
-            </div>
-            <div class="field-box">
-              <label class="stat-label">Fasting Status</label>
-              <select class="field-input" onchange="activeJob.fasting_status=this.value;">
-                <option value="Fasting (10-12 hrs)" ${activeJob.fasting_status==='Fasting (10-12 hrs)'?'selected':''}>Fasting (10-12 hrs)</option>
-                <option value="Post-Prandial (2 hrs)" ${activeJob.fasting_status==='Post-Prandial (2 hrs)'?'selected':''}>Post-Prandial (2 hrs)</option>
-                <option value="Random / Non-fasting" ${activeJob.fasting_status==='Random / Non-fasting'?'selected':''}>Random / Non-fasting</option>
-                <option value="GTT 1-Hour" ${activeJob.fasting_status==='GTT 1-Hour'?'selected':''}>GTT 1-Hour</option>
-                <option value="GTT 2-Hours" ${activeJob.fasting_status==='GTT 2-Hours'?'selected':''}>GTT 2-Hours</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Barcode Tube & UHID Identification Tag -->
-          <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-alt); padding:5px 8px; margin-top:8px; border:1px dashed var(--border);">
-            <span style="font-size:11px; font-weight:700; color:var(--text-dim);">🏷️ Barcode: <b style="color:var(--text); font-family:monospace;">${activeJob.barcode || ('SMP-' + activeJob.report_no)}</b></span>
-            <span style="font-size:11px; font-weight:700; color:var(--text-dim);">UHID: <b style="color:var(--text); font-family:monospace;">${activeJob.uhid || ('UHID-' + activeJob.report_no)}</b></span>
-          </div>
-
-          <div class="field-box" style="margin-top:8px;">
-            <label class="stat-label">Referred by Doctor</label>
-            <select class="field-input" onchange="activeJob.referrer=this.value;">
-              <option value="Self">Self</option>
-              ${DOCTORS.map(d => `<option value="${d.name} (${d.spec})" ${activeJob.referrer.includes(d.name)?'selected':''}>${d.name} — ${d.spec} (${d.hosp})</option>`).join("")}
-            </select>
-          </div>
-
-          <div id="job-dynamic-notes" style="display:flex; flex-direction:column; gap:4px; margin-top:8px; font-size:11.5px;"></div>
+          <div><label class="stat-label">Mobile Phone (WhatsApp)</label><input type="text" class="field-input" value="${activeJob.mobile}" oninput="activeJob.mobile=this.value; saveState();" placeholder="10-digit mobile number"></div>
+          <div><label class="stat-label">Referred By</label><select class="field-input" onchange="activeJob.referrer=this.value; saveState();"><option value="Self">Self / Walk-in</option>${DOCTORS.map(d => `<option value="${d.name}" ${activeJob.referrer.includes(d.name)?'selected':''}>${d.name} (${d.spec})</option>`).join("")}</select></div>
         </div>
 
-        <!-- Tests Selector Section -->
-        <div style="padding:14px 16px; flex:1; overflow:auto;">
-          <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;">
-            <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;">Pathology Catalog</div>
-            <div style="font-size:11px; color:var(--text-muted);">${total} chosen · ${total} results</div>
-          </div>
+        <div class="sec-title" style="margin-top:16px;">02. SEARCH & ADD TEST (F3)</div>
+        <input type="text" id="test-search-inp" class="field-input" placeholder="Type test name or code..." oninput="onSearchTest(this.value)">
+        <div id="test-search-results" class="search-drop-list" style="display:none;"></div>
 
-          <div style="margin-bottom:10px;">
-            <input type="text" class="field-input" id="test-search-inp" placeholder="Type to add test (e.g. CBC, HBA1C, LFT, PT, TROP, HIV)..." oninput="searchTestQuick(this.value)">
-            <div id="search-quick-res" style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;"></div>
-          </div>
+        <div class="sec-title" style="margin-top:16px;">03. COMMON PANELS</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          ${Object.keys(PANELS).map(p => `
+            <button class="panel-tag-btn" onclick="addPanel('${p}')">+ ${p}</button>
+          `).join("")}
+        </div>
+      </div>
 
-          <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Clinical Panels & Profiles (${Object.keys(PANELS).length})</div>
-          <div style="display:flex; flex-wrap:wrap; gap:6px;">
-            ${Object.keys(PANELS).map(p => `
-              <button class="panel-tag-btn" onclick="addPanel('${p}')">+ ${p}</button>
-            `).join("")}
+      <!-- Center Column: Results Grid & Smart Impressions -->
+      <div class="col-center">
+        <div class="results-table-head">
+          <div>Investigation</div>
+          <div style="width:130px;">Observed Value</div>
+          <div style="width:70px;">Unit</div>
+          <div style="width:110px;">Reference Range</div>
+          <div style="width:80px;">Flag</div>
+          <div style="width:24px;"></div>
+        </div>
+
+        <div class="results-table-body">
+          ${activeJob.tests.length === 0 ? `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:320px; color:var(--text-muted);">
+              <span style="font-size:36px; margin-bottom:12px;">🧪</span>
+              <div style="font-weight:700; font-size:14px;">No tests added to this job yet</div>
+              <div style="font-size:12px;">Click a panel on the left or press <b>F3</b> to search catalog.</div>
+            </div>
+          ` : resultsHTML}
+
+          <!-- Clinical Impressions / Smart Phrases Box -->
+          <div style="margin-top:16px; padding:14px; background:var(--surface); border:1px solid var(--border-light);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-weight:800; font-size:11.5px; text-transform:uppercase; color:var(--brand-blue);">💬 Clinical Notes & Peripheral Smear Interpretation</span>
+              <button class="btn-m" style="font-size:11px;" onclick="openSmartPhraseModal()">+ Insert Smart-Phrase</button>
+            </div>
+            <textarea class="field-input" rows="3" style="width:100%; font-size:12px; font-family:inherit; resize:vertical;" placeholder="Enter clinical impressions or click '+ Insert Smart-Phrase'..." oninput="activeJob.clinical_notes=this.value; saveState();">${activeJob.clinical_notes || ''}</textarea>
           </div>
         </div>
       </div>
 
-      <!-- Center Column (Net Payable Band, Panic Banner & Results Table) -->
-      <div class="center-col-results">
-        <!-- Net Payable Band -->
-        <div class="net-payable-band">
-          <div>
-            <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#9b9797;">Net Payable</div>
-            <div class="np-large">₹ ${netPayable}.00</div>
+      <!-- Right Column: Financial & Job Metadata -->
+      <div class="col-side" style="border-left:2px solid var(--border); border-right:none;">
+        <div class="sec-title">04. BILLING & FINANCIALS (F4)</div>
+        <div style="background:var(--surface); border:1px solid var(--border-light); padding:14px; display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <span style="color:var(--text-muted);">Total Tests (${activeJob.tests.length}):</span>
+            <span style="font-weight:800;">₹ ${subtotal}.00</span>
           </div>
-          <div style="display:flex; gap:26px;">
-            <div>
-              <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#9b9797;">Gross Total</div>
-              <div style="font-size:16px; font-weight:700; line-height:1.4;">₹ ${subtotal}.00</div>
-            </div>
-            <div>
-              <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#9b9797;">Discount</div>
-              <div style="font-size:16px; font-weight:700; color:var(--accent-amber); line-height:1.4;">₹ ${activeJob.bill_disc||0}.00</div>
-            </div>
-            <div>
-              <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#9b9797;">Paid</div>
-              <div style="font-size:16px; font-weight:700; color:var(--accent-green); line-height:1.4;">₹ ${activeJob.bill_paid||netPayable}.00</div>
-            </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <span style="color:var(--text-muted);">Discount:</span>
+            <span style="font-weight:800; color:var(--accent-red);">− ₹ ${activeJob.bill_disc || 0}.00</span>
           </div>
-          <div style="margin-left:auto; display:flex; gap:9px;">
-            <button class="btn-m" style="border-color:#7d7979; color:#f3f2f2; background:transparent;" onclick="openBillModal()">Print bill…</button>
-            <button class="btn-m" style="background:#f3f2f2; color:#201e1d;" onclick="openBillModal()">Make the bill · F4</button>
+          <div style="border-top:1px dashed var(--border); padding-top:8px; display:flex; justify-content:space-between; font-size:14px; font-weight:800;">
+            <span>Net Payable:</span>
+            <span style="color:var(--accent-green);">₹ ${netPayable}.00</span>
           </div>
+          <button class="btn-m primary" style="width:100%; margin-top:4px;" onclick="openBillModal()">💳 Settle Payment / Invoice</button>
         </div>
 
-        <!-- Real-time Medical Critical / Panic Value Alert Banner -->
-        ${panicAlerts.length > 0 ? `
-          <div style="background:#fee2e2; border-bottom:2px solid #ef4444; color:#991b1b; padding:10px 18px; display:flex; align-items:center; gap:12px;">
-            <span style="font-size:22px;">🚨</span>
-            <div>
-              <div style="font-size:12px; font-weight:800; letter-spacing:.05em; text-transform:uppercase;">CRITICAL PANIC VALUE DETECTED — NOTIFY CLINICIAN</div>
-              <div style="font-size:11.5px; font-weight:600; margin-top:2px;">
-                ${panicAlerts.map(a => `<b>${a.name}:</b> ${a.val} (<span style="color:#b91c1c;">${a.reason}</span>)`).join(" · ")}
-              </div>
-            </div>
-          </div>
-        ` : ''}
-
-        <!-- Results Table Header & Rows -->
-        <div class="results-header-row">
-          <div class="results-header-cell">Test Description & Method</div>
-          <div class="results-header-cell">Observed Value</div>
-          <div class="results-header-cell">Unit</div>
-          <div class="results-header-cell">Reference Range</div>
-          <div class="results-header-cell">Flag</div>
-          <div></div>
-        </div>
-
-        <div style="flex:1; overflow:auto;">
-          ${total === 0 ? '<div style="text-align:center; padding:60px; color:var(--text-muted); font-size:14px;">No tests added to this job yet. Click a clinical panel on the left or search a test.</div>' : resultsHTML}
-        </div>
-
-        <!-- Bottom Save Strip -->
-        <div style="height:48px; border-top:2px solid var(--border); display:flex; align-items:center; padding:0 18px; gap:12px; background:var(--bg);">
-          <div style="font-size:11.5px; color:var(--text-muted);">Each box saves automatically. Tube Barcode: <b>${activeJob.barcode || ('SMP-' + activeJob.report_no)}</b></div>
-          <div style="margin-left:auto; display:flex; gap:8px;">
-            <button class="btn-m" onclick="saveJobLocal()">Save</button>
-            <button class="btn-m" onclick="openBillModal()">Bill</button>
-            <button class="btn-m" onclick="openReportPreview(activeJob)">Preview</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Column (Blockers, Last Visit, Keyboard Cheatsheet) -->
-      <div class="right-col-cheatsheet">
-        <div style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
-          <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px;">Before It Can Go</div>
-          <div style="display:flex; flex-direction:column; gap:8px; font-size:12px;">
-            <div style="display:flex; gap:8px; align-items:center;">
-              <span style="width:8px; height:8px; background:${isNameSet?'var(--accent-green)':'var(--accent-amber)'}; display:inline-block;"></span>
-              <span>${isNameSet?'Patient name recorded':'Patient name required'}</span>
-            </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-              <span style="width:8px; height:8px; background:${isMobileSet?'var(--accent-green)':'var(--accent-amber)'}; display:inline-block;"></span>
-              <span>${isMobileSet?'Mobile number recorded':'Mobile number required'}</span>
-            </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-              <span style="width:8px; height:8px; background:${isSexSet?'var(--accent-green)':'var(--accent-amber)'}; display:inline-block;"></span>
-              <span>${isSexSet?'Sex recorded for normal ranges':'Sex required'}</span>
-            </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-              <span style="width:8px; height:8px; background:${done===total&&total>0?'var(--accent-green)':'var(--accent-amber)'}; display:inline-block;"></span>
-              <span>${done===total&&total>0?'All test results filled':'Fill all results (' + done + '/' + total + ')'}</span>
-            </div>
-          </div>
-        </div>
-
-        <div style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
-          <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px;">Last Visit Records</div>
-          <div style="display:flex; flex-direction:column; gap:6px; font-size:12px;">
-            <div style="display:flex; justify-content:space-between;">
-              <span style="color:var(--text-muted);">HbA1c (02-04-2026):</span>
-              <b>9.8% (H)</b>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-              <span style="color:var(--text-muted);">Fasting Glucose:</span>
-              <b>182 mg/dl</b>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-              <span style="color:var(--text-muted);">Total Cholesterol:</span>
-              <b>210 mg/dl</b>
-            </div>
-          </div>
-        </div>
-
-        <div style="padding:14px 16px; flex:1;">
-          <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px;">Keyboard Shortcuts</div>
-          <div style="display:flex; flex-direction:column; gap:6px; font-size:11.5px;">
-            <div style="display:flex; gap:10px;"><b style="min-width:48px;">F2</b><span style="color:var(--text-muted);">New Job</span></div>
-            <div style="display:flex; gap:10px;"><b style="min-width:48px;">F4</b><span style="color:var(--text-muted);">Make Bill</span></div>
-            <div style="display:flex; gap:10px;"><b style="min-width:48px;">F8</b><span style="color:var(--text-muted);">Preview Report</span></div>
-            <div style="display:flex; gap:10px;"><b style="min-width:48px;">F9</b><span style="color:var(--text-muted);">Check & Make Report</span></div>
-            <div style="display:flex; gap:10px;"><b style="min-width:48px;">Ctrl+P</b><span style="color:var(--text-muted);">Print PDF</span></div>
-          </div>
+        <div class="sec-title">05. QUALITY CHECK & FORMULAS</div>
+        <div style="font-size:11.5px; color:var(--text-muted); line-height:1.45; background:var(--surface); border:1px solid var(--border-light); padding:12px;">
+          • <b>Real-time Formula Engine:</b> Derived parameters (e.g. eAG, BUN, NLR, LDL, Globulin, A/G Ratio, Corrected Calcium) calculate instantly on input.<br>
+          • <b>Delta Check:</b> Historical test comparisons display in blue.<br>
+          • <b>Critical Panic Alert:</b> Red banner activates on critical values.
         </div>
       </div>
     </div>
   `;
-
-  updateJobNotes();
 }
 
 function updateJobNotes() {
@@ -2472,33 +2488,114 @@ function saveNewStaff() {
 function renderSettingsScreen(container) {
   container.innerHTML = `
     <div style="padding:14px 18px; background:var(--surface); border-bottom:2px solid var(--border);">
-      <h1 style="font-size:18px; font-weight:800; margin:0;">Settings & Lab Customization</h1>
+      <h1 style="font-size:18px; font-weight:800; margin:0;">⚙️ Laboratory Settings & Letterhead Customizer</h1>
+      <div style="font-size:11.5px; color:var(--text-muted);">Customize lab header branding, letterhead styling, and clinical signatories</div>
     </div>
 
-    <div style="padding:20px; background:var(--surface); flex:1; overflow:auto;">
-      <div style="border:2px solid var(--border); padding:16px; margin-bottom:18px;">
-        <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px;">Letterhead Design Style</div>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <label><input type="radio" name="lh_style" value="classic" ${letterheadStyle==='classic'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Classic</b> (Icy Blue Card with circular emblem logo)</label>
-          <label><input type="radio" name="lh_style" value="modern" ${letterheadStyle==='modern'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Modern</b> (Deep Medical Navy band with cyan accent stripe)</label>
-          <label><input type="radio" name="lh_style" value="preprinted" ${letterheadStyle==='preprinted'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Preprinted Stationery Mode</b> (36mm blank top margin for physical letterhead)</label>
+    <div style="flex:1; overflow:auto; background:var(--bg); padding:20px; display:flex; flex-direction:column; gap:20px;">
+      <!-- Lab Profile Branding Form -->
+      <div style="background:var(--surface); border:2px solid var(--border); padding:18px;">
+        <h3 style="font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin:0 0 14px; color:var(--brand-blue);">
+          🏥 Laboratory Profile & Contact Details
+        </h3>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
+          <div>
+            <label class="stat-label">Prefix</label>
+            <input type="text" class="field-input" value="${LAB_CONFIG.prefix}" oninput="LAB_CONFIG.prefix=this.value; saveState();">
+          </div>
+          <div>
+            <label class="stat-label">Main Lab Name</label>
+            <input type="text" class="field-input" value="${LAB_CONFIG.name}" oninput="LAB_CONFIG.name=this.value; saveState();">
+          </div>
+          <div>
+            <label class="stat-label">Subtitle Badge</label>
+            <input type="text" class="field-input" value="${LAB_CONFIG.subtitle}" oninput="LAB_CONFIG.subtitle=this.value; saveState();">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
+          <div>
+            <label class="stat-label">Tagline / Motto</label>
+            <input type="text" class="field-input" value="${LAB_CONFIG.tagline}" oninput="LAB_CONFIG.tagline=this.value; saveState();">
+          </div>
+          <div>
+            <label class="stat-label">Contact Phone(s)</label>
+            <input type="text" class="field-input" value="${LAB_CONFIG.phone}" oninput="LAB_CONFIG.phone=this.value; saveState();">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
+          <div>
+            <label class="stat-label">Address Line 1</label>
+            <input type="text" class="field-input" value="${LAB_CONFIG.address_1}" oninput="LAB_CONFIG.address_1=this.value; saveState();">
+          </div>
+          <div>
+            <label class="stat-label">Address Line 2 (City, Pin)</label>
+            <input type="text" class="field-input" value="${LAB_CONFIG.address_2}" oninput="LAB_CONFIG.address_2=this.value; saveState();">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
+          <div>
+            <label class="stat-label">Official Email</label>
+            <input type="text" class="field-input" value="${LAB_CONFIG.email}" oninput="LAB_CONFIG.email=this.value; saveState();">
+          </div>
+          <div>
+            <label class="stat-label">GSTIN / Tax ID</label>
+            <input type="text" class="field-input" value="${LAB_CONFIG.gstin}" oninput="LAB_CONFIG.gstin=this.value; saveState();">
+          </div>
         </div>
       </div>
 
-      <div style="border:2px solid var(--border); padding:16px; margin-bottom:18px;">
-        <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px;">Developer & Software Credits</div>
-        <p style="margin:0 0 10px; color:var(--text-muted);">
-          <b>LabSoft v${APP_VERSION}</b> — Medical Diagnostic Laboratory Information & Reporting System.<br>
-          <b>Author / Developer:</b> <span style="color:var(--brand-blue); font-weight:800;">${AUTHOR}</span>
-        </p>
-        <button class="btn-m primary" onclick="showAbout()">View About & Credits Dialog</button>
+      <!-- Letterhead Theme Selector -->
+      <div style="background:var(--surface); border:2px solid var(--border); padding:18px;">
+        <h3 style="font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin:0 0 12px; color:var(--brand-blue);">
+          🎨 Official Report Letterhead Style
+        </h3>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label><input type="radio" name="lh_style" value="classic" ${letterheadStyle==='classic'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Classic Blue</b> (Icy blue banner with circular diagnostic emblem)</label>
+          <label><input type="radio" name="lh_style" value="modern" ${letterheadStyle==='modern'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Modern Navy & Cyan</b> (Deep clinical navy header with cyan accent bar)</label>
+          <label><input type="radio" name="lh_style" value="preprinted" ${letterheadStyle==='preprinted'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Preprinted Stationery Mode</b> (36mm blank top margin for physical lab pad stationery)</label>
+        </div>
       </div>
 
-      <div style="border:2px solid var(--border); padding:16px;">
-        <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px;">Local Demo Data Tools</div>
-        <div style="display:flex; gap:12px;">
-          <button class="btn-m" onclick="loadSampleData()">Load Sample Demo Patients</button>
-          <button class="btn-m" style="color:var(--accent-red);" onclick="if(confirm('Wipe and reset all local demo test data?')){localStorage.removeItem('labsoft_jobs_v3'); sessionStorage.clear(); location.reload();}">Wipe & Reset Everything</button>
+      <!-- Authorized Clinical Signatories -->
+      <div style="background:var(--surface); border:2px solid var(--border); padding:18px;">
+        <h3 style="font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin:0 0 14px; color:var(--brand-blue);">
+          ✍️ Authorized Signatories (Printed at bottom of report)
+        </h3>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
+          <div style="background:var(--surface-alt); padding:12px; border:1px solid var(--border-light);">
+            <div style="font-weight:800; font-size:11px; margin-bottom:8px;">Signatory 1 (Technologist)</div>
+            <input type="text" class="field-input" style="margin-bottom:6px;" value="${LAB_CONFIG.sig1_name}" oninput="LAB_CONFIG.sig1_name=this.value; saveState();" placeholder="Name">
+            <input type="text" class="field-input" style="margin-bottom:6px;" value="${LAB_CONFIG.sig1_qual}" oninput="LAB_CONFIG.sig1_qual=this.value; saveState();" placeholder="Qualifications">
+            <input type="text" class="field-input" value="${LAB_CONFIG.sig1_role}" oninput="LAB_CONFIG.sig1_role=this.value; saveState();" placeholder="Role">
+          </div>
+          <div style="background:var(--surface-alt); padding:12px; border:1px solid var(--border-light);">
+            <div style="font-weight:800; font-size:11px; margin-bottom:8px;">Signatory 2 (Microbiologist)</div>
+            <input type="text" class="field-input" style="margin-bottom:6px;" value="${LAB_CONFIG.sig2_name}" oninput="LAB_CONFIG.sig2_name=this.value; saveState();" placeholder="Name">
+            <input type="text" class="field-input" style="margin-bottom:6px;" value="${LAB_CONFIG.sig2_qual}" oninput="LAB_CONFIG.sig2_qual=this.value; saveState();" placeholder="Qualifications">
+            <input type="text" class="field-input" value="${LAB_CONFIG.sig2_role}" oninput="LAB_CONFIG.sig2_role=this.value; saveState();" placeholder="Role">
+          </div>
+          <div style="background:var(--surface-alt); padding:12px; border:1px solid var(--border-light);">
+            <div style="font-weight:800; font-size:11px; margin-bottom:8px;">Signatory 3 (Pathologist / Head)</div>
+            <input type="text" class="field-input" style="margin-bottom:6px;" value="${LAB_CONFIG.sig3_name}" oninput="LAB_CONFIG.sig3_name=this.value; saveState();" placeholder="Name">
+            <input type="text" class="field-input" style="margin-bottom:6px;" value="${LAB_CONFIG.sig3_qual}" oninput="LAB_CONFIG.sig3_qual=this.value; saveState();" placeholder="Qualifications">
+            <input type="text" class="field-input" value="${LAB_CONFIG.sig3_role}" oninput="LAB_CONFIG.sig3_role=this.value; saveState();" placeholder="Role">
+          </div>
+        </div>
+      </div>
+
+      <!-- Developer Info & Demo Data -->
+      <div style="background:var(--surface); border:2px solid var(--border); padding:18px;">
+        <h3 style="font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin:0 0 10px; color:var(--brand-blue);">
+          ℹ️ Developer & Data Tools
+        </h3>
+        <p style="margin:0 0 12px; font-size:12.5px; color:var(--text-muted);">
+          <b>LabSoft v${APP_VERSION}</b> — Developed by <b>${AUTHOR}</b>.<br>
+          Clinical diagnostic information & pathology laboratory information system.
+        </p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-m primary" onclick="showAbout()">View About Dialog</button>
+          <button class="btn-m" onclick="loadSampleData()">Load Demo Patients</button>
+          <button class="btn-m" style="color:var(--accent-red);" onclick="if(confirm('Clear all local data?')){localStorage.clear(); location.reload();}">Reset All Local Data</button>
         </div>
       </div>
     </div>
@@ -2568,52 +2665,55 @@ function openReportPreview(job) {
     groups[g].push({ code, test: t, val: job.results[code] || "—" });
   });
 
-  let rowsHTML = "";
-  for (const [groupName, testList] of Object.entries(groups)) {
-    rowsHTML += `
-      <tr>
-        <td colspan="3" style="font-weight:800; color:#0E4D92; padding:12px 0 6px; font-size:12px; text-transform:uppercase; border-bottom:1.5px solid #c9dff7;">
-          ${groupName}
-        </td>
-      </tr>
-    `;
-    testList.forEach(({ code, test: t, val }) => {
-      let isPanic = false;
-      let isHigh = false;
-      let isLow = false;
-      if (val && !isNaN(val)) {
-        const num = parseFloat(val);
-        if ((t.panicHi !== undefined && num >= t.panicHi) || (t.panicLo !== undefined && num <= t.panicLo)) {
-          isPanic = true;
-        } else if (t.hi !== undefined && num > t.hi) {
-          isHigh = true;
-        } else if (t.lo !== undefined && num < t.lo) {
-          isLow = true;
-        }
-      }
-      const valDisplay = val !== "—" ? `${val} ${t.u || ''}` : "—";
-      const highlightStyle = isPanic ? "background:#fee2e2; color:#991b1b; font-weight:800; padding:2px 6px; border-radius:3px;" : (isHigh || isLow ? "color:#c1121f; font-weight:800;" : "font-weight:700;");
-
+  function renderTestRows(testItems) {
+    let rowsHTML = "";
+    for (const [groupName, testList] of Object.entries(testItems)) {
       rowsHTML += `
-        <tr style="border-bottom:1px solid #eceff1;">
-          <td style="padding:7px 0;">
-            <div style="font-weight:600; color:#201e1d;">${t.n}</div>
-            <div style="font-size:10px; color:#616A72;">Method: ${t.m || 'Standard'}</div>
+        <tr>
+          <td colspan="3" style="font-weight:800; color:#0E4D92; padding:10px 0 4px; font-size:11.5px; text-transform:uppercase; border-bottom:1.5px solid #c9dff7;">
+            ${groupName}
           </td>
-          <td style="font-size:13.5px; text-align:center; padding:7px 0;">
-            <span style="${highlightStyle}">${valDisplay}</span>
-            ${isPanic ? '<span style="font-size:10px; background:#991b1b; color:#fff; padding:1px 4px; border-radius:2px; margin-left:4px;">CRITICAL</span>' : ''}
-          </td>
-          <td style="color:#4A5157; text-align:right; padding:7px 0; font-size:12px; font-variant-numeric:tabular-nums;">${t.r || '—'}</td>
         </tr>
       `;
-    });
+      testList.forEach(({ code, test: t, val }) => {
+        let isPanic = false;
+        let isHigh = false;
+        let isLow = false;
+        if (val && !isNaN(val)) {
+          const num = parseFloat(val);
+          if ((t.panicHi !== undefined && num >= t.panicHi) || (t.panicLo !== undefined && num <= t.panicLo)) {
+            isPanic = true;
+          } else if (t.hi !== undefined && num > t.hi) {
+            isHigh = true;
+          } else if (t.lo !== undefined && num < t.lo) {
+            isLow = true;
+          }
+        }
+        const valDisplay = val !== "—" ? `${val} ${t.u || ''}` : "—";
+        const highlightStyle = isPanic ? "background:#fee2e2; color:#991b1b; font-weight:800; padding:2px 6px; border-radius:3px;" : (isHigh || isLow ? "color:#c1121f; font-weight:800;" : "font-weight:700;");
+
+        rowsHTML += `
+          <tr style="border-bottom:1px solid #eceff1;">
+            <td style="padding:6px 0;">
+              <div style="font-weight:600; color:#201e1d; font-size:12.5px;">${t.n}</div>
+              <div style="font-size:9.5px; color:#616A72;">Method: ${t.m || 'Standard'}</div>
+            </td>
+            <td style="font-size:13px; text-align:center; padding:6px 0;">
+              <span style="${highlightStyle}">${valDisplay}</span>
+              ${isPanic ? '<span style="font-size:9px; background:#991b1b; color:#fff; padding:1px 4px; border-radius:2px; margin-left:4px;">CRITICAL</span>' : ''}
+            </td>
+            <td style="color:#4A5157; text-align:right; padding:6px 0; font-size:11.5px; font-variant-numeric:tabular-nums;">${t.r || '—'}</td>
+          </tr>
+        `;
+      });
+    }
+    return rowsHTML;
   }
 
   function getQRCodeSVG() {
     return `
       <div style="display:flex; flex-direction:column; align-items:center; border:1px solid #c9dff7; padding:4px 6px; background:#f0f7ff; border-radius:3px; margin-left:14px; flex-shrink:0;">
-        <svg width="46" height="46" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="44" height="44" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="100" height="100" fill="white"/>
           <rect x="10" y="10" width="28" height="28" fill="#0A3668"/>
           <rect x="15" y="15" width="18" height="18" fill="white"/>
@@ -2635,140 +2735,231 @@ function openReportPreview(job) {
           <rect x="76" y="76" width="12" height="12" fill="#0A3668"/>
           <rect x="44" y="76" width="8" height="8" fill="#0A3668"/>
         </svg>
-        <span style="font-size:6.5px; font-weight:800; color:#0A3668; letter-spacing:.05em; margin-top:2px;">SCAN TO VERIFY</span>
+        <span style="font-size:6px; font-weight:800; color:#0A3668; letter-spacing:.05em; margin-top:2px;">SCAN TO VERIFY</span>
       </div>
     `;
   }
 
-  let letterheadHTML = "";
-  if (letterheadStyle === "modern") {
-    letterheadHTML = `
-      <div class="letterhead-modern">
-        ${getLogoSVG()}
-        <div class="lh-title-block">
-          <div class="lh-pre">NEW</div>
-          <div class="lh-main">MITHRA</div>
-          <div>
-            <span class="lh-sub-badge" style="background:#48CAE4; color:#0A3668;">MEDICAL LABORATORY</span>
-            <span class="lh-tagline" style="color:#D4E7FA;">ACCURACY • CARE • TRUST</span>
+  function getLetterheadHTML() {
+    if (letterheadStyle === "modern") {
+      return `
+        <div class="letterhead-modern">
+          ${getLogoSVG()}
+          <div class="lh-title-block">
+            <div class="lh-pre">${LAB_CONFIG.prefix || 'NEW'}</div>
+            <div class="lh-main">${LAB_CONFIG.name || 'MITHRA'}</div>
+            <div>
+              <span class="lh-sub-badge" style="background:#48CAE4; color:#0A3668;">${LAB_CONFIG.subtitle || 'MEDICAL LABORATORY'}</span>
+              <span class="lh-tagline" style="color:#D4E7FA;">${LAB_CONFIG.tagline || 'ACCURACY • CARE • TRUST'}</span>
+            </div>
+          </div>
+          <div class="lh-contact" style="display:flex; align-items:center; justify-content:flex-end;">
+            <div>
+              ${LAB_CONFIG.address_1 || ''}<br>
+              ${LAB_CONFIG.address_2 || ''}<br>
+              Ph: ${LAB_CONFIG.phone || ''}<br>
+              e-mail: ${LAB_CONFIG.email || ''}
+            </div>
+            ${getQRCodeSVG()}
           </div>
         </div>
-        <div class="lh-contact" style="display:flex; align-items:center; justify-content:flex-end;">
-          <div>
-            Chettiyankinar Road, Kuttippala,<br>
-            Opp. Govt. Ayurveda Dispensary<br>
-            Ph: +91 81578 87311, 95266 77311<br>
-            e-mail: mithralab12020@gmail.com
+      `;
+    } else if (letterheadStyle === "preprinted") {
+      return `<div class="letterhead-preprinted"></div>`;
+    } else {
+      return `
+        <div class="letterhead-classic">
+          ${getLogoSVG()}
+          <div class="lh-title-block">
+            <div class="lh-pre">${LAB_CONFIG.prefix || 'NEW'}</div>
+            <div class="lh-main">${LAB_CONFIG.name || 'MITHRA'}</div>
+            <div>
+              <span class="lh-sub-badge">${LAB_CONFIG.subtitle || 'MEDICAL LABORATORY'}</span>
+              <span class="lh-tagline">${LAB_CONFIG.tagline || 'ACCURACY • CARE • TRUST'}</span>
+            </div>
           </div>
-          ${getQRCodeSVG()}
-        </div>
-      </div>
-    `;
-  } else if (letterheadStyle === "preprinted") {
-    letterheadHTML = `<div class="letterhead-preprinted"></div>`;
-  } else {
-    letterheadHTML = `
-      <div class="letterhead-classic">
-        ${getLogoSVG()}
-        <div class="lh-title-block">
-          <div class="lh-pre">NEW</div>
-          <div class="lh-main">MITHRA</div>
-          <div>
-            <span class="lh-sub-badge">MEDICAL LABORATORY</span>
-            <span class="lh-tagline">ACCURACY • CARE • TRUST</span>
+          <div class="lh-contact" style="display:flex; align-items:center; justify-content:flex-end;">
+            <div>
+              ${LAB_CONFIG.address_1 || ''}<br>
+              ${LAB_CONFIG.address_2 || ''}<br>
+              Ph: ${LAB_CONFIG.phone || ''}<br>
+              e-mail: ${LAB_CONFIG.email || ''}
+            </div>
+            ${getQRCodeSVG()}
           </div>
         </div>
-        <div class="lh-contact" style="display:flex; align-items:center; justify-content:flex-end;">
-          <div>
-            Chettiyankinar Road, Kuttippala,<br>
-            Opp. Govt. Ayurveda Dispensary<br>
-            Ph: +91 81578 87311, 95266 77311<br>
-            e-mail: mithralab12020@gmail.com
-          </div>
-          ${getQRCodeSVG()}
-        </div>
-      </div>
-    `;
+      `;
+    }
   }
+
+  const patientMetaHeader = `
+    <div class="meta-grid">
+      <div class="meta-row"><span class="meta-k">Report No:</span><span class="meta-v"><b>${job.report_no}</b></span></div>
+      <div class="meta-row"><span class="meta-k">Barcode / UHID:</span><span class="meta-v"><b>${job.barcode || ('SMP-' + job.report_no)}</b> / ${job.uhid || ('UHID-' + job.report_no)}</span></div>
+      <div class="meta-row"><span class="meta-k">Date:</span><span class="meta-v">${job.date}</span></div>
+
+      <div class="meta-row"><span class="meta-k">Patient Name:</span><span class="meta-v"><b>${job.name} .${job.initial}.</b></span></div>
+      <div class="meta-row"><span class="meta-k">Age / Sex:</span><span class="meta-v">${job.age} ${job.age_unit} / <b>${job.sex}</b></span></div>
+      <div class="meta-row"><span class="meta-k">Sample Specimen:</span><span class="meta-v"><b>${job.specimen || 'Serum'}</b></span></div>
+
+      <div class="meta-row"><span class="meta-k">Ref. by Doctor:</span><span class="meta-v"><b>${job.referrer || 'Self'}</b></span></div>
+      <div class="meta-row"><span class="meta-k">Fasting Status:</span><span class="meta-v">${job.fasting_status || 'Fasting (10-12 hrs)'}</span></div>
+      <div class="meta-row"><span class="meta-k">Sample Collected:</span><span class="meta-v">${job.collected_at || job.date}</span></div>
+    </div>
+  `;
+
+  const signaturesBlock = `
+    <div class="sign-row" style="margin-top:auto; padding-top:14px; border-top:1.5px solid #0E4D92;">
+      <div class="sign-person">
+        <div class="sign-name">${LAB_CONFIG.sig1_name || 'SAHEED MOHAMED. P.'}</div>
+        <div class="sign-qual">${LAB_CONFIG.sig1_qual || 'BScMLT'}</div>
+        <div class="sign-role">${LAB_CONFIG.sig1_role || 'Technologist'}</div>
+      </div>
+      <div class="sign-person">
+        <div class="sign-name">${LAB_CONFIG.sig2_name || 'FATTIMATH SAKIRA. M.'}</div>
+        <div class="sign-qual">${LAB_CONFIG.sig2_qual || 'MScMicrobiology'}</div>
+        <div class="sign-role">${LAB_CONFIG.sig2_role || 'Microbiologist'}</div>
+      </div>
+      <div class="sign-person">
+        <div class="sign-name">${LAB_CONFIG.sig3_name || 'ABDUNNASER MAYYERI'}</div>
+        <div class="sign-qual">${LAB_CONFIG.sig3_qual || 'DMLT BScMLT'}</div>
+        <div class="sign-role">${LAB_CONFIG.sig3_role || 'Lab Incharge'}</div>
+      </div>
+    </div>
+  `;
 
   const hba1cParagraph = `
-    <div class="clinical-box">
+    <div class="clinical-box" style="margin-top:10px;">
       <b>Clinical Significance of Glycosylated Hemoglobin (HbA1c):</b><br>
-      Glycosylated hemoglobin values are used to assess long-term glucose control in diabetes, especially in insulin-dependent diabetics whose glucose levels are labile, and in whom blood and urine glucose measurements exhibit significant daily variation. GHb measurements reflect the level of control present over the preceding 100-120 days. In such patients, whose fasting glucose concentrations are fairly consistent from day to day, there is a correlation between glycosylated hemoglobin and single fasting glucose levels. Continued high levels of blood glucose are reflected in high GHb concentrations. Glycosylated hemoglobin predicts the progression of retinopathy.<br><br>
-      Chronic blood loss, hemolytic anemia, or other setting for decrease in RBC life span, results in a decrease in the glycosylated hemoglobin level. Pregnancy may lower glycosylated hemoglobin.
+      Glycosylated hemoglobin values reflect mean glycemic control over the preceding 100-120 days. HbA1c is used to monitor long-term blood glucose regulation and guide therapeutic management.
     </div>
   `;
 
-  const content = `
-    <div class="report-page" id="printable-report">
-      ${letterheadHTML}
-
-      <!-- Metadata Header Block (NABL / Clinical Compliant) -->
-      <div class="meta-grid">
-        <div class="meta-row"><span class="meta-k">Report No:</span><span class="meta-v"><b>${job.report_no}</b></span></div>
-        <div class="meta-row"><span class="meta-k">Barcode / UHID:</span><span class="meta-v"><b>${job.barcode || ('SMP-' + job.report_no)}</b> / ${job.uhid || ('UHID-' + job.report_no)}</span></div>
-        <div class="meta-row"><span class="meta-k">Date:</span><span class="meta-v">${job.date}</span></div>
-
-        <div class="meta-row"><span class="meta-k">Patient Name:</span><span class="meta-v"><b>${job.name} .${job.initial}.</b></span></div>
-        <div class="meta-row"><span class="meta-k">Age / Sex:</span><span class="meta-v">${job.age} ${job.age_unit} / <b>${job.sex}</b></span></div>
-        <div class="meta-row"><span class="meta-k">Sample Specimen:</span><span class="meta-v"><b>${job.specimen || 'Serum'}</b></span></div>
-
-        <div class="meta-row"><span class="meta-k">Ref. by Doctor:</span><span class="meta-v"><b>${job.referrer || 'Self'}</b></span></div>
-        <div class="meta-row"><span class="meta-k">Fasting Status:</span><span class="meta-v">${job.fasting_status || 'Fasting (10-12 hrs)'}</span></div>
-        <div class="meta-row"><span class="meta-k">Sample Collected:</span><span class="meta-v">${job.collected_at || job.date}</span></div>
-      </div>
-
-      <!-- Results Table -->
-      <table style="margin-top:10px;">
-        <thead>
-          <tr style="border-bottom:2px solid #0E4D92;">
-            <th style="background:none; color:#0E4D92; font-size:12px; font-weight:800; padding:8px 0;">Test Description</th>
-            <th style="background:none; color:#0E4D92; font-size:12px; font-weight:800; text-align:center; padding:8px 0;">Observed Value</th>
-            <th style="background:none; color:#0E4D92; font-size:12px; font-weight:800; text-align:right; padding:8px 0;">Reference Range</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rowsHTML}
-        </tbody>
-      </table>
-
-      <!-- End of Report Mark -->
-      <div style="text-align:center; font-weight:700; font-size:11px; margin:18px 0; color:#616A72;">** End Of Report **</div>
-
-      ${isHbA1c ? hba1cParagraph : ''}
-
-      <!-- Signatures Row -->
-      <div class="sign-row">
-        <div class="sign-person">
-          <div class="sign-name">SAHEED MOHAMED. P.</div>
-          <div class="sign-qual">BScMLT</div>
-          <div class="sign-role">Technologist</div>
-        </div>
-        <div class="sign-person">
-          <div class="sign-name">FATTIMATH SAKIRA.M.</div>
-          <div class="sign-qual">MScMicrobiology</div>
-          <div class="sign-role">Microbiologist</div>
-        </div>
-        <div class="sign-person">
-          <div class="sign-name">ABDUNNASER MAYYERI</div>
-          <div class="sign-qual">DMLT BScMLT</div>
-          <div class="sign-role">Lab Incharge</div>
-        </div>
-      </div>
-
-      <!-- Bottom Disclaimer Strip -->
-      <div class="disclaimer-strip">
-        The result of the investigations depends upon the quality of the specimen received. Isolated laboratory investigations never confirm the final diagnosis of diseases. The reported results are only for the information of the referring doctor. In case of doubts, referring doctors can request a free recheck.
-      </div>
+  const clinicalNotesBlock = job.clinical_notes ? `
+    <div style="margin-top:10px; border:1px solid #c9dff7; background:#f8fafc; padding:8px 12px; font-size:11px; line-height:1.4;">
+      <div style="font-weight:800; color:#0A3668; text-transform:uppercase; margin-bottom:3px;">Clinical Remarks / Impression:</div>
+      <div style="color:#334155; white-space:pre-line;">${job.clinical_notes}</div>
     </div>
-  `;
+  ` : '';
 
-  document.getElementById("modal-dialog-title").textContent = `Report Preview — No ${job.report_no} (${job.name} .${job.initial}.)`;
+  // Smart Multi-Page Pagination: Check if total tests > 14
+  const allTests = job.tests;
+  let pagesHTML = "";
+
+  if (allTests.length > 14) {
+    // Split into 2 Pages
+    const page1Codes = allTests.slice(0, 12);
+    const page2Codes = allTests.slice(12);
+
+    const page1Groups = {};
+    page1Codes.forEach(code => {
+      const t = TESTS[code];
+      if (!t) return;
+      const g = t.g || "ROUTINE INVESTIGATIONS";
+      if (!page1Groups[g]) page1Groups[g] = [];
+      page1Groups[g].push({ code, test: t, val: job.results[code] || "—" });
+    });
+
+    const page2Groups = {};
+    page2Codes.forEach(code => {
+      const t = TESTS[code];
+      if (!t) return;
+      const g = t.g || "ROUTINE INVESTIGATIONS";
+      if (!page2Groups[g]) page2Groups[g] = [];
+      page2Groups[g].push({ code, test: t, val: job.results[code] || "—" });
+    });
+
+    // Page 1
+    pagesHTML += `
+      <div class="report-page" style="margin-bottom:20px;">
+        ${getLetterheadHTML()}
+        ${patientMetaHeader}
+        <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:#0E4D92; margin-top:8px; border-bottom:1px solid #c9dff7; padding-bottom:2px;">
+          <span>DIAGNOSTIC REPORT (Page 1 of 2)</span>
+          <span>Sample Ref #${job.report_no}</span>
+        </div>
+        <table style="margin-top:6px;">
+          <thead>
+            <tr style="border-bottom:2px solid #0E4D92;">
+              <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; padding:6px 0;">Test Description</th>
+              <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; text-align:center; padding:6px 0;">Observed Value</th>
+              <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; text-align:right; padding:6px 0;">Reference Range</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${renderTestRows(page1Groups)}
+          </tbody>
+        </table>
+        <div style="text-align:right; font-weight:700; font-size:10px; color:#616A72; margin-top:auto; padding-top:10px;">
+          (Continued on Page 2 →)
+        </div>
+      </div>
+    `;
+
+    // Page 2
+    pagesHTML += `
+      <div class="report-page">
+        ${getLetterheadHTML()}
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#f0f7ff; border:1px solid #c9dff7; padding:6px 12px; margin-bottom:10px; font-size:11px;">
+          <span><b>Patient:</b> ${job.name} .${job.initial}. (${job.age} ${job.age_unit} / ${job.sex})</span>
+          <span><b>Report No:</b> #${job.report_no}</span>
+          <span style="font-weight:700; color:#0E4D92;">Page 2 of 2</span>
+        </div>
+        <table>
+          <thead>
+            <tr style="border-bottom:2px solid #0E4D92;">
+              <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; padding:6px 0;">Test Description</th>
+              <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; text-align:center; padding:6px 0;">Observed Value</th>
+              <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; text-align:right; padding:6px 0;">Reference Range</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${renderTestRows(page2Groups)}
+          </tbody>
+        </table>
+
+        ${clinicalNotesBlock}
+        ${isHbA1c ? hba1cParagraph : ''}
+
+        <div style="text-align:center; font-weight:700; font-size:10.5px; margin:14px 0; color:#616A72;">** End Of Report · Page 2 of 2 **</div>
+        ${signaturesBlock}
+      </div>
+    `;
+  } else {
+    // Single Page Report
+    pagesHTML = `
+      <div class="report-page" id="printable-report">
+        ${getLetterheadHTML()}
+        ${patientMetaHeader}
+
+        <table style="margin-top:8px;">
+          <thead>
+            <tr style="border-bottom:2px solid #0E4D92;">
+              <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; padding:6px 0;">Test Description</th>
+              <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; text-align:center; padding:6px 0;">Observed Value</th>
+              <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; text-align:right; padding:6px 0;">Reference Range</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${renderTestRows(groups)}
+          </tbody>
+        </table>
+
+        ${clinicalNotesBlock}
+        ${isHbA1c ? hba1cParagraph : ''}
+
+        <div style="text-align:center; font-weight:700; font-size:10.5px; margin:14px 0; color:#616A72;">** End Of Report **</div>
+        ${signaturesBlock}
+      </div>
+    `;
+  }
+
+  document.getElementById("modal-dialog-title").textContent = `🖨️ Official Diagnostic Report — #${job.report_no} ${job.name} .${job.initial}.`;
   document.getElementById("modal-dialog-body").className = "modal-dialog-body";
-  document.getElementById("modal-dialog-body").innerHTML = content;
+  document.getElementById("modal-dialog-body").innerHTML = pagesHTML;
   document.getElementById("modal-dialog-footer").innerHTML = `
-    <button class="btn-m primary" onclick="window.print()">🖨️ Print / Save PDF</button>
-    <button class="btn-m" onclick="openWhatsAppDispatchModal(jobs.find(x=>x.id===${job.id})||activeJob)">📱 WhatsApp Dispatch</button>
+    <button class="btn-m primary" onclick="window.print()">🖨️ Print Report</button>
+    <button class="btn-m" onclick="openWhatsAppDispatchModal(activeJob)">📱 WhatsApp Dispatch</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
   document.getElementById("modal-container").classList.add("open");
@@ -3052,6 +3243,388 @@ function closeModal() {
 
 // Initial boot
 render();
+
+
+
+
+
+
+/* --------------------------------------------------------------------------
+   Clinical Group Removal Function
+   -------------------------------------------------------------------------- */
+function removeGroup(groupName) {
+  if (!confirm(`Remove all tests under "${groupName}"?`)) return;
+  const toRemove = activeJob.tests.filter(code => TESTS[code]?.g === groupName);
+  toRemove.forEach(code => {
+    activeJob.tests = activeJob.tests.filter(c => c !== code);
+    delete activeJob.results[code];
+  });
+  saveState();
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Phlebotomy Vacutainer Tube Barcode Label Modal (50mm x 25mm Thermal Sticker)
+   -------------------------------------------------------------------------- */
+function openTubeLabelModal(job) {
+  if (!job) job = activeJob;
+  const testsList = job.tests.map(c => TESTS[c]?.s || c).slice(0, 5).join(", ");
+  const specimenColor = job.specimen === 'EDTA' ? '#7c3aed' : job.specimen === 'Fluoride' ? '#4b5563' : job.specimen === 'Citrate' ? '#2563eb' : '#dc2626';
+
+  const content = `
+    <div style="background:#f3f4f6; padding:24px; display:flex; flex-direction:column; align-items:center; gap:16px;">
+      <div class="tube-label-sticker" id="printable-tube-sticker">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #000; padding-bottom:2px;">
+          <span style="font-weight:900; font-size:11px; letter-spacing:.05em;">${LAB_CONFIG.name || 'LABSOFT'}</span>
+          <span style="font-size:9px; font-weight:800; background:${specimenColor}; color:#fff; padding:1px 4px; border-radius:2px;">${job.specimen || 'SERUM'}</span>
+        </div>
+        <div style="margin:2px 0;">
+          <div style="font-size:11px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${job.name ? job.name + ' .' + job.initial + '.' : 'UNREGISTERED PATIENT'}</div>
+          <div style="font-size:9.5px; display:flex; gap:8px;">
+            <span><b>ID:</b> #${job.report_no}</span>
+            <span><b>Age/Sex:</b> ${job.age}${job.age_unit[0].toUpperCase()} / ${job.sex[0]}</span>
+          </div>
+        </div>
+        <!-- Barcode Vector -->
+        <div style="display:flex; flex-direction:column; align-items:center; margin:2px 0;">
+          <svg style="width:100%; height:20px;" viewBox="0 0 160 20">
+            <rect x="0" y="0" width="3" height="20" fill="#000"/>
+            <rect x="5" y="0" width="2" height="20" fill="#000"/>
+            <rect x="10" y="0" width="4" height="20" fill="#000"/>
+            <rect x="16" y="0" width="2" height="20" fill="#000"/>
+            <rect x="20" y="0" width="5" height="20" fill="#000"/>
+            <rect x="27" y="0" width="3" height="20" fill="#000"/>
+            <rect x="32" y="0" width="2" height="20" fill="#000"/>
+            <rect x="36" y="0" width="4" height="20" fill="#000"/>
+            <rect x="42" y="0" width="3" height="20" fill="#000"/>
+            <rect x="47" y="0" width="5" height="20" fill="#000"/>
+            <rect x="54" y="0" width="2" height="20" fill="#000"/>
+            <rect x="58" y="0" width="4" height="20" fill="#000"/>
+            <rect x="64" y="0" width="3" height="20" fill="#000"/>
+            <rect x="70" y="0" width="2" height="20" fill="#000"/>
+            <rect x="74" y="0" width="5" height="20" fill="#000"/>
+            <rect x="81" y="0" width="3" height="20" fill="#000"/>
+            <rect x="86" y="0" width="2" height="20" fill="#000"/>
+            <rect x="90" y="0" width="4" height="20" fill="#000"/>
+            <rect x="96" y="0" width="3" height="20" fill="#000"/>
+            <rect x="101" y="0" width="5" height="20" fill="#000"/>
+            <rect x="108" y="0" width="2" height="20" fill="#000"/>
+            <rect x="112" y="0" width="4" height="20" fill="#000"/>
+            <rect x="118" y="0" width="3" height="20" fill="#000"/>
+            <rect x="123" y="0" width="2" height="20" fill="#000"/>
+            <rect x="127" y="0" width="5" height="20" fill="#000"/>
+            <rect x="134" y="0" width="3" height="20" fill="#000"/>
+            <rect x="139" y="0" width="2" height="20" fill="#000"/>
+            <rect x="143" y="0" width="4" height="20" fill="#000"/>
+            <rect x="149" y="0" width="3" height="20" fill="#000"/>
+            <rect x="154" y="0" width="5" height="20" fill="#000"/>
+          </svg>
+          <span style="font-size:8px; font-weight:800; letter-spacing:1.5px;">*SMP-${job.report_no}*</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:8.5px; border-top:1px solid #000; padding-top:2px;">
+          <span style="font-weight:700;">${testsList || 'DIAGNOSTIC'}</span>
+          <span>${job.date}</span>
+        </div>
+      </div>
+      <div style="font-size:12px; color:var(--text-muted); text-align:center;">
+        Standard 50mm × 25mm Phlebotomy Barcode Sticker for Vacutainer Tubes.
+      </div>
+    </div>
+  `;
+
+  document.getElementById("modal-dialog-title").textContent = `🏷️ Phlebotomy Vial Label — Sample #${job.report_no}`;
+  document.getElementById("modal-dialog-body").className = "modal-dialog-body plain";
+  document.getElementById("modal-dialog-body").innerHTML = content;
+  document.getElementById("modal-dialog-footer").innerHTML = `
+    <button class="btn-m primary" onclick="window.print()">🖨️ Print Label Sticker</button>
+    <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
+  `;
+  document.getElementById("modal-container").classList.add("open");
+}
+
+/* --------------------------------------------------------------------------
+   Pathology Smart-Phrases & Peripheral Smear Comment Library
+   -------------------------------------------------------------------------- */
+const SMART_PHRASES = [
+  {
+    cat: "🩸 Peripheral Blood Smear (PS)",
+    items: [
+      { code: "PS-NORM", title: "Normocytic Normochromic", text: "RBCs are predominantly normocytic and normochromic. WBCs are normal in count and morphology. Platelets are adequate in number and morphology on smear examination." },
+      { code: "PS-MICRO", title: "Microcytic Hypochromic (Iron Deficiency)", text: "RBCs show moderate microcytic hypochromic picture with mild to moderate anisopoikilocytosis, pencil cells and target cells. Suggestive of Iron Deficiency Anemia. Clinical correlation & Iron Profile advised." },
+      { code: "PS-DIMORPH", title: "Dimorphic Anemia", text: "RBCs show dimorphic picture with dual population of both microcytic hypochromic and macrocytic cells. Suggestive of mixed nutritional deficiency (Iron + Vitamin B12/Folate)." },
+      { code: "PS-LEUKO", title: "Leukocytosis with Left Shift", text: "Moderate to marked leukocytosis noted with absolute neutrophilia and toxic granulations. Features suggestive of acute bacterial infection / acute inflammatory response." },
+      { code: "PS-THROMB", title: "Thrombocytopenia Confirmed", text: "Marked thrombocytopenia confirmed on peripheral smear examination. No giant platelets or significant platelet clumps seen. Suggest repeat count and clinical correlation." }
+    ]
+  },
+  {
+    cat: "🔬 Urine Routine Examination",
+    items: [
+      { code: "UR-UTI", title: "Active Urinary Sediment (UTI)", text: "Urine examination shows numerous pus cells (pyuria) with moderate epithelial cells and bacteriuria, consistent with active Urinary Tract Infection (UTI). Urine Culture & Sensitivity test advised." },
+      { code: "UR-MICRO", title: "Microscopic Hematuria & Proteinuria", text: "Occasional intact RBCs seen with mild proteinuria (Albumin 1+). Suggestive of early glomerular / lower urinary tract irritation. Follow-up advised." }
+    ]
+  },
+  {
+    cat: "🩺 Lipid & Cardiovascular Risk",
+    items: [
+      { code: "LIP-RISK", title: "Atherogenic Dyslipidemia", text: "Lipid profile indicates atherogenic dyslipidemia with elevated LDL and non-HDL cholesterol. Dietary lifestyle modification, regular aerobic exercise and clinical cardiovascular evaluation recommended." }
+    ]
+  },
+  {
+    cat: "🦋 Thyroid Function",
+    items: [
+      { code: "THY-HYPO", title: "Primary Hypothyroidism Pattern", text: "Significantly elevated serum TSH with normal to reduced Free T4 level, consistent with Primary Hypothyroidism. Clinical endocrinological correlation advised." }
+    ]
+  }
+];
+
+function openSmartPhraseModal() {
+  const content = `
+    <div style="padding:16px; display:flex; flex-direction:column; gap:16px; max-height:68vh; overflow:auto;">
+      <div style="font-size:12px; color:var(--text-muted);">
+        Click any verified clinical impression below to insert it directly into this report's clinical notes:
+      </div>
+      ${SMART_PHRASES.map(cat => `
+        <div style="border:1px solid var(--border-light); background:var(--surface-alt); padding:12px;">
+          <div style="font-size:12px; font-weight:800; color:var(--brand-blue); text-transform:uppercase; margin-bottom:8px;">${cat.cat}</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${cat.items.map(item => `
+              <div style="background:var(--surface); border:1px solid var(--border); padding:10px; cursor:pointer; transition:all .1s;" onmouseover="this.style.borderColor='var(--accent-red)'" onmouseout="this.style.borderColor='var(--border)'" onclick="insertSmartPhrase('${item.text.replace(/'/g, "\\'")}')">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                  <span style="font-weight:800; font-size:12.5px; color:var(--text);">${item.title}</span>
+                  <span style="font-size:10px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:2px;">[${item.code}]</span>
+                </div>
+                <div style="font-size:11.5px; color:var(--text-muted); line-height:1.4;">${item.text}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  document.getElementById("modal-dialog-title").textContent = "💬 Clinical Pathology Impression & Smart-Phrases";
+  document.getElementById("modal-dialog-body").className = "modal-dialog-body plain";
+  document.getElementById("modal-dialog-body").innerHTML = content;
+  document.getElementById("modal-dialog-footer").innerHTML = `
+    <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
+  `;
+  document.getElementById("modal-container").classList.add("open");
+}
+
+function insertSmartPhrase(phraseText) {
+  activeJob.clinical_notes = (activeJob.clinical_notes ? activeJob.clinical_notes + "\n" : "") + phraseText;
+  saveState();
+  closeModal();
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Executive Day-Book & Financial Analytics Dashboard (F10)
+   -------------------------------------------------------------------------- */
+function renderAnalyticsScreen(container) {
+  const totalBilled = jobs.reduce((acc, j) => acc + (j.bill_paid || 150), 0);
+  const totalDiscounts = jobs.reduce((acc, j) => acc + (j.bill_disc || 0), 0);
+  const grossRevenue = totalBilled + totalDiscounts;
+
+  const cashRev = jobs.filter(j => (j.bill_mode||'Cash') === 'Cash').reduce((acc, j) => acc + (j.bill_paid || 150), 0);
+  const digitalRev = totalBilled - cashRev;
+
+  // Test volume frequencies
+  const testCounts = {};
+  jobs.forEach(j => {
+    j.tests.forEach(c => {
+      testCounts[c] = (testCounts[c] || 0) + 1;
+    });
+  });
+
+  const sortedTests = Object.keys(testCounts).sort((a, b) => testCounts[b] - testCounts[a]).slice(0, 5);
+
+  // Doctor Incentives
+  const docComms = {};
+  DOCTORS.forEach(d => { docComms[d.name] = { count: 0, billing: 0, comm: 0, pct: d.pct, spec: d.spec }; });
+  jobs.forEach(j => {
+    if (j.referrer && j.referrer !== 'Self') {
+      const doc = DOCTORS.find(d => j.referrer.includes(d.name));
+      if (doc) {
+        docComms[doc.name].count++;
+        const amt = (j.bill_paid || 150);
+        docComms[doc.name].billing += amt;
+        docComms[doc.name].comm += Math.round(amt * (doc.pct / 100));
+      }
+    }
+  });
+
+  container.innerHTML = `
+    <div style="padding:14px 18px; background:var(--surface); border-bottom:2px solid var(--border); display:flex; align-items:center;">
+      <div>
+        <h1 style="font-size:18px; font-weight:800; margin:0;">📊 Executive Day-Book & Financial Analytics</h1>
+        <div style="font-size:11.5px; color:var(--text-muted);">Real-time revenue, workload performance and referral statements</div>
+      </div>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <button class="btn-m" onclick="exportDaySheetCSV()">📥 Export Day Sheet (CSV)</button>
+        <button class="btn-m primary" onclick="window.print()">🖨️ Print Executive Statement</button>
+      </div>
+    </div>
+
+    <div style="flex:1; overflow:auto; background:var(--bg); padding:18px; display:flex; flex-direction:column; gap:16px;">
+      <!-- KPI Metric Cards Grid -->
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;">
+        <div class="kpi-card" style="border-left:4px solid var(--brand-blue);">
+          <div class="kpi-title">Total Patients Today</div>
+          <div class="kpi-val">${jobs.length}</div>
+          <div style="font-size:11px; color:var(--text-muted);">Registered Workstation Entries</div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid var(--accent-green);">
+          <div class="kpi-title">Gross Revenue</div>
+          <div class="kpi-val" style="color:var(--accent-green);">₹ ${grossRevenue}.00</div>
+          <div style="font-size:11px; color:var(--text-muted);">Total Invoiced Investigations</div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid var(--accent-red);">
+          <div class="kpi-title">Net Counter Collections</div>
+          <div class="kpi-val" style="color:var(--accent-red);">₹ ${totalBilled}.00</div>
+          <div style="font-size:11px; color:var(--text-muted);">Cash: ₹ ${cashRev} · Digital/UPI: ₹ ${digitalRev}</div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #f59e0b;">
+          <div class="kpi-title">Discounts Given</div>
+          <div class="kpi-val" style="color:#f59e0b;">₹ ${totalDiscounts}.00</div>
+          <div style="font-size:11px; color:var(--text-muted);">Concessions & Waivers</div>
+        </div>
+      </div>
+
+      <!-- Workload & Doctor Referrals Split -->
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:16px;">
+        <!-- Top Ordered Investigations -->
+        <div style="background:var(--surface); border:1px solid var(--border-light); padding:16px;">
+          <h3 style="font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; margin:0 0 12px; color:var(--brand-blue);">
+            🔬 Top 5 Diagnostic Investigations Conducted
+          </h3>
+          ${sortedTests.length === 0 ? '<div style="padding:20px; text-align:center; color:var(--text-muted);">No investigations conducted yet today.</div>' :
+            `<div style="display:flex; flex-direction:column; gap:10px;">
+              ${sortedTests.map(code => {
+                const count = testCounts[code];
+                const pct = Math.min(100, Math.round((count / Math.max(1, jobs.length)) * 100));
+                return `
+                  <div>
+                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:3px;">
+                      <span>${TESTS[code]?.n || code} (${TESTS[code]?.g || 'Routine'})</span>
+                      <span>${count} requests (${pct}%)</span>
+                    </div>
+                    <div style="width:100%; height:8px; background:var(--surface-alt); border-radius:4px; overflow:hidden;">
+                      <div style="width:${pct}%; height:100%; background:var(--brand-blue);"></div>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>`
+          }
+        </div>
+
+        <!-- Payment Mode Split -->
+        <div style="background:var(--surface); border:1px solid var(--border-light); padding:16px;">
+          <h3 style="font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; margin:0 0 12px; color:var(--brand-blue);">
+            💳 Payment Mode Settlement Breakdown
+          </h3>
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-alt); border-left:3px solid #16703F;">
+              <span style="font-weight:700;">💵 Hard Cash Counter</span>
+              <span style="font-weight:800; font-size:14px;">₹ ${cashRev}.00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-alt); border-left:3px solid #0284c7;">
+              <span style="font-weight:700;">📱 UPI / GPay / Card</span>
+              <span style="font-weight:800; font-size:14px;">₹ ${digitalRev}.00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-alt); border-left:3px solid #6b7280;">
+              <span style="font-weight:700;">🤝 Patient Balance / Due</span>
+              <span style="font-weight:800; font-size:14px;">₹ 0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Doctor Referral Accounting -->
+      <div style="background:var(--surface); border:1px solid var(--border-light); padding:16px;">
+        <h3 style="font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; margin:0 0 12px; color:var(--brand-blue);">
+          🩺 Referring Clinician Referral & Incentive Statement
+        </h3>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
+              <th style="padding:8px 10px; text-align:left; font-size:10px; font-weight:700;">Doctor Name & Specialty</th>
+              <th style="padding:8px 10px; text-align:center; font-size:10px; font-weight:700;">Referred Patients</th>
+              <th style="padding:8px 10px; text-align:right; font-size:10px; font-weight:700;">Gross Billing (₹)</th>
+              <th style="padding:8px 10px; text-align:center; font-size:10px; font-weight:700;">Commission (%)</th>
+              <th style="padding:8px 10px; text-align:right; font-size:10px; font-weight:700;">Incentive Payable (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${DOCTORS.map(d => {
+              const row = docComms[d.name] || { count: 0, billing: 0, comm: 0, pct: d.pct };
+              return `
+                <tr style="border-bottom:1px solid var(--border-subtle);">
+                  <td style="padding:8px 10px; font-weight:700;">${d.name} <span style="font-size:11px; color:var(--text-muted);">(${d.spec})</span></td>
+                  <td style="padding:8px 10px; text-align:center; font-weight:800;">${row.count}</td>
+                  <td style="padding:8px 10px; text-align:right;">₹ ${row.billing}.00</td>
+                  <td style="padding:8px 10px; text-align:center; font-weight:700; color:var(--accent-green);">${row.pct}%</td>
+                  <td style="padding:8px 10px; text-align:right; font-weight:800; color:var(--brand-blue);">₹ ${row.comm}.00</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function exportDaySheetCSV() {
+  let csv = "Report No,Date,Patient Name,Age,Sex,Referrer,Tests,Gross (INR),Discount (INR),Paid (INR),Payment Mode\n";
+  jobs.forEach(j => {
+    const gross = (j.bill_paid || 150) + (j.bill_disc || 0);
+    csv += `"${j.report_no}","${j.date}","${j.name} .${j.initial}.","${j.age} ${j.age_unit}","${j.sex}","${j.referrer}","${j.tests.join('; ')}",${gross},${j.bill_disc||0},${j.bill_paid||150},"${j.bill_mode||'Cash'}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `LabSoft_DaySheet_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+
+
+/* --------------------------------------------------------------------------
+   Global Keyboard Shortcuts Listener (F1 - F12)
+   -------------------------------------------------------------------------- */
+window.addEventListener("keydown", (e) => {
+  if (e.key === "F2") {
+    e.preventDefault();
+    newJob();
+  } else if (e.key === "F3") {
+    e.preventDefault();
+    setTab("job");
+    setTimeout(() => document.getElementById("test-search-inp")?.focus(), 50);
+  } else if (e.key === "F4") {
+    e.preventDefault();
+    openBillModal();
+  } else if (e.key === "F7") {
+    e.preventDefault();
+    openTubeLabelModal(activeJob);
+  } else if (e.key === "F8") {
+    e.preventDefault();
+    openWhatsAppDispatchModal(activeJob);
+  } else if (e.key === "F9") {
+    e.preventDefault();
+    openReportPreview(activeJob);
+  } else if (e.key === "F10") {
+    e.preventDefault();
+    setTab("analytics");
+  } else if (e.key === "Escape") {
+    closeModal();
+  }
+});
 </script>
 </body>
 </html>

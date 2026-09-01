@@ -1147,6 +1147,19 @@ class JobScreen(QWidget):
             self._persist_tests()
             self._rebuild_grid()
 
+    def _remove_group(self, group_name: str) -> None:
+        """Remove all tests belonging to a clinical department/group with one click."""
+        tests = (q.job_tests(self.job_id) if self.job_id else self._preview_tests())
+        matching_ids = [t["id"] for t in tests if (t.get("group_name") or "").strip() == group_name]
+        if not matching_ids:
+            return
+        if not confirm(self, f"Remove {group_name}?",
+                       f"All {len(matching_ids)} tests under {group_name} will be removed from this job.", "Remove"):
+            return
+        self.test_ids = [tid for tid in self.test_ids if tid not in matching_ids]
+        self._persist_tests()
+        self._rebuild_grid()
+
     def _persist_tests(self) -> None:
         """Save the test list if the job already exists on disk."""
         if self.job_id:
@@ -1197,6 +1210,10 @@ class JobScreen(QWidget):
                 sl = QHBoxLayout(strip)
                 sl.setContentsMargins(18, 0, 18, 0)
                 sl.addWidget(label(group, "group"))
+                sl.addStretch(1)
+                rem_btn = button("✕ Remove group", "quiet", lambda _c=False, g=group: self._remove_group(g))
+                rem_btn.setStyleSheet("font-size: 8pt; color: #b91c1c;")
+                sl.addWidget(rem_btn)
                 self.grid.addWidget(strip, r, 0, 1, 6)
                 last_group = group
                 r += 1
