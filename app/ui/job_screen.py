@@ -27,6 +27,9 @@ from .. import services
 from ..core import turnaround
 from ..db import queries as q
 from . import style
+from .smart_phrases_dialog import SmartPhrasesDialog
+from .tube_label_dialog import TubeLabelDialog
+from .whatsapp_dialog import WhatsAppDialog
 from .widgets import (
     EllipsisLabel, FlagLabel, SearchBox, age_unit_combo, button, column,
     confirm, error, field_label, hline, info, label, row, sex_combo, warn,
@@ -353,10 +356,13 @@ class JobScreen(QWidget):
                                    "Start a fresh job  (F2)")
         self.preview_button = button("Preview", "", self.preview,
                                      "Look at the report before sending it", "F8")
+        self.tube_button = button("🏷️ Tube Label", "", self._open_tube_label, "Print 50x25mm vial sticker", "F7")
+        self.whatsapp_button = button("📱 WhatsApp", "", self._open_whatsapp_dispatch, "Send structured WhatsApp report", "F8")
+        self.smart_button = button("✨ Smart Phrases", "quiet", self._open_smart_phrases, "Insert clinical smear impressions")
         self.verify_button = button("Check && make report", "go", self.verify,
                                     "Check every test is filled in, then make the report",
                                     "F9")
-        for b in (self.clear_button, self.preview_button, self.verify_button):
+        for b in (self.clear_button, self.tube_button, self.whatsapp_button, self.smart_button, self.preview_button, self.verify_button):
             lay.addWidget(b)
         return rail
 
@@ -1663,3 +1669,50 @@ class JobScreen(QWidget):
         from .history_dialog import HistoryDialog
 
         HistoryDialog(self.patient_id, self).exec()
+
+    def _open_tube_label(self) -> None:
+        if not self.job_id or not self.test_ids:
+            return
+        job = q.get_job(self.job_id) or {}
+        tests = q.job_tests(self.job_id)
+        test_names = [t["name"] for t in tests]
+        data = {
+            "report_no": job.get("report_no", self.job_id),
+            "patient_name": self.printed_name_text() or self.name_edit.text(),
+            "age": f"{self.age_spin.value()} {self.age_unit.currentText()}",
+            "sex": self.sex_combo.currentText(),
+            "received_at": job.get("received_at", ""),
+        }
+        TubeLabelDialog(self, data, test_names).exec()
+
+    def _open_whatsapp_dispatch(self) -> None:
+        if not self.job_id:
+            return
+        job = q.get_job(self.job_id) or {}
+        tests = q.job_tests(self.job_id)
+        stored = q.results_for_job(self.job_id)
+        lines = []
+        for t in tests:
+            jt = t["job_test_id"]
+            r = stored.get(jt, {})
+            val = r.get("display_value") or r.get("raw_value") or "—"
+            unit = t.get("unit") or ""
+            flag = f" [{r.get('flag')}]" if r.get("flag") else ""
+            lines.append(f"• *{t['name']}:* {val} {unit}{flag}")
+        
+        data = {
+            "report_no": job.get("report_no", self.job_id),
+            "patient_name": self.printed_name_text() or self.name_edit.text(),
+            "phone": self.phone_edit.text(),
+            "received_at": job.get("received_at", ""),
+        }
+        WhatsAppDialog(self, data, "\n".join(lines)).exec()
+
+    def _open_smart_phrases(self) -> None:
+        def insert_cb(phrase: str):
+            curr = self.remarks_edit.toPlainText().strip() if hasattr(self, "remarks_edit") else ""
+            if curr:
+                self.remarks_edit.setPlainText(curr + "\n\n" + phrase)
+            elif hasattr(self, "remarks_edit"):
+                self.remarks_edit.setPlainText(phrase)
+        SmartPhrasesDialog(self, insert_cb).exec()

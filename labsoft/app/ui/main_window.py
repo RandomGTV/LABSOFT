@@ -10,6 +10,7 @@ from .. import config
 from ..core import auth
 from ..db import connection, queries as q
 from . import style
+from .analytics_screen import AnalyticsScreen
 from .billing_screen import BillingScreen
 from .doctors_screen import DoctorsScreen
 from .job_screen import JobScreen
@@ -40,6 +41,7 @@ class MainWindow(QMainWindow):
         self.doctors_screen = DoctorsScreen()
         self.tests_screen = TestsScreen()
         self.billing_screen = BillingScreen()
+        self.analytics_screen = AnalyticsScreen()
         self.summaries_screen = SummariesScreen()
         self.staff_screen = StaffScreen()
         self.settings_screen = SettingsScreen()
@@ -54,6 +56,7 @@ class MainWindow(QMainWindow):
             self.tabs.addTab(self.tests_screen, "Tests")
         if auth.can(auth.P_MONEY):
             self.tabs.addTab(self.billing_screen, "Billing")
+            self.tabs.addTab(self.analytics_screen, "Analytics")
             self.tabs.addTab(self.summaries_screen, "Summaries")
         if auth.can(auth.P_USERS):
             self.tabs.addTab(self.staff_screen, "Staff")
@@ -111,6 +114,10 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence("F5"), self, activated=self._refresh_all)
         QShortcut(QKeySequence("Ctrl+1"), self, activated=lambda: self.tabs.setCurrentIndex(0))
         QShortcut(QKeySequence("Ctrl+2"), self, activated=lambda: self.tabs.setCurrentIndex(1))
+        QShortcut(QKeySequence("F7"), self, activated=lambda: self.job_screen._open_tube_label())
+        QShortcut(QKeySequence("F8"), self, activated=lambda: self.job_screen._open_whatsapp_dispatch())
+        QShortcut(QKeySequence("F9"), self, activated=lambda: self.preview(self.job_screen.job_id))
+        QShortcut(QKeySequence("F10"), self, activated=lambda: self.tabs.setCurrentWidget(self.analytics_screen))
 
     def _show_about(self) -> None:
         from .about_dialog import AboutDialog
