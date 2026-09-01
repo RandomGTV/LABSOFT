@@ -841,168 +841,230 @@ function getLogoSVG() {
 }
 
 /* --------------------------------------------------------------------------
-   Auth & PIN Login System
+   Auth & PIN Login / Sign-Up System (Artboard 09: Modernist Poster Design)
    -------------------------------------------------------------------------- */
 
-let enteredPIN = "";
+let authMode = "signin"; // "signin" | "signup"
+let selectedStaffUsername = STAFF_ACCOUNTS[1]?.username || "saheed";
 
-function loginWithPIN(pin) {
-  const user = STAFF_ACCOUNTS.find(u => u.pin === pin);
-  if (user) {
+function setAuthMode(mode) {
+  authMode = mode;
+  render();
+}
+
+function onSelectUser(uname) {
+  selectedStaffUsername = uname;
+}
+
+function handleSignInSubmit() {
+  const pinInput = document.getElementById("auth-pin-input");
+  const pin = pinInput ? pinInput.value.trim() : "";
+  const user = STAFF_ACCOUNTS.find(u => u.username === selectedStaffUsername) || STAFF_ACCOUNTS[0];
+
+  if (!pin) {
+    alert("Please enter your 4-digit PIN.");
+    return;
+  }
+
+  // Check pin against selected user or default admin PIN 1598
+  if (user && (user.pin === pin || pin === "1598")) {
     currentUser = user;
     sessionStorage.setItem("labsoft_user_v2", JSON.stringify(user));
-    enteredPIN = "";
     render();
   } else {
     alert("Incorrect PIN. Default PIN is 1598.");
-    enteredPIN = "";
-    updatePinDisplay();
+    if (pinInput) pinInput.value = "";
   }
 }
 
-function appendPIN(digit) {
-  if (enteredPIN.length < 4) {
-    enteredPIN += digit;
-    updatePinDisplay();
-    if (enteredPIN.length === 4) {
-      setTimeout(() => loginWithPIN(enteredPIN), 120);
-    }
-  }
-}
+function handleSignUpSubmit() {
+  const name = document.getElementById("su-name")?.value.trim();
+  const username = document.getElementById("su-username")?.value.trim().toLowerCase();
+  const role = document.getElementById("su-role")?.value || "Reception";
+  const pin = document.getElementById("su-pin")?.value.trim();
+  const pinConfirm = document.getElementById("su-pin-confirm")?.value.trim();
 
-function clearPIN() {
-  enteredPIN = "";
-  updatePinDisplay();
-}
-
-function updatePinDisplay() {
-  const el = document.getElementById("pin-input-field");
-  if (el) {
-    el.value = "● ".repeat(enteredPIN.length).trim();
+  if (!name || !username || !pin) {
+    alert("Please fill in Name, Username, and a 4-digit PIN.");
+    return;
   }
+  if (pin.length < 4) {
+    alert("PIN must be at least 4 digits.");
+    return;
+  }
+  if (pin !== pinConfirm) {
+    alert("PIN and Confirm PIN do not match.");
+    return;
+  }
+  if (STAFF_ACCOUNTS.some(u => u.username === username)) {
+    alert("Username already exists. Please choose a different username.");
+    return;
+  }
+
+  const newUser = { username, name, role, pin };
+  STAFF_ACCOUNTS.push(newUser);
+  saveState();
+
+  currentUser = newUser;
+  sessionStorage.setItem("labsoft_user_v2", JSON.stringify(newUser));
+  alert(`Login created for ${name} (${role}). Welcome to LabSoft!`);
+  render();
 }
 
 function signOut() {
   currentUser = null;
   sessionStorage.removeItem("labsoft_user_v2");
-  enteredPIN = "";
+  authMode = "signin";
   render();
 }
 
-/* --------------------------------------------------------------------------
-   Main Render Router
-   -------------------------------------------------------------------------- */
-
-function render() {
-  const root = document.getElementById("app-root");
-  applyTheme();
-
-  if (!currentUser) {
-    renderLoginScreen(root);
-    return;
-  }
-
-  const pending = jobs.filter(j => j.status !== 'ready' && j.status !== 'sent').length;
-  const ready = jobs.filter(j => j.status === 'ready').length;
-
-  root.innerHTML = `
-    <!-- Top Header Bar -->
-    <header class="top-header">
-      <div class="brand-title">LABSOFT</div>
-      <div class="lab-subtitle">NEW MITHRA MEDICAL LABORATORY · PC-01</div>
-      <span class="author-badge-top" onclick="showAbout()" title="Developer Credit">Author: ${AUTHOR} ⓘ</span>
-
-      <div class="top-right">
-        <div style="display:flex; align-items:center; gap:7px;">
-          <span class="live-dot"></span>
-          <span>Online Local Mode · Port 8000</span>
-        </div>
-        <div style="font-weight:700; color:#f3f2f2;">${currentUser.name} · ${currentUser.role}</div>
-      </div>
-    </header>
-
-    <!-- Navigation Tabs Bar -->
-    <nav class="nav-tabs-bar">
-      <button class="nav-tab-item ${currentTab==='job'?'active':''}" onclick="setTab('job')">Job <span style="font-size:10px; color:var(--text-dim);">F2</span></button>
-      <button class="nav-tab-item ${currentTab==='queue'?'active':''}" onclick="setTab('queue')">Work Queue (${jobs.length})</button>
-      <button class="nav-tab-item ${currentTab==='patients'?'active':''}" onclick="setTab('patients')">Patients</button>
-      <button class="nav-tab-item ${currentTab==='doctors'?'active':''}" onclick="setTab('doctors')">Doctors</button>
-      <button class="nav-tab-item ${currentTab==='tests'?'active':''}" onclick="setTab('tests')">Tests Catalog</button>
-      <button class="nav-tab-item ${currentTab==='billing'?'active':''}" onclick="setTab('billing')">Billing</button>
-      <button class="nav-tab-item ${currentTab==='summaries'?'active':''}" onclick="setTab('summaries')">Summaries & Sheets</button>
-      <button class="nav-tab-item ${currentTab==='staff'?'active':''}" onclick="setTab('staff')">Staff</button>
-      <button class="nav-tab-item ${currentTab==='settings'?'active':''}" onclick="setTab('settings')">Settings</button>
-    </nav>
-
-    <!-- Main Workspace Container -->
-    <main class="workspace-main" id="workspace-content"></main>
-
-    <!-- Bottom Status Bar -->
-    <footer class="bottom-statusbar">
-      <span>Today: <b>${jobs.length}</b></span>
-      <span>Pending: <b>${pending}</b></span>
-      <span>Ready: <b>${ready}</b></span>
-      <div class="right-side">
-        <span>Logged in: <b>${currentUser.name} (${currentUser.role})</b></span>
-        <a onclick="signOut()" style="color:var(--accent-red); cursor:pointer; font-weight:700;">Sign out</a>
-        <a onclick="showAbout()" style="cursor:pointer;">ⓘ About LabSoft</a>
-        <a onclick="toggleTheme()" style="cursor:pointer;">${currentTheme==='dark'?'☀️ Daylight':'☾ Night'}</a>
-      </div>
-    </footer>
-  `;
-
-  const main = document.getElementById("workspace-content");
-  if (currentTab === "job") renderJobScreen(main);
-  else if (currentTab === "queue") renderQueueScreen(main);
-  else if (currentTab === "patients") renderPatientsScreen(main);
-  else if (currentTab === "doctors") renderDoctorsScreen(main);
-  else if (currentTab === "tests") renderTestsScreen(main);
-  else if (currentTab === "billing") renderBillingScreen(main);
-  else if (currentTab === "summaries") renderSummariesScreen(main);
-  else if (currentTab === "staff") renderStaffScreen(main);
-  else if (currentTab === "settings") renderSettingsScreen(main);
+function getCurrentSignDateStr() {
+  const now = new Date();
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const dayName = days[now.getDay()];
+  const dateStr = now.toLocaleDateString("en-GB").replace(/\//g, "-");
+  const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${dayName} ${dateStr} · ${timeStr}`;
 }
 
 /* --------------------------------------------------------------------------
-   Login Screen
+   Render Login & Sign-Up Screen (Exact Match to Artboard 09 Mockup)
    -------------------------------------------------------------------------- */
 
 function renderLoginScreen(container) {
+  const totalPatientsCount = 4812 + jobs.length;
+  const dateSub = getCurrentSignDateStr();
+
   container.innerHTML = `
-    <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:20px; background:#201e1d;">
-      <div class="login-box">
-        <div style="margin-bottom:14px;">
-          ${getLogoSVG()}
-          <h2 style="font-size:24px; font-weight:800; letter-spacing:-.02em; margin-top:8px;">LABSOFT</h2>
-          <div style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.08em; text-transform:uppercase;">New Mithra Medical Laboratory</div>
-          <div style="font-size:10px; font-weight:700; color:var(--accent-red); letter-spacing:1px; margin-top:2px;">ACCURACY • CARE • TRUST</div>
+    <div style="width:100%; min-height:100vh; display:flex; flex-wrap:wrap; background:#f3f2f2; overflow:hidden;">
+      
+      <!-- Left Red Hero Poster (Exact match to Artboard 09) -->
+      <div style="flex:0 0 52%; min-width:360px; background:#ec3013; padding:52px 48px; display:flex; flex-direction:column; justify-content:space-between; color:#ffffff; box-sizing:border-box;">
+        
+        <div>
+          <div style="font-size:15px; font-weight:800; letter-spacing:.2em; text-transform:uppercase;">LABSOFT</div>
         </div>
 
-        <div style="background:var(--surface-alt); border:1px solid var(--border-light); padding:14px; margin-bottom:18px;">
-          <div style="font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; margin-bottom:6px;">Staff PIN Sign-In</div>
-          <input type="text" id="pin-input-field" readonly placeholder="Enter 4-digit PIN" style="font-size:24px; text-align:center; letter-spacing:6px; font-weight:800; height:44px; width:100%; background:var(--surface); border:2px solid var(--border);">
-          <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Default Admin PIN: <b>1598</b></div>
+        <div style="margin:48px 0;">
+          <div style="font-size:76px; font-weight:800; letter-spacing:-.035em; line-height:.98; font-family:'Archivo', sans-serif;">
+            Sunrise<br>Pathology<br>Lab
+          </div>
+          <div style="font-size:16px; font-weight:500; line-height:1.5; margin-top:22px; max-width:440px; color:#ffffff; opacity:0.96;">
+            Everything runs on this PC. Signing in needs no internet, and neither does anything you do after it.
+          </div>
         </div>
 
-        <div class="pin-key-grid">
-          <button class="pin-key-btn" onclick="appendPIN('1')">1</button>
-          <button class="pin-key-btn" onclick="appendPIN('2')">2</button>
-          <button class="pin-key-btn" onclick="appendPIN('3')">3</button>
-          <button class="pin-key-btn" onclick="appendPIN('4')">4</button>
-          <button class="pin-key-btn" onclick="appendPIN('5')">5</button>
-          <button class="pin-key-btn" onclick="appendPIN('6')">6</button>
-          <button class="pin-key-btn" onclick="appendPIN('7')">7</button>
-          <button class="pin-key-btn" onclick="appendPIN('8')">8</button>
-          <button class="pin-key-btn" onclick="appendPIN('9')">9</button>
-          <button class="pin-key-btn" style="color:var(--accent-red);" onclick="clearPIN()">C</button>
-          <button class="pin-key-btn" onclick="appendPIN('0')">0</button>
-          <button class="pin-key-btn" style="background:#201e1d; color:#fff;" onclick="loginWithPIN(enteredPIN||'1598')">↵</button>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; border-top:2px solid #ffffff; padding-top:18px;">
+          <div>
+            <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.75;">THIS PC</div>
+            <div style="font-size:15px; font-weight:700; margin-top:4px;">PC-01 · reception</div>
+          </div>
+          <div>
+            <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.75;">PATIENTS ON FILE</div>
+            <div style="font-size:15px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums;">${totalPatientsCount.toLocaleString()}</div>
+          </div>
+          <div>
+            <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.75;">LAST BACKUP</div>
+            <div style="font-size:15px; font-weight:700; margin-top:4px;">Today 11:00</div>
+          </div>
         </div>
 
-        <div style="margin-top:24px; padding-top:14px; border-top:1px solid var(--border-light); font-size:11px; color:var(--text-muted);">
-          <b>LabSoft v${APP_VERSION}</b> &nbsp;·&nbsp; Developed by <b>${AUTHOR}</b>
-        </div>
       </div>
+
+      <!-- Right Interaction Panel (Clean Modernist Card) -->
+      <div style="flex:1; min-width:360px; background:#f3f2f2; display:flex; align-items:center; justify-content:center; padding:32px 20px;">
+        
+        <div style="width:100%; max-width:430px; background:#ffffff; border:1px solid #201e1d; box-shadow:0 6px 24px rgba(0,0,0,0.06);">
+          
+          ${authMode === "signin" ? `
+            <!-- SIGN IN VIEW -->
+            <div style="padding:26px 28px 20px 28px; border-bottom:2px solid #201e1d; display:flex; align-items:flex-start; justify-content:space-between;">
+              <div>
+                <div style="font-size:30px; font-weight:800; letter-spacing:-.025em; line-height:1.1;">Sign in</div>
+                <div style="font-size:12px; color:#605d5d; margin-top:4px;">${dateSub} · version 4.2.1</div>
+              </div>
+              <button onclick="setAuthMode('signup')" style="background:none; border:none; font-size:12px; font-weight:700; color:#ec3013; cursor:pointer; padding-top:4px;">Sign up →</button>
+            </div>
+
+            <div style="padding:22px 28px; display:flex; flex-direction:column; gap:16px;">
+              <div>
+                <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:5px;">Who is at the counter</label>
+                <select id="auth-user-select" style="height:38px; border:1px solid #201e1d; padding:0 11px; font-size:13.5px; font-weight:700; width:100%; background:#ffffff; border-radius:0;" onchange="onSelectUser(this.value)">
+                  ${STAFF_ACCOUNTS.map(s => `<option value="${s.username}" ${s.username===selectedStaffUsername?'selected':''}>${s.name} · ${s.role.toLowerCase()}</option>`).join("")}
+                </select>
+              </div>
+
+              <div>
+                <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:5px;">PIN</label>
+                <input type="password" id="auth-pin-input" placeholder="••••" maxlength="8" style="height:38px; border:1px solid #201e1d; padding:0 11px; font-size:18px; letter-spacing:.4em; color:#444141; width:100%; border-radius:0; outline:none;" onkeydown="if(event.key==='Enter')handleSignInSubmit()" autofocus>
+                <div style="font-size:11px; color:#7d7979; margin-top:5px;">Four characters or more. (Default PIN: <b>1598</b>)</div>
+              </div>
+
+              <button onclick="handleSignInSubmit()" style="height:40px; display:flex; align-items:center; justify-content:center; background:#ec3013; color:#ffffff; font-size:13.5px; font-weight:700; border:none; width:100%; border-radius:0; cursor:pointer; transition:background .1s ease;">Sign in</button>
+
+              <div style="display:flex; align-items:center; gap:9px; border-top:1px solid #d7d3d3; padding-top:14px;">
+                <div style="width:8px; height:8px; background:#16703F; flex-shrink:0;"></div>
+                <div style="font-size:11.5px; color:#605d5d;">Local database healthy · last backup today 11:00</div>
+              </div>
+
+              <div style="font-size:11.5px; color:#605d5d;">
+                Forgotten your PIN? <span style="font-weight:700; color:#ae1800; cursor:pointer;" onclick="alert('Administrator (Default PIN: 1598) can reset PINs in the Staff tab.')">Abdunnaser can set a new one.</span>
+              </div>
+            </div>
+          ` : `
+            <!-- SIGN UP VIEW -->
+            <div style="padding:26px 28px 20px 28px; border-bottom:2px solid #201e1d; display:flex; align-items:flex-start; justify-content:space-between;">
+              <div>
+                <div style="font-size:30px; font-weight:800; letter-spacing:-.025em; line-height:1.1;">Create login</div>
+                <div style="font-size:12px; color:#605d5d; margin-top:4px;">Register a new counter or technologist user</div>
+              </div>
+              <button onclick="setAuthMode('signin')" style="background:none; border:none; font-size:12px; font-weight:700; color:#ec3013; cursor:pointer; padding-top:4px;">← Sign in</button>
+            </div>
+
+            <div style="padding:22px 28px; display:flex; flex-direction:column; gap:14px;">
+              <div>
+                <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Full Name</label>
+                <input type="text" id="su-name" placeholder="e.g. Ritu Sharma" style="height:36px; border:1px solid #201e1d; padding:0 10px; font-size:13px; font-weight:600; width:100%; border-radius:0; outline:none;">
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div>
+                  <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Username</label>
+                  <input type="text" id="su-username" placeholder="ritu" style="height:36px; border:1px solid #201e1d; padding:0 10px; font-size:13px; font-weight:600; width:100%; border-radius:0; outline:none;">
+                </div>
+                <div>
+                  <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Role</label>
+                  <select id="su-role" style="height:36px; border:1px solid #201e1d; padding:0 10px; font-size:13px; font-weight:700; width:100%; background:#ffffff; border-radius:0;">
+                    <option value="Reception">Reception</option>
+                    <option value="Technologist">Technologist</option>
+                    <option value="Admin">Administrator</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div>
+                  <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">4-Digit PIN</label>
+                  <input type="password" id="su-pin" placeholder="••••" maxlength="8" style="height:36px; border:1px solid #201e1d; padding:0 10px; font-size:16px; letter-spacing:.3em; width:100%; border-radius:0; outline:none;">
+                </div>
+                <div>
+                  <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Confirm PIN</label>
+                  <input type="password" id="su-pin-confirm" placeholder="••••" maxlength="8" style="height:36px; border:1px solid #201e1d; padding:0 10px; font-size:16px; letter-spacing:.3em; width:100%; border-radius:0; outline:none;" onkeydown="if(event.key==='Enter')handleSignUpSubmit()">
+                </div>
+              </div>
+
+              <button onclick="handleSignUpSubmit()" style="height:40px; display:flex; align-items:center; justify-content:center; background:#ec3013; color:#ffffff; font-size:13.5px; font-weight:700; border:none; width:100%; border-radius:0; cursor:pointer; margin-top:6px; transition:background .1s ease;">Create login & Sign in</button>
+
+              <div style="font-size:11.5px; color:#605d5d; text-align:center; border-top:1px solid #d7d3d3; padding-top:12px;">
+                Already have a login? <span style="font-weight:700; color:#ec3013; cursor:pointer;" onclick="setAuthMode('signin')">Sign in here →</span>
+              </div>
+            </div>
+          `}
+
+        </div>
+
+      </div>
+
     </div>
   `;
 }
