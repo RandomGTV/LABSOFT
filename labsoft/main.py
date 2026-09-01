@@ -154,26 +154,34 @@ def main() -> int:
     # Sign in before anything is shown, so the window is built with the right
     # tabs for whoever is actually standing there.
     from app.ui.login_dialog import sign_in_at_startup
-
-    proceed, _user = sign_in_at_startup()
-    if not proceed:
-        return 0
-
     from app.ui.main_window import MainWindow
 
-    window = MainWindow()
-    window.show()
+    first_run_notification = made
 
-    if made:
-        QMessageBox.information(
-            window, "Welcome to LabSoft",
-            f"{made} common tests have been loaded, with their usual normal "
-            f"values.\n\nEverything is editable under the Tests tab — change "
-            f"the wording, rates and ranges to match your lab, and delete what "
-            f"you do not use.\n\nCheck the Settings tab to set your report "
-            f"number and add your logo.")
+    while True:
+        proceed, _user = sign_in_at_startup()
+        if not proceed or not _user:
+            return 0
 
-    return app.exec()
+        window = MainWindow()
+        window.show()
+
+        if first_run_notification:
+            QMessageBox.information(
+                window, "Welcome to LabSoft",
+                f"{first_run_notification} common tests have been loaded, with their usual normal "
+                f"values.\n\nEverything is editable under the Tests tab — change "
+                f"the wording, rates and ranges to match your lab, and delete what "
+                f"you do not use.\n\nCheck the Settings tab to set your report "
+                f"number and add your logo.")
+            first_run_notification = 0
+
+        app.exec()
+
+        if not getattr(window, "was_signed_out", False):
+            # User clicked X or closed the window to exit the application
+            return 0
+        # Otherwise was_signed_out is True: loop reopens the sign-in screen!
 
 
 if __name__ == "__main__":

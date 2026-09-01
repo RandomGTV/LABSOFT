@@ -28,6 +28,7 @@ TAB_QUEUE = 1
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.was_signed_out = False
         lab = (q.get_setting("lab_name_prefix") + " " + q.get_setting("lab_name")).strip()
         self.setWindowTitle(f"LabSoft — {lab}")
         self.resize(1180, 820)
@@ -140,11 +141,12 @@ class MainWindow(QMainWindow):
         from .widgets import confirm
 
         if not confirm(self, "Sign out?",
-                       "LabSoft will close and ask for a PIN again.\n\n"
+                       "Do you want to sign out and return to the login screen?\n\n"
                        "Anything already typed has been saved.", "Sign out"):
             return
         q.log_action("signed_out", "user", (auth.current() or auth.User()).id)
         auth.set_current(None)
+        self.was_signed_out = True
         self.close()
 
     # -------------------------------------------------------------- actions

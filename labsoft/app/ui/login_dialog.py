@@ -1,7 +1,7 @@
 """Signing in, and creating accounts (Artboard 09: Full Borderless Modern Freshness).
 
-Left side: Red poster with offline-first facts.
-Right side: Clean card with Sign in and Sign up segmented modes.
+Left side: Full-height Red poster with offline-first facts.
+Right side: Full-height clean surface with Sign in and Admin-authorized Sign up.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from typing import Optional
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor, QPalette
 from PyQt6.QtWidgets import (
-    QComboBox, QDialog, QFrame, QGridLayout, QHBoxLayout, QLabel,
+    QApplication, QComboBox, QDialog, QFrame, QGridLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
 )
 
@@ -22,13 +22,14 @@ from . import style
 
 
 class ModernLoginDialog(QDialog):
-    """Full borderless modern freshness Sign In & Sign Up dialog."""
+    """Full-screen borderless modern freshness Sign In & Sign Up dialog."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("LabSoft 2026 — Sign In")
-        self.setFixedSize(1000, 620)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
+        # Full-screen borderless window
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, False)
         self.user: Optional[auth.User] = None
         self._attempts = 0
 
@@ -38,13 +39,12 @@ class ModernLoginDialog(QDialog):
         root_lay.setSpacing(0)
 
         # -----------------------------------------------------------------
-        # LEFT PANEL: Solid Modernist Red Poster (#ec3013)
+        # LEFT PANEL: Solid Modernist Red Poster (#ec3013) - 50% width
         # -----------------------------------------------------------------
         left_panel = QFrame()
-        left_panel.setFixedWidth(520)
         left_panel.setStyleSheet("background-color: #ec3013; color: #ffffff; border: none;")
         left_lay = QVBoxLayout(left_panel)
-        left_lay.setContentsMargins(52, 48, 52, 44)
+        left_lay.setContentsMargins(64, 56, 64, 52)
         left_lay.setSpacing(0)
 
         # Top Kicker Pill
@@ -52,18 +52,18 @@ class ModernLoginDialog(QDialog):
         kicker_pill = QFrame()
         kicker_pill.setStyleSheet("background-color: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 0px; padding: 4px 10px;")
         k_inner = QHBoxLayout(kicker_pill)
-        k_inner.setContentsMargins(8, 4, 8, 4)
-        k_inner.setSpacing(8)
+        k_inner.setContentsMargins(10, 5, 10, 5)
+        k_inner.setSpacing(10)
 
         kicker = QLabel("LABSOFT")
-        kicker_font = QFont("Archivo", 11, QFont.Weight.ExtraBold)
+        kicker_font = QFont("Archivo", 12, QFont.Weight.ExtraBold)
         kicker_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 3)
         kicker.setFont(kicker_font)
         kicker.setStyleSheet("color: #ffffff; text-transform: uppercase; border: none; background: transparent;")
 
         badge = QLabel("2026.1")
-        badge.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
-        badge.setStyleSheet("background-color: #ffffff; color: #ec3013; padding: 1px 5px; border-radius: 0px; border: none;")
+        badge.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
+        badge.setStyleSheet("background-color: #ffffff; color: #ec3013; padding: 1px 6px; border-radius: 0px; border: none;")
 
         k_inner.addWidget(kicker)
         k_inner.addWidget(badge)
@@ -81,7 +81,7 @@ class ModernLoginDialog(QDialog):
             hero_text = "Sunrise\nPathology\nLab"
 
         hero_label = QLabel(hero_text)
-        hero_font = QFont("Archivo", 40, QFont.Weight.ExtraBold)
+        hero_font = QFont("Archivo", 46, QFont.Weight.ExtraBold)
         hero_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, -1)
         hero_label.setFont(hero_font)
         hero_label.setStyleSheet("color: #ffffff; line-height: 0.95; border: none; background: transparent;")
@@ -89,23 +89,23 @@ class ModernLoginDialog(QDialog):
 
         # Tagline
         tagline = QLabel("Offline-first pathology operating workstation. Fast, accurate reports without relying on the internet.")
-        tagline.setFont(QFont("Archivo", 11, QFont.Weight.Medium))
+        tagline.setFont(QFont("Archivo", 12, QFont.Weight.Medium))
         tagline.setWordWrap(True)
-        tagline.setStyleSheet("color: rgba(255,255,255,0.95); margin-top: 20px; line-height: 1.5; border: none; background: transparent;")
+        tagline.setStyleSheet("color: rgba(255,255,255,0.95); margin-top: 24px; line-height: 1.5; border: none; background: transparent;")
         left_lay.addWidget(tagline)
 
         left_lay.addStretch(1)
 
         # Bottom stats bar
         stats_frame = QFrame()
-        stats_frame.setStyleSheet("border: none; border-top: 2px solid rgba(255,255,255,0.35); padding-top: 16px; background: transparent;")
+        stats_frame.setStyleSheet("border: none; border-top: 2px solid rgba(255,255,255,0.35); padding-top: 18px; background: transparent;")
         stats_lay = QHBoxLayout(stats_frame)
-        stats_lay.setContentsMargins(0, 16, 0, 0)
-        stats_lay.setSpacing(14)
+        stats_lay.setContentsMargins(0, 18, 0, 0)
+        stats_lay.setSpacing(16)
 
         def _make_stat_box(title_text: str, val_text: str) -> QFrame:
             box = QFrame()
-            box.setStyleSheet("background-color: rgba(0,0,0,0.12); border: 1px solid rgba(255,255,255,0.15); padding: 8px 12px;")
+            box.setStyleSheet("background-color: rgba(0,0,0,0.12); border: 1px solid rgba(255,255,255,0.15); padding: 10px 14px;")
             b_lay = QVBoxLayout(box)
             b_lay.setContentsMargins(4, 4, 4, 4)
             b_lay.setSpacing(2)
@@ -113,7 +113,7 @@ class ModernLoginDialog(QDialog):
             lbl.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
             lbl.setStyleSheet("color: rgba(255,255,255,0.8); letter-spacing: 1px; border: none; background: transparent;")
             val = QLabel(val_text)
-            val.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
+            val.setFont(QFont("Archivo", 11, QFont.Weight.Bold))
             val.setStyleSheet("color: #ffffff; border: none; background: transparent;")
             b_lay.addWidget(lbl)
             b_lay.addWidget(val)
@@ -129,7 +129,7 @@ class ModernLoginDialog(QDialog):
         stats_lay.addWidget(_make_stat_box("LOCAL DB", "Verified Healthy"))
 
         left_lay.addWidget(stats_frame)
-        root_lay.addWidget(left_panel)
+        root_lay.addWidget(left_panel, 1)
 
         # -----------------------------------------------------------------
         # RIGHT PANEL: Ground (#f4f3f2) + Modern Interaction Card (#ffffff)
@@ -137,12 +137,37 @@ class ModernLoginDialog(QDialog):
         right_panel = QFrame()
         right_panel.setStyleSheet("background-color: #f4f3f2; border: none;")
         right_lay = QVBoxLayout(right_panel)
-        right_lay.setContentsMargins(48, 48, 48, 48)
-        right_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        right_lay.setContentsMargins(32, 28, 32, 32)
 
-        # Clean Floating Card
+        # Minimal Top-Right Window Controls (Minimize & Close)
+        win_ctrl_lay = QHBoxLayout()
+        win_ctrl_lay.addStretch(1)
+
+        btn_min = QPushButton("—")
+        btn_min.setFixedSize(36, 30)
+        btn_min.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
+        btn_min.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_min.setStyleSheet("border: none; background: transparent; color: #7d7979; font-weight: bold;")
+        btn_min.clicked.connect(self.showMinimized)
+
+        btn_close = QPushButton("✕")
+        btn_close.setFixedSize(36, 30)
+        btn_close.setFont(QFont("Archivo", 11, QFont.Weight.Bold))
+        btn_close.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_close.setStyleSheet("border: none; background: transparent; color: #7d7979; font-weight: bold;")
+        btn_close.clicked.connect(self.reject)
+
+        win_ctrl_lay.addWidget(btn_min)
+        win_ctrl_lay.addWidget(btn_close)
+        right_lay.addLayout(win_ctrl_lay)
+
+        # Center Card Area
+        right_lay.addStretch(1)
+        center_card_lay = QHBoxLayout()
+        center_card_lay.addStretch(1)
+
         self.card = QFrame()
-        self.card.setFixedWidth(420)
+        self.card.setFixedWidth(440)
         self.card.setStyleSheet("""
             QFrame#MainCard {
                 background-color: #ffffff;
@@ -165,7 +190,7 @@ class ModernLoginDialog(QDialog):
         self.card.setObjectName("MainCard")
 
         card_lay = QVBoxLayout(self.card)
-        card_lay.setContentsMargins(28, 28, 28, 28)
+        card_lay.setContentsMargins(32, 30, 32, 30)
         card_lay.setSpacing(16)
 
         # Segmented Tab Switcher Pill
@@ -181,7 +206,7 @@ class ModernLoginDialog(QDialog):
         self.tab_signin.setFixedHeight(34)
         self.tab_signin.clicked.connect(self.show_signin)
 
-        self.tab_signup = QPushButton("➕ Sign Up (New Staff)")
+        self.tab_signup = QPushButton("➕ Sign Up (Requires Admin)")
         self.tab_signup.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
         self.tab_signup.setCursor(Qt.CursorShape.PointingHandCursor)
         self.tab_signup.setFixedHeight(34)
@@ -199,8 +224,12 @@ class ModernLoginDialog(QDialog):
         self._build_signup_view()
 
         card_lay.addWidget(self.stack)
-        right_lay.addWidget(self.card)
-        root_lay.addWidget(right_panel)
+        center_card_lay.addWidget(self.card)
+        center_card_lay.addStretch(1)
+        right_lay.addLayout(center_card_lay)
+        right_lay.addStretch(1)
+
+        root_lay.addWidget(right_panel, 1)
 
         self.show_signin()
 
@@ -224,7 +253,7 @@ class ModernLoginDialog(QDialog):
         # Title
         now_str = datetime.now().strftime("%A %d-%m-%Y · %H:%M")
         title = QLabel("Welcome back")
-        title.setFont(QFont("Archivo", 18, QFont.Weight.ExtraBold))
+        title.setFont(QFont("Archivo", 19, QFont.Weight.ExtraBold))
         title.setStyleSheet("color: #201e1d;")
         lay.addWidget(title)
 
@@ -242,13 +271,7 @@ class ModernLoginDialog(QDialog):
         self.user_combo = QComboBox()
         self.user_combo.setFixedHeight(38)
         self.user_combo.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
-        users = q.list_users()
-        if not users:
-            self.user_combo.addItem("Administrator (admin)", "admin")
-        else:
-            for u in users:
-                role_label = u.role.lower() if u.role else "staff"
-                self.user_combo.addItem(f"{u.display_name or u.username} ({role_label})", u.username)
+        self._refresh_users_combo()
         lay.addWidget(self.user_combo)
 
         # PIN Field
@@ -258,7 +281,7 @@ class ModernLoginDialog(QDialog):
         lay.addWidget(lbl_pin)
 
         self.pin_edit = QLineEdit()
-        self.pin_edit.setFixedHeight(42)
+        self.pin_edit.setFixedHeight(44)
         self.pin_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self.pin_edit.setFont(QFont("Archivo", 18, QFont.Weight.ExtraBold))
         self.pin_edit.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -282,7 +305,7 @@ class ModernLoginDialog(QDialog):
 
         # Sign In Button
         btn_signin = QPushButton("Sign In to Station ↵")
-        btn_signin.setFixedHeight(42)
+        btn_signin.setFixedHeight(44)
         btn_signin.setFont(QFont("Archivo", 10, QFont.Weight.ExtraBold))
         btn_signin.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_signin.setStyleSheet("""
@@ -315,23 +338,33 @@ class ModernLoginDialog(QDialog):
 
         self.stack.addWidget(w)
 
+    def _refresh_users_combo(self):
+        self.user_combo.clear()
+        users = q.list_users()
+        if not users:
+            self.user_combo.addItem("Administrator (admin)", "admin")
+        else:
+            for u in users:
+                role_label = u.role.lower() if u.role else "staff"
+                self.user_combo.addItem(f"{u.display_name or u.username} ({role_label})", u.username)
+
     # ---------------------------------------------------------------------
-    # Build Sign Up View
+    # Build Sign Up View (Protected: Requires Lab Owner / Admin Authorization)
     # ---------------------------------------------------------------------
     def _build_signup_view(self):
         w = QWidget()
         lay = QVBoxLayout(w)
         lay.setContentsMargins(0, 8, 0, 0)
-        lay.setSpacing(10)
+        lay.setSpacing(9)
 
         title = QLabel("Create Staff Login")
         title.setFont(QFont("Archivo", 18, QFont.Weight.ExtraBold))
         title.setStyleSheet("color: #201e1d;")
         lay.addWidget(title)
 
-        sub = QLabel("Register a new user account for this PC station")
-        sub.setFont(QFont("Archivo", 8, QFont.Weight.Medium))
-        sub.setStyleSheet("color: #7d7979; margin-top: -6px;")
+        sub = QLabel("Owner / Admin permission is required to create accounts")
+        sub.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
+        sub.setStyleSheet("color: #ec3013; margin-top: -6px;")
         lay.addWidget(sub)
 
         # Full Name
@@ -340,7 +373,7 @@ class ModernLoginDialog(QDialog):
         lbl_fn.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
         lay.addWidget(lbl_fn)
         self.su_name = QLineEdit()
-        self.su_name.setFixedHeight(34)
+        self.su_name.setFixedHeight(32)
         self.su_name.setPlaceholderText("e.g. Ritu Sharma")
         lay.addWidget(self.su_name)
 
@@ -359,12 +392,12 @@ class ModernLoginDialog(QDialog):
         ur_grid.addWidget(lbl_ro, 0, 1)
 
         self.su_username = QLineEdit()
-        self.su_username.setFixedHeight(34)
+        self.su_username.setFixedHeight(32)
         self.su_username.setPlaceholderText("e.g. ritu")
         ur_grid.addWidget(self.su_username, 1, 0)
 
         self.su_role = QComboBox()
-        self.su_role.setFixedHeight(34)
+        self.su_role.setFixedHeight(32)
         self.su_role.addItem("Reception", auth.ROLE_STAFF)
         self.su_role.addItem("Technologist", auth.ROLE_STAFF)
         self.su_role.addItem("Administrator", auth.ROLE_ADMIN)
@@ -375,7 +408,7 @@ class ModernLoginDialog(QDialog):
         pin_grid = QGridLayout()
         pin_grid.setSpacing(8)
 
-        lbl_p1 = QLabel("4-DIGIT PIN")
+        lbl_p1 = QLabel("NEW USER 4-DIGIT PIN")
         lbl_p1.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
         lbl_p1.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
         pin_grid.addWidget(lbl_p1, 0, 0)
@@ -386,18 +419,31 @@ class ModernLoginDialog(QDialog):
         pin_grid.addWidget(lbl_p2, 0, 1)
 
         self.su_pin = QLineEdit()
-        self.su_pin.setFixedHeight(34)
+        self.su_pin.setFixedHeight(32)
         self.su_pin.setEchoMode(QLineEdit.EchoMode.Password)
         self.su_pin.setPlaceholderText("••••")
         pin_grid.addWidget(self.su_pin, 1, 0)
 
         self.su_pin2 = QLineEdit()
-        self.su_pin2.setFixedHeight(34)
+        self.su_pin2.setFixedHeight(32)
         self.su_pin2.setEchoMode(QLineEdit.EchoMode.Password)
         self.su_pin2.setPlaceholderText("••••")
-        self.su_pin2.returnPressed.connect(self._do_sign_up)
         pin_grid.addWidget(self.su_pin2, 1, 1)
         lay.addLayout(pin_grid)
+
+        # ADMIN AUTHORIZATION PIN (Mandatory requirement for owner/admin verification)
+        lbl_admin_auth = QLabel("ADMIN / OWNER AUTHORIZATION PIN")
+        lbl_admin_auth.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
+        lbl_admin_auth.setStyleSheet("color: #ec3013; letter-spacing: 1px;")
+        lay.addWidget(lbl_admin_auth)
+
+        self.su_admin_pin = QLineEdit()
+        self.su_admin_pin.setFixedHeight(34)
+        self.su_admin_pin.setEchoMode(QLineEdit.EchoMode.Password)
+        self.su_admin_pin.setPlaceholderText("Admin Master PIN (1598) required")
+        self.su_admin_pin.setStyleSheet("border: 2px solid #ec3013; background: #fff5f5;")
+        self.su_admin_pin.returnPressed.connect(self._do_sign_up)
+        lay.addWidget(self.su_admin_pin)
 
         # Sign Up Error
         self.signup_error = QLabel("")
@@ -408,8 +454,8 @@ class ModernLoginDialog(QDialog):
         lay.addWidget(self.signup_error)
 
         # Create Button
-        btn_create = QPushButton("Create Account & Unlock Station")
-        btn_create.setFixedHeight(42)
+        btn_create = QPushButton("Authorize & Create Account")
+        btn_create.setFixedHeight(40)
         btn_create.setFont(QFont("Archivo", 10, QFont.Weight.ExtraBold))
         btn_create.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_create.setStyleSheet("""
@@ -432,6 +478,7 @@ class ModernLoginDialog(QDialog):
 
     def show_signin(self):
         self._update_tab_styles(True)
+        self._refresh_users_combo()
         self.stack.setCurrentIndex(0)
         self.pin_edit.setFocus()
 
@@ -475,9 +522,31 @@ class ModernLoginDialog(QDialog):
         role = self.su_role.currentData() or auth.ROLE_STAFF
         pin = self.su_pin.text().strip()
         pin2 = self.su_pin2.text().strip()
+        admin_pin = self.su_admin_pin.text().strip()
 
         if not name or not username or not pin:
             self.signup_error.setText("Please fill in Name, Username, and PIN.")
+            self.signup_error.show()
+            return
+
+        if not admin_pin:
+            self.signup_error.setText("Admin authorization required: Enter Admin PIN (1598).")
+            self.signup_error.show()
+            return
+
+        # Verify Admin PIN authorization
+        is_admin_valid = False
+        if admin_pin == "1598":
+            is_admin_valid = True
+        else:
+            admin_users = [u for u in q.list_users() if u.role == auth.ROLE_ADMIN]
+            for au in admin_users:
+                if q.sign_in(au.username, admin_pin):
+                    is_admin_valid = True
+                    break
+
+        if not is_admin_valid:
+            self.signup_error.setText("Admin authorization failed: Only the lab owner/admin can create staff accounts.")
             self.signup_error.show()
             return
 
@@ -504,8 +573,9 @@ class ModernLoginDialog(QDialog):
 
 
 def sign_in_at_startup(parent=None) -> tuple[bool, Optional[auth.User]]:
-    """Shows the Modernist Artboard 09 Sign In & Sign Up screen on startup."""
+    """Shows the full borderless screen Modernist Sign In & Sign Up on startup."""
     dlg = ModernLoginDialog(parent)
+    dlg.showFullScreen()
     if dlg.exec() != QDialog.DialogCode.Accepted:
         return False, None
     return True, dlg.user
