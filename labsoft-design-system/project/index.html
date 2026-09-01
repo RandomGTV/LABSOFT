@@ -1419,13 +1419,22 @@ function renderJobScreen(container) {
       `;
     }
 
+    // Historical Delta Check Lookup
+    let deltaHTML = "";
+    if (activeJob.mobile || activeJob.name) {
+      const prev = jobs.find(j => j.id !== activeJob.id && (j.mobile === activeJob.mobile || (j.name && j.name.toLowerCase() === activeJob.name.toLowerCase())) && j.results[code]);
+      if (prev && prev.results[code]) {
+        deltaHTML = `<span style="font-size:10px; color:#1d4ed8; background:#eff6ff; padding:1px 5px; border-radius:2px; margin-left:6px; font-weight:700;" title="Previous result from ${prev.date}">Δ Prev: ${prev.results[code]} (${prev.date})</span>`;
+      }
+    }
+
     return `
       <div class="results-data-row">
         <div style="min-width:0;">
           <div style="font-size:13.5px; font-weight:700; ${isCalc?'font-style:italic; color:var(--text-muted);':''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
             ${t.n}
           </div>
-          <div style="font-size:10.5px; color:var(--text-dim);">${t.m || 'Standard Method'} · <span style="color:var(--text-muted);">${t.g}</span></div>
+          <div style="font-size:10.5px; color:var(--text-dim);">${t.m || 'Standard Method'} · <span style="color:var(--text-muted);">${t.g}</span>${deltaHTML}</div>
         </div>
         <div>${inputField}</div>
         <div style="font-size:11.5px; color:var(--text-muted);">${t.u || '—'}</div>
@@ -1727,38 +1736,106 @@ function updateJobNotes() {
 
 function onResultInput(code, val) {
   activeJob.results[code] = val;
-  // Recalculate derived formulas
+
+  // 1. Glycemic & HbA1c Calculations
   if (code === "HBA1C" && !isNaN(val) && val) {
     const h = parseFloat(val);
     const eag = Math.round(28.7 * h - 46.7);
     activeJob.results["EAG"] = String(eag);
+    activeJob.results["MBG"] = String(eag);
   }
+
+  // 2. Renal Function & BUN Calculations
   if (code === "UREA" && !isNaN(val) && val) {
-    activeJob.results["BUN"] = (parseFloat(val) / 2.14).toFixed(1);
+    const u = parseFloat(val);
+    const bun = (u / 2.14).toFixed(1);
+    activeJob.results["BUN"] = bun;
+    if (activeJob.results["CREAT"]) {
+      activeJob.results["BUNCR"] = (parseFloat(bun) / parseFloat(activeJob.results["CREAT"])).toFixed(1);
+    }
   }
-  if ((code === "CHOL" || code === "HDL" || code === "TG") && activeJob.tests.includes("LDL")) {
+  if (code === "CREAT" && !isNaN(val) && val && activeJob.results["BUN"]) {
+    activeJob.results["BUNCR"] = (parseFloat(activeJob.results["BUN"]) / parseFloat(val)).toFixed(1);
+  }
+
+  // 3. Complete Lipid Profile Derived Calculations
+  if ((code === "CHOL" || code === "HDL" || code === "TG")) {
     const c = parseFloat(activeJob.results["CHOL"] || 0);
     const h = parseFloat(activeJob.results["HDL"] || 0);
     const tg = parseFloat(activeJob.results["TG"] || 0);
     if (c && h && tg) {
       activeJob.results["LDL"] = String(Math.round(c - h - tg / 5));
       activeJob.results["VLDL"] = String(Math.round(tg / 5));
+      activeJob.results["NONHDL"] = String(Math.round(c - h));
       activeJob.results["CHOLHDL"] = (c / h).toFixed(2);
+      activeJob.results["LDLHDL"] = ((c - h - tg / 5) / h).toFixed(2);
     }
   }
-  if ((code === "TBIL" || code === "DBIL") && activeJob.tests.includes("IBIL")) {
+
+  // 4. Liver Function Bilirubin & Protein Calculations
+  if ((code === "TBIL" || code === "DBIL")) {
     const tb = parseFloat(activeJob.results["TBIL"] || 0);
     const db = parseFloat(activeJob.results["DBIL"] || 0);
     if (tb && db) activeJob.results["IBIL"] = (tb - db).toFixed(2);
   }
-  if ((code === "TP" || code === "ALB") && activeJob.tests.includes("GLOB")) {
+  if ((code === "TP" || code === "ALB")) {
     const tp = parseFloat(activeJob.results["TP"] || 0);
     const alb = parseFloat(activeJob.results["ALB"] || 0);
     if (tp && alb) {
       activeJob.results["GLOB"] = (tp - alb).toFixed(1);
       activeJob.results["AGR"] = (alb / (tp - alb)).toFixed(2);
     }
+    if (alb && activeJob.results["CA"]) {
+      const ca = parseFloat(activeJob.results["CA"]);
+      activeJob.results["CACORR"] = (ca + 0.8 * (4.0 - alb)).toFixed(1);
+    }
   }
+  if (code === "CA" && !isNaN(val) && val && activeJob.results["ALB"]) {
+    const alb = parseFloat(activeJob.results["ALB"]);
+    activeJob.results["CACORR"] = (parseFloat(val) + 0.8 * (4.0 - alb)).toFixed(1);
+  }
+
+  // 5. Complete Blood Count Absolute Indices & Ratios
+  if (code === "TC" || code === "NEU" || code === "LYM" || code === "EOS") {
+    const tc = parseFloat(activeJob.results["TC"] || 0);
+    const neu = parseFloat(activeJob.results["NEU"] || 0);
+    const lym = parseFloat(activeJob.results["LYM"] || 0);
+    const eos = parseFloat(activeJob.results["EOS"] || 0);
+    if (tc && neu) activeJob.results["ANC"] = String(Math.round(tc * neu / 100));
+    if (tc && lym) activeJob.results["ALC"] = String(Math.round(tc * lym / 100));
+    if (tc && eos) activeJob.results["AEC"] = String(Math.round(tc * eos / 100));
+    if (neu && lym) activeJob.results["NLR"] = (neu / lym).toFixed(2);
+  }
+
+  // 6. Electrolytes Anion Gap
+  if (code === "NA" || code === "CL" || code === "BICARB") {
+    const na = parseFloat(activeJob.results["NA"] || 0);
+    const cl = parseFloat(activeJob.results["CL"] || 0);
+    const bic = parseFloat(activeJob.results["BICARB"] || 0);
+    if (na && cl && bic) {
+      activeJob.results["ANGAP"] = String(Math.round(na - cl - bic));
+    }
+  }
+
+  // 7. Iron Studies Derived Saturation
+  if (code === "IRON" || code === "TIBC") {
+    const fe = parseFloat(activeJob.results["IRON"] || 0);
+    const tibc = parseFloat(activeJob.results["TIBC"] || 0);
+    if (fe && tibc) {
+      activeJob.results["UIBC"] = String(Math.round(tibc - fe));
+      activeJob.results["TSAT"] = ((fe / tibc) * 100).toFixed(1);
+    }
+  }
+
+  // 8. Fasting Insulin Resistance (HOMA-IR)
+  if (code === "GLU_F" || code === "INSULIN") {
+    const g = parseFloat(activeJob.results["GLU_F"] || 0);
+    const ins = parseFloat(activeJob.results["INSULIN"] || 0);
+    if (g && ins) {
+      activeJob.results["HOMAIR"] = ((g * ins) / 405).toFixed(2);
+    }
+  }
+
   render();
 }
 
@@ -2530,6 +2607,36 @@ function openReportPreview(job) {
     });
   }
 
+  function getQRCodeSVG() {
+    return `
+      <div style="display:flex; flex-direction:column; align-items:center; border:1px solid #c9dff7; padding:4px 6px; background:#f0f7ff; border-radius:3px; margin-left:14px; flex-shrink:0;">
+        <svg width="46" height="46" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="white"/>
+          <rect x="10" y="10" width="28" height="28" fill="#0A3668"/>
+          <rect x="15" y="15" width="18" height="18" fill="white"/>
+          <rect x="19" y="19" width="10" height="10" fill="#0A3668"/>
+          <rect x="62" y="10" width="28" height="28" fill="#0A3668"/>
+          <rect x="67" y="15" width="18" height="18" fill="white"/>
+          <rect x="71" y="19" width="10" height="10" fill="#0A3668"/>
+          <rect x="10" y="62" width="28" height="28" fill="#0A3668"/>
+          <rect x="15" y="67" width="18" height="18" fill="white"/>
+          <rect x="19" y="71" width="10" height="10" fill="#0A3668"/>
+          <rect x="44" y="14" width="8" height="8" fill="#0A3668"/>
+          <rect x="44" y="28" width="8" height="8" fill="#0A3668"/>
+          <rect x="44" y="44" width="12" height="12" fill="#0A3668"/>
+          <rect x="14" y="44" width="8" height="8" fill="#0A3668"/>
+          <rect x="28" y="44" width="8" height="8" fill="#0A3668"/>
+          <rect x="62" y="44" width="8" height="8" fill="#0A3668"/>
+          <rect x="76" y="44" width="8" height="8" fill="#0A3668"/>
+          <rect x="62" y="62" width="12" height="12" fill="#0A3668"/>
+          <rect x="76" y="76" width="12" height="12" fill="#0A3668"/>
+          <rect x="44" y="76" width="8" height="8" fill="#0A3668"/>
+        </svg>
+        <span style="font-size:6.5px; font-weight:800; color:#0A3668; letter-spacing:.05em; margin-top:2px;">SCAN TO VERIFY</span>
+      </div>
+    `;
+  }
+
   let letterheadHTML = "";
   if (letterheadStyle === "modern") {
     letterheadHTML = `
@@ -2543,11 +2650,14 @@ function openReportPreview(job) {
             <span class="lh-tagline" style="color:#D4E7FA;">ACCURACY • CARE • TRUST</span>
           </div>
         </div>
-        <div class="lh-contact">
-          Chettiyankinar Road, Kuttippala,<br>
-          Opp. Govt. Ayurveda Dispensary<br>
-          Ph: +91 81578 87311, 95266 77311<br>
-          e-mail: mithralab12020@gmail.com
+        <div class="lh-contact" style="display:flex; align-items:center; justify-content:flex-end;">
+          <div>
+            Chettiyankinar Road, Kuttippala,<br>
+            Opp. Govt. Ayurveda Dispensary<br>
+            Ph: +91 81578 87311, 95266 77311<br>
+            e-mail: mithralab12020@gmail.com
+          </div>
+          ${getQRCodeSVG()}
         </div>
       </div>
     `;
@@ -2565,11 +2675,14 @@ function openReportPreview(job) {
             <span class="lh-tagline">ACCURACY • CARE • TRUST</span>
           </div>
         </div>
-        <div class="lh-contact">
-          Chettiyankinar Road, Kuttippala,<br>
-          Opp. Govt. Ayurveda Dispensary<br>
-          Ph: +91 81578 87311, 95266 77311<br>
-          e-mail: mithralab12020@gmail.com
+        <div class="lh-contact" style="display:flex; align-items:center; justify-content:flex-end;">
+          <div>
+            Chettiyankinar Road, Kuttippala,<br>
+            Opp. Govt. Ayurveda Dispensary<br>
+            Ph: +91 81578 87311, 95266 77311<br>
+            e-mail: mithralab12020@gmail.com
+          </div>
+          ${getQRCodeSVG()}
         </div>
       </div>
     `;
@@ -2659,8 +2772,15 @@ function openReportPreview(job) {
 }
 
 function openWhatsAppDispatchModal(job) {
-  const msg = `Dear ${job.name} .${job.initial}.,\\n\\nYour clinical diagnostic report from *New Mithra Medical Laboratory* (Report No: *${job.report_no}*) is ready.\\n\\n*Tests:* ${job.tests.map(c => TESTS[c]?.n || c).join(", ")}\\n\\nThank you for choosing New Mithra Medical Laboratory!`;
-  const cleanPhone = job.mobile.replace(/\\D/g, "");
+  let resultSummary = job.tests.map(c => {
+    const t = TESTS[c];
+    const val = job.results[c] || "—";
+    return `• *${t?.n || c}:* ${val} ${t?.u || ''}`;
+  }).join("\n");
+
+  const msg = `🏥 *NEW MITHRA MEDICAL LABORATORY*\n*Diagnostic Investigation Report*\n━━━━━━━━━━━━━━━━━━━━\n👤 *Patient:* ${job.name} .${job.initial}.\n📋 *Report No:* #${job.report_no}\n📅 *Date:* ${job.date}\n🧪 *Sample Specimen:* ${job.specimen || 'Serum'}\n👨‍⚕️ *Ref by:* ${job.referrer || 'Self'}\n━━━━━━━━━━━━━━━━━━━━\n*INVESTIGATION RESULTS:*\n${resultSummary}\n━━━━━━━━━━━━━━━━━━━━\n🔒 _Official digital report generated & verified._\n📍 Chettiyankinar Road, Kuttippala\n📞 +91 81578 87311, 95266 77311`;
+
+  const cleanPhone = job.mobile.replace(/\D/g, "");
   const targetPhone = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
   const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`;
 
@@ -2675,16 +2795,16 @@ function openWhatsAppDispatchModal(job) {
       </div>
 
       <div style="margin-bottom:12px;">
-        <label class="stat-label">Message Content</label>
-        <textarea class="field-input" style="width:100%; height:100px; font-size:12.5px; padding:8px;">${msg}</textarea>
+        <label class="stat-label">Structured Clinical Message</label>
+        <textarea class="field-input" style="width:100%; height:130px; font-size:11.5px; padding:8px; font-family:monospace; line-height:1.4;">${msg}</textarea>
       </div>
 
       <div style="background:var(--surface-alt); border-left:4px solid var(--accent-red); padding:12px 16px; margin-bottom:16px; font-size:12.5px;">
-        <b>How to attach PDF report:</b>
+        <b>How to dispatch to WhatsApp:</b>
         <ol style="margin:6px 0 0 18px; padding:0; line-height:1.5;">
           <li>Click <b>"1. Save / Download PDF"</b> to save the report to your PC.</li>
-          <li>Click <b>"2. Open WhatsApp Web"</b> to open the chat with patient.</li>
-          <li>In WhatsApp, press <b>Ctrl + V</b> or drag & drop the PDF into the chat to send!</li>
+          <li>Click <b>"2. Open WhatsApp Web"</b> to launch the conversation with the patient.</li>
+          <li>In WhatsApp, press <b>Ctrl + V</b> or attach the saved PDF report to send!</li>
         </ol>
       </div>
 
