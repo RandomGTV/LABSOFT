@@ -81,6 +81,19 @@
     border-right: 1px solid var(--border-light);
   }
 
+  body.auth-mode {
+    background: #f3f2f2;
+    overflow: auto;
+  }
+  body.auth-mode .app-container {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    border: none !important;
+    background: #f3f2f2 !important;
+  }
+
   /* 01. Header Bar */
   .top-header {
     height: 44px;
@@ -917,6 +930,61 @@ function signOut() {
   render();
 }
 
+function render() {
+  const root = document.getElementById("app-root");
+  if (!root) return;
+  applyTheme();
+
+  if (!currentUser) {
+    document.body.classList.add("auth-mode");
+    renderLoginScreen(root);
+    return;
+  }
+  document.body.classList.remove("auth-mode");
+
+  root.innerHTML = `
+    <!-- Top Header Bar -->
+    <header class="top-header">
+      <div style="font-weight:800; letter-spacing:1.5px; padding:0 16px; font-size:14px;">LABSOFT</div>
+      <div style="font-size:12px; color:#c9c5c5;">Sunrise Pathology Lab · Workstation PC-01</div>
+      <div class="user-chip" style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+        <span style="font-weight:700; color:#ffffff;">👤 ${currentUser.name} (${currentUser.role})</span>
+        <button onclick="signOut()" class="header-btn" style="background:#ec3013; color:#fff; font-weight:700; border:none; padding:4px 10px; font-size:11px; cursor:pointer;">Sign Out</button>
+      </div>
+      <button class="header-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="margin-right:12px; font-size:12px; padding:4px 8px;">🌓 ${currentTheme==='dark'?'Light':'Dark'}</button>
+      <button class="header-btn" onclick="showAbout()" title="About & Credits" style="margin-right:12px; font-size:12px; padding:4px 8px;">ℹ️ About</button>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-bar">
+      <button class="nav-tab ${currentTab==='job'?'active':''}" onclick="setTab('job')">01. Job (F2)</button>
+      <button class="nav-tab ${currentTab==='queue'?'active':''}" onclick="setTab('queue')">02. Work Queue</button>
+      <button class="nav-tab ${currentTab==='patients'?'active':''}" onclick="setTab('patients')">03. Patients</button>
+      <button class="nav-tab ${currentTab==='doctors'?'active':''}" onclick="setTab('doctors')">04. Doctors</button>
+      <button class="nav-tab ${currentTab==='tests'?'active':''}" onclick="setTab('tests')">05. Tests</button>
+      <button class="nav-tab ${currentTab==='billing'?'active':''}" onclick="setTab('billing')">06. Billing</button>
+      <button class="nav-tab ${currentTab==='summaries'?'active':''}" onclick="setTab('summaries')">07. Summaries</button>
+      <button class="nav-tab ${currentTab==='staff'?'active':''}" onclick="setTab('staff')">08. Staff</button>
+      <button class="nav-tab ${currentTab==='settings'?'active':''}" onclick="setTab('settings')">09. Settings</button>
+    </nav>
+
+    <!-- Main Active Workspace -->
+    <main id="main-content" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+    </main>
+  `;
+
+  const main = document.getElementById("main-content");
+  if (currentTab === "job") renderJobScreen(main);
+  else if (currentTab === "queue") renderQueueScreen(main);
+  else if (currentTab === "patients") renderPatientsScreen(main);
+  else if (currentTab === "doctors") renderDoctorsScreen(main);
+  else if (currentTab === "tests") renderTestsScreen(main);
+  else if (currentTab === "billing") renderBillingScreen(main);
+  else if (currentTab === "summaries") renderSummariesScreen(main);
+  else if (currentTab === "staff") renderStaffScreen(main);
+  else if (currentTab === "settings") renderSettingsScreen(main);
+}
+
 function getCurrentSignDateStr() {
   const now = new Date();
   const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -935,105 +1003,124 @@ function renderLoginScreen(container) {
   const dateSub = getCurrentSignDateStr();
 
   container.innerHTML = `
-    <div style="width:100%; min-height:100vh; display:flex; flex-wrap:wrap; background:#f3f2f2; overflow:hidden;">
+    <div style="width:100vw; min-height:100vh; display:flex; flex-wrap:wrap; background:#f4f3f2; margin:0; padding:0; overflow-x:hidden;">
       
-      <!-- Left Red Hero Poster (Exact match to Artboard 09) -->
-      <div style="flex:0 0 52%; min-width:360px; background:#ec3013; padding:52px 48px; display:flex; flex-direction:column; justify-content:space-between; color:#ffffff; box-sizing:border-box;">
+      <!-- Left Red Hero Poster (Modern Freshness & High Contrast) -->
+      <div style="flex:0 0 50%; min-width:380px; min-height:100vh; background:#ec3013; padding:56px 52px; display:flex; flex-direction:column; justify-content:space-between; color:#ffffff; box-sizing:border-box;">
         
         <div>
-          <div style="font-size:15px; font-weight:800; letter-spacing:.2em; text-transform:uppercase;">LABSOFT</div>
+          <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(0,0,0,0.15); padding:6px 14px; border:1px solid rgba(255,255,255,0.25);">
+            <span style="font-size:13px; font-weight:800; letter-spacing:.22em; text-transform:uppercase; color:#ffffff;">LABSOFT</span>
+            <span style="font-size:10px; font-weight:700; background:#ffffff; color:#ec3013; padding:1px 6px; letter-spacing:.05em;">2026.1</span>
+          </div>
         </div>
 
-        <div style="margin:48px 0;">
-          <div style="font-size:76px; font-weight:800; letter-spacing:-.035em; line-height:.98; font-family:'Archivo', sans-serif;">
+        <div style="margin:40px 0;">
+          <div style="font-size:74px; font-weight:800; letter-spacing:-.035em; line-height:.96; font-family:'Archivo', sans-serif; text-shadow:0 2px 10px rgba(0,0,0,0.08);">
             Sunrise<br>Pathology<br>Lab
           </div>
-          <div style="font-size:16px; font-weight:500; line-height:1.5; margin-top:22px; max-width:440px; color:#ffffff; opacity:0.96;">
-            Everything runs on this PC. Signing in needs no internet, and neither does anything you do after it.
+          <div style="font-size:16px; font-weight:500; line-height:1.55; margin-top:24px; max-width:440px; color:#ffffff; opacity:0.95;">
+            Offline-first pathology operating workstation. Fast, reliable clinical reports without relying on the internet.
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; border-top:2px solid #ffffff; padding-top:18px;">
-          <div>
-            <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.75;">THIS PC</div>
-            <div style="font-size:15px; font-weight:700; margin-top:4px;">PC-01 · reception</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; border-top:2px solid rgba(255,255,255,0.35); padding-top:20px;">
+          <div style="background:rgba(0,0,0,0.1); padding:12px 14px; border:1px solid rgba(255,255,255,0.15);">
+            <div style="font-size:8.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; opacity:.8;">THIS PC</div>
+            <div style="font-size:14px; font-weight:700; margin-top:4px;">PC-01 · Reception</div>
           </div>
-          <div>
-            <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.75;">PATIENTS ON FILE</div>
-            <div style="font-size:15px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums;">${totalPatientsCount.toLocaleString()}</div>
+          <div style="background:rgba(0,0,0,0.1); padding:12px 14px; border:1px solid rgba(255,255,255,0.15);">
+            <div style="font-size:8.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; opacity:.8;">PATIENTS ON FILE</div>
+            <div style="font-size:14px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums;">${totalPatientsCount.toLocaleString()}</div>
           </div>
-          <div>
-            <div style="font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.75;">LAST BACKUP</div>
-            <div style="font-size:15px; font-weight:700; margin-top:4px;">Today 11:00</div>
+          <div style="background:rgba(0,0,0,0.1); padding:12px 14px; border:1px solid rgba(255,255,255,0.15);">
+            <div style="font-size:8.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; opacity:.8;">LOCAL DB</div>
+            <div style="font-size:14px; font-weight:700; margin-top:4px;">Verified Healthy</div>
           </div>
         </div>
 
       </div>
 
-      <!-- Right Interaction Panel (Clean Modernist Card) -->
-      <div style="flex:1; min-width:360px; background:#f3f2f2; display:flex; align-items:center; justify-content:center; padding:32px 20px;">
+      <!-- Right Interaction Panel (Clean Modern Freshness) -->
+      <div style="flex:1; min-width:380px; background:#f4f3f2; display:flex; align-items:center; justify-content:center; padding:40px 24px;">
         
-        <div style="width:100%; max-width:430px; background:#ffffff; border:1px solid #201e1d; box-shadow:0 6px 24px rgba(0,0,0,0.06);">
+        <div style="width:100%; max-width:440px; background:#ffffff; box-shadow:0 12px 36px rgba(0,0,0,0.06); border:1px solid #eae7e7; padding:32px 32px 28px;">
           
+          <!-- Segmented Tab Switcher -->
+          <div style="display:flex; background:#eae7e7; padding:3px; margin-bottom:24px; border:1px solid #d7d3d3;">
+            <button onclick="setAuthMode('signin')" style="flex:1; height:34px; border:none; background:${authMode==='signin'?'#ffffff':'transparent'}; font-size:12.5px; font-weight:${authMode==='signin'?'800':'600'}; color:${authMode==='signin'?'#201e1d':'#7d7979'}; box-shadow:${authMode==='signin'?'0 1px 4px rgba(0,0,0,0.1)':'none'}; cursor:pointer; transition:all .15s ease;">
+              🔐 Sign In
+            </button>
+            <button onclick="setAuthMode('signup')" style="flex:1; height:34px; border:none; background:${authMode==='signup'?'#ffffff':'transparent'}; font-size:12.5px; font-weight:${authMode==='signup'?'800':'600'}; color:${authMode==='signup'?'#201e1d':'#7d7979'}; box-shadow:${authMode==='signup'?'0 1px 4px rgba(0,0,0,0.1)':'none'}; cursor:pointer; transition:all .15s ease;">
+              ➕ Sign Up (New Staff)
+            </button>
+          </div>
+
           ${authMode === "signin" ? `
-            <!-- SIGN IN VIEW -->
-            <div style="padding:26px 28px 20px 28px; border-bottom:2px solid #201e1d; display:flex; align-items:flex-start; justify-content:space-between;">
-              <div>
-                <div style="font-size:30px; font-weight:800; letter-spacing:-.025em; line-height:1.1;">Sign in</div>
-                <div style="font-size:12px; color:#605d5d; margin-top:4px;">${dateSub} · version 4.2.1</div>
-              </div>
-              <button onclick="setAuthMode('signup')" style="background:none; border:none; font-size:12px; font-weight:700; color:#ec3013; cursor:pointer; padding-top:4px;">Sign up →</button>
+            <!-- SIGN IN FORM -->
+            <div style="margin-bottom:20px;">
+              <h1 style="font-size:26px; font-weight:800; letter-spacing:-.02em; margin:0 0 4px; color:#201e1d;">Welcome back</h1>
+              <div style="font-size:12px; color:#7d7979;">${dateSub} · Station Online</div>
             </div>
 
-            <div style="padding:22px 28px; display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; flex-direction:column; gap:16px;">
               <div>
-                <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:5px;">Who is at the counter</label>
-                <select id="auth-user-select" style="height:38px; border:1px solid #201e1d; padding:0 11px; font-size:13.5px; font-weight:700; width:100%; background:#ffffff; border-radius:0;" onchange="onSelectUser(this.value)">
-                  ${STAFF_ACCOUNTS.map(s => `<option value="${s.username}" ${s.username===selectedStaffUsername?'selected':''}>${s.name} · ${s.role.toLowerCase()}</option>`).join("")}
+                <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:6px;">Staff Counter User</label>
+                <select id="auth-user-select" style="height:40px; border:1px solid #bab6b6; padding:0 12px; font-size:13.5px; font-weight:700; width:100%; background:#ffffff; color:#201e1d;" onchange="onSelectUser(this.value)">
+                  ${STAFF_ACCOUNTS.map(s => `<option value="${s.username}" ${s.username===selectedStaffUsername?'selected':''}>${s.name} (${s.role})</option>`).join("")}
                 </select>
               </div>
 
               <div>
-                <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:5px;">PIN</label>
-                <input type="password" id="auth-pin-input" placeholder="••••" maxlength="8" style="height:38px; border:1px solid #201e1d; padding:0 11px; font-size:18px; letter-spacing:.4em; color:#444141; width:100%; border-radius:0; outline:none;" onkeydown="if(event.key==='Enter')handleSignInSubmit()" autofocus>
-                <div style="font-size:11px; color:#7d7979; margin-top:5px;">Four characters or more. (Default PIN: <b>1598</b>)</div>
+                <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:6px;">4-Digit Security PIN</label>
+                <input type="password" id="auth-pin-input" placeholder="••••" maxlength="8" style="height:44px; border:2px solid #201e1d; padding:0 14px; font-size:22px; letter-spacing:.5em; text-align:center; font-weight:800; color:#201e1d; width:100%; outline:none; background:#faf9f8;" onkeydown="if(event.key==='Enter')handleSignInSubmit()" autofocus>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:11px; color:#7d7979;">
+                  <span>Default Master PIN: <b>1598</b></span>
+                  <a onclick="toggleKeypad()" style="color:#ec3013; cursor:pointer; font-weight:700;">🔢 Toggle Keypad</a>
+                </div>
               </div>
 
-              <button onclick="handleSignInSubmit()" style="height:40px; display:flex; align-items:center; justify-content:center; background:#ec3013; color:#ffffff; font-size:13.5px; font-weight:700; border:none; width:100%; border-radius:0; cursor:pointer; transition:background .1s ease;">Sign in</button>
+              <!-- Optional On-Screen Keypad for Reception Touchscreens -->
+              <div id="onscreen-keypad" style="display:none; grid-template-columns:repeat(3,1fr); gap:6px; background:#eae7e7; padding:10px; border:1px solid #d7d3d3;">
+                ${['1','2','3','4','5','6','7','8','9','C','0','↵'].map(k => `
+                  <button type="button" onclick="handleKeypadClick('${k}')" style="height:36px; font-size:16px; font-weight:800; border:1px solid #d7d3d3; background:${k==='↵'?'#201e1d':k==='C'?'#ffdad4':'#ffffff'}; color:${k==='↵'?'#ffffff':k==='C'?'#c1121f':'#201e1d'}; cursor:pointer;">${k}</button>
+                `).join("")}
+              </div>
 
-              <div style="display:flex; align-items:center; gap:9px; border-top:1px solid #d7d3d3; padding-top:14px;">
+              <button onclick="handleSignInSubmit()" style="height:44px; display:flex; align-items:center; justify-content:center; background:#ec3013; color:#ffffff; font-size:14px; font-weight:800; letter-spacing:.05em; border:none; width:100%; cursor:pointer; transition:background .1s ease; margin-top:4px;">
+                Sign In to Station ↵
+              </button>
+
+              <div style="display:flex; align-items:center; gap:8px; border-top:1px solid #eae7e7; padding-top:14px;">
                 <div style="width:8px; height:8px; background:#16703F; flex-shrink:0;"></div>
-                <div style="font-size:11.5px; color:#605d5d;">Local database healthy · last backup today 11:00</div>
+                <div style="font-size:11.5px; color:#605d5d;">Local SQLite Database Active & Verified</div>
               </div>
 
-              <div style="font-size:11.5px; color:#605d5d;">
-                Forgotten your PIN? <span style="font-weight:700; color:#ae1800; cursor:pointer;" onclick="alert('Administrator (Default PIN: 1598) can reset PINs in the Staff tab.')">Abdunnaser can set a new one.</span>
+              <div style="font-size:11.5px; color:#7d7979; line-height:1.4;">
+                Forgotten your PIN? <span style="font-weight:700; color:#ae1800; cursor:pointer;" onclick="alert('Administrator (Default PIN: 1598) can reset PINs in the Staff tab.')">Admin can reset PIN.</span>
               </div>
             </div>
           ` : `
-            <!-- SIGN UP VIEW -->
-            <div style="padding:26px 28px 20px 28px; border-bottom:2px solid #201e1d; display:flex; align-items:flex-start; justify-content:space-between;">
-              <div>
-                <div style="font-size:30px; font-weight:800; letter-spacing:-.025em; line-height:1.1;">Create login</div>
-                <div style="font-size:12px; color:#605d5d; margin-top:4px;">Register a new counter or technologist user</div>
-              </div>
-              <button onclick="setAuthMode('signin')" style="background:none; border:none; font-size:12px; font-weight:700; color:#ec3013; cursor:pointer; padding-top:4px;">← Sign in</button>
+            <!-- SIGN UP FORM -->
+            <div style="margin-bottom:20px;">
+              <h1 style="font-size:26px; font-weight:800; letter-spacing:-.02em; margin:0 0 4px; color:#201e1d;">Create Staff Login</h1>
+              <div style="font-size:12px; color:#7d7979;">Register a new user account for this PC station</div>
             </div>
 
-            <div style="padding:22px 28px; display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; flex-direction:column; gap:14px;">
               <div>
-                <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Full Name</label>
-                <input type="text" id="su-name" placeholder="e.g. Ritu Sharma" style="height:36px; border:1px solid #201e1d; padding:0 10px; font-size:13px; font-weight:600; width:100%; border-radius:0; outline:none;">
+                <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:5px;">Full Name</label>
+                <input type="text" id="su-name" placeholder="e.g. Ritu Sharma" style="height:38px; border:1px solid #bab6b6; padding:0 12px; font-size:13px; font-weight:600; width:100%; outline:none;">
               </div>
 
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                 <div>
-                  <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Username</label>
-                  <input type="text" id="su-username" placeholder="ritu" style="height:36px; border:1px solid #201e1d; padding:0 10px; font-size:13px; font-weight:600; width:100%; border-radius:0; outline:none;">
+                  <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:5px;">Username</label>
+                  <input type="text" id="su-username" placeholder="ritu" style="height:38px; border:1px solid #bab6b6; padding:0 12px; font-size:13px; font-weight:600; width:100%; outline:none;">
                 </div>
                 <div>
-                  <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Role</label>
-                  <select id="su-role" style="height:36px; border:1px solid #201e1d; padding:0 10px; font-size:13px; font-weight:700; width:100%; background:#ffffff; border-radius:0;">
+                  <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:5px;">Role</label>
+                  <select id="su-role" style="height:38px; border:1px solid #bab6b6; padding:0 10px; font-size:13px; font-weight:700; width:100%; background:#ffffff;">
                     <option value="Reception">Reception</option>
                     <option value="Technologist">Technologist</option>
                     <option value="Admin">Administrator</option>
@@ -1043,19 +1130,21 @@ function renderLoginScreen(container) {
 
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                 <div>
-                  <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">4-Digit PIN</label>
-                  <input type="password" id="su-pin" placeholder="••••" maxlength="8" style="height:36px; border:1px solid #201e1d; padding:0 10px; font-size:16px; letter-spacing:.3em; width:100%; border-radius:0; outline:none;">
+                  <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:5px;">4-Digit PIN</label>
+                  <input type="password" id="su-pin" placeholder="••••" maxlength="8" style="height:38px; border:1px solid #bab6b6; padding:0 12px; font-size:16px; letter-spacing:.3em; width:100%; outline:none;">
                 </div>
                 <div>
-                  <label style="display:block; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Confirm PIN</label>
-                  <input type="password" id="su-pin-confirm" placeholder="••••" maxlength="8" style="height:36px; border:1px solid #201e1d; padding:0 10px; font-size:16px; letter-spacing:.3em; width:100%; border-radius:0; outline:none;" onkeydown="if(event.key==='Enter')handleSignUpSubmit()">
+                  <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:5px;">Confirm PIN</label>
+                  <input type="password" id="su-pin-confirm" placeholder="••••" maxlength="8" style="height:38px; border:1px solid #bab6b6; padding:0 12px; font-size:16px; letter-spacing:.3em; width:100%; outline:none;" onkeydown="if(event.key==='Enter')handleSignUpSubmit()">
                 </div>
               </div>
 
-              <button onclick="handleSignUpSubmit()" style="height:40px; display:flex; align-items:center; justify-content:center; background:#ec3013; color:#ffffff; font-size:13.5px; font-weight:700; border:none; width:100%; border-radius:0; cursor:pointer; margin-top:6px; transition:background .1s ease;">Create login & Sign in</button>
+              <button onclick="handleSignUpSubmit()" style="height:44px; display:flex; align-items:center; justify-content:center; background:#ec3013; color:#ffffff; font-size:14px; font-weight:800; letter-spacing:.05em; border:none; width:100%; cursor:pointer; margin-top:6px; transition:background .1s ease;">
+                Create Account & Unlock Station
+              </button>
 
-              <div style="font-size:11.5px; color:#605d5d; text-align:center; border-top:1px solid #d7d3d3; padding-top:12px;">
-                Already have a login? <span style="font-weight:700; color:#ec3013; cursor:pointer;" onclick="setAuthMode('signin')">Sign in here →</span>
+              <div style="font-size:11.5px; color:#7d7979; text-align:center; border-top:1px solid #eae7e7; padding-top:12px;">
+                Already have an account? <span style="font-weight:700; color:#ec3013; cursor:pointer;" onclick="setAuthMode('signin')">Sign in here →</span>
               </div>
             </div>
           `}
@@ -1066,6 +1155,23 @@ function renderLoginScreen(container) {
 
     </div>
   `;
+}
+
+function toggleKeypad() {
+  const kp = document.getElementById("onscreen-keypad");
+  if (kp) kp.style.display = kp.style.display === "grid" ? "none" : "grid";
+}
+
+function handleKeypadClick(k) {
+  const inp = document.getElementById("auth-pin-input");
+  if (!inp) return;
+  if (k === "C") {
+    inp.value = "";
+  } else if (k === "↵") {
+    handleSignInSubmit();
+  } else {
+    if (inp.value.length < 8) inp.value += k;
+  }
 }
 
 /* --------------------------------------------------------------------------

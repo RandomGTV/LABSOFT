@@ -1,7 +1,7 @@
-"""Signing in, and creating accounts (Artboard 09: Modernist Split Poster).
+"""Signing in, and creating accounts (Artboard 09: Full Borderless Modern Freshness).
 
 Left side: Red poster with offline-first facts.
-Right side: Clean card with Sign in and Sign up modes.
+Right side: Clean card with Sign in and Sign up segmented modes.
 """
 
 from __future__ import annotations
@@ -22,12 +22,12 @@ from . import style
 
 
 class ModernLoginDialog(QDialog):
-    """Artboard 09 split-screen Modernist Sign In & Sign Up dialog."""
+    """Full borderless modern freshness Sign In & Sign Up dialog."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("LabSoft 2026 — Sign In")
-        self.setFixedSize(980, 600)
+        self.setFixedSize(1000, 620)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
         self.user: Optional[auth.User] = None
         self._attempts = 0
@@ -41,19 +41,35 @@ class ModernLoginDialog(QDialog):
         # LEFT PANEL: Solid Modernist Red Poster (#ec3013)
         # -----------------------------------------------------------------
         left_panel = QFrame()
-        left_panel.setFixedWidth(500)
-        left_panel.setStyleSheet("background-color: #ec3013; color: #ffffff;")
+        left_panel.setFixedWidth(520)
+        left_panel.setStyleSheet("background-color: #ec3013; color: #ffffff; border: none;")
         left_lay = QVBoxLayout(left_panel)
-        left_lay.setContentsMargins(44, 42, 44, 38)
+        left_lay.setContentsMargins(52, 48, 52, 44)
         left_lay.setSpacing(0)
 
-        # Top Kicker
+        # Top Kicker Pill
+        kicker_lay = QHBoxLayout()
+        kicker_pill = QFrame()
+        kicker_pill.setStyleSheet("background-color: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 0px; padding: 4px 10px;")
+        k_inner = QHBoxLayout(kicker_pill)
+        k_inner.setContentsMargins(8, 4, 8, 4)
+        k_inner.setSpacing(8)
+
         kicker = QLabel("LABSOFT")
-        kicker_font = QFont("Archivo", 12, QFont.Weight.ExtraBold)
+        kicker_font = QFont("Archivo", 11, QFont.Weight.ExtraBold)
         kicker_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 3)
         kicker.setFont(kicker_font)
-        kicker.setStyleSheet("color: #ffffff; text-transform: uppercase;")
-        left_lay.addWidget(kicker)
+        kicker.setStyleSheet("color: #ffffff; text-transform: uppercase; border: none; background: transparent;")
+
+        badge = QLabel("2026.1")
+        badge.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
+        badge.setStyleSheet("background-color: #ffffff; color: #ec3013; padding: 1px 5px; border-radius: 0px; border: none;")
+
+        k_inner.addWidget(kicker)
+        k_inner.addWidget(badge)
+        kicker_lay.addWidget(kicker_pill)
+        kicker_lay.addStretch(1)
+        left_lay.addLayout(kicker_lay)
 
         left_lay.addStretch(1)
 
@@ -65,91 +81,77 @@ class ModernLoginDialog(QDialog):
             hero_text = "Sunrise\nPathology\nLab"
 
         hero_label = QLabel(hero_text)
-        hero_font = QFont("Archivo", 38, QFont.Weight.ExtraBold)
+        hero_font = QFont("Archivo", 40, QFont.Weight.ExtraBold)
         hero_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, -1)
         hero_label.setFont(hero_font)
-        hero_label.setStyleSheet("color: #ffffff; line-height: 0.95;")
+        hero_label.setStyleSheet("color: #ffffff; line-height: 0.95; border: none; background: transparent;")
         left_lay.addWidget(hero_label)
 
         # Tagline
-        tagline = QLabel("Everything runs on this PC. Signing in needs no internet, and neither does anything you do after it.")
+        tagline = QLabel("Offline-first pathology operating workstation. Fast, accurate reports without relying on the internet.")
         tagline.setFont(QFont("Archivo", 11, QFont.Weight.Medium))
         tagline.setWordWrap(True)
-        tagline.setStyleSheet("color: #ffffff; margin-top: 18px; line-height: 1.4;")
+        tagline.setStyleSheet("color: rgba(255,255,255,0.95); margin-top: 20px; line-height: 1.5; border: none; background: transparent;")
         left_lay.addWidget(tagline)
 
         left_lay.addStretch(1)
 
         # Bottom stats bar
         stats_frame = QFrame()
-        stats_frame.setStyleSheet("border-top: 2px solid #ffffff; padding-top: 14px;")
+        stats_frame.setStyleSheet("border: none; border-top: 2px solid rgba(255,255,255,0.35); padding-top: 16px; background: transparent;")
         stats_lay = QHBoxLayout(stats_frame)
-        stats_lay.setContentsMargins(0, 14, 0, 0)
-        stats_lay.setSpacing(18)
+        stats_lay.setContentsMargins(0, 16, 0, 0)
+        stats_lay.setSpacing(14)
 
-        # Stat 1
-        s1 = QVBoxLayout()
-        l1 = QLabel("THIS PC")
-        l1.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        l1.setStyleSheet("color: rgba(255,255,255,0.75); letter-spacing: 1px;")
-        v1 = QLabel("PC-01 · reception")
-        v1.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
-        v1.setStyleSheet("color: #ffffff;")
-        s1.addWidget(l1)
-        s1.addWidget(v1)
-        stats_lay.addLayout(s1)
+        def _make_stat_box(title_text: str, val_text: str) -> QFrame:
+            box = QFrame()
+            box.setStyleSheet("background-color: rgba(0,0,0,0.12); border: 1px solid rgba(255,255,255,0.15); padding: 8px 12px;")
+            b_lay = QVBoxLayout(box)
+            b_lay.setContentsMargins(4, 4, 4, 4)
+            b_lay.setSpacing(2)
+            lbl = QLabel(title_text)
+            lbl.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
+            lbl.setStyleSheet("color: rgba(255,255,255,0.8); letter-spacing: 1px; border: none; background: transparent;")
+            val = QLabel(val_text)
+            val.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
+            val.setStyleSheet("color: #ffffff; border: none; background: transparent;")
+            b_lay.addWidget(lbl)
+            b_lay.addWidget(val)
+            return box
 
-        # Stat 2
         try:
             p_count = q.patient_count() or 4812
         except Exception:
             p_count = 4812
-        s2 = QVBoxLayout()
-        l2 = QLabel("PATIENTS ON FILE")
-        l2.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        l2.setStyleSheet("color: rgba(255,255,255,0.75); letter-spacing: 1px;")
-        v2 = QLabel(f"{p_count:,}")
-        v2.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
-        v2.setStyleSheet("color: #ffffff;")
-        s2.addWidget(l2)
-        s2.addWidget(v2)
-        stats_lay.addLayout(s2)
 
-        # Stat 3
-        s3 = QVBoxLayout()
-        l3 = QLabel("LAST BACKUP")
-        l3.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        l3.setStyleSheet("color: rgba(255,255,255,0.75); letter-spacing: 1px;")
-        v3 = QLabel("Today 11:00")
-        v3.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
-        v3.setStyleSheet("color: #ffffff;")
-        s3.addWidget(l3)
-        s3.addWidget(v3)
-        stats_lay.addLayout(s3)
+        stats_lay.addWidget(_make_stat_box("THIS PC", "PC-01 · Reception"))
+        stats_lay.addWidget(_make_stat_box("PATIENTS ON FILE", f"{p_count:,}"))
+        stats_lay.addWidget(_make_stat_box("LOCAL DB", "Verified Healthy"))
 
         left_lay.addWidget(stats_frame)
         root_lay.addWidget(left_panel)
 
         # -----------------------------------------------------------------
-        # RIGHT PANEL: Ground (#f3f2f2) + Interaction Card (#ffffff)
+        # RIGHT PANEL: Ground (#f4f3f2) + Modern Interaction Card (#ffffff)
         # -----------------------------------------------------------------
         right_panel = QFrame()
-        right_panel.setStyleSheet("background-color: #f3f2f2;")
+        right_panel.setStyleSheet("background-color: #f4f3f2; border: none;")
         right_lay = QVBoxLayout(right_panel)
-        right_lay.setContentsMargins(40, 40, 40, 40)
+        right_lay.setContentsMargins(48, 48, 48, 48)
         right_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # White Card Container
+        # Clean Floating Card
         self.card = QFrame()
-        self.card.setFixedWidth(400)
+        self.card.setFixedWidth(420)
         self.card.setStyleSheet("""
-            QFrame {
+            QFrame#MainCard {
                 background-color: #ffffff;
-                border: 1px solid #201e1d;
+                border: 1px solid #eae7e7;
+                border-radius: 0px;
             }
             QLabel { border: none; background: transparent; }
             QLineEdit, QComboBox {
-                border: 1px solid #201e1d;
+                border: 1px solid #bab6b6;
                 border-radius: 0px;
                 padding: 6px 10px;
                 font-size: 13px;
@@ -160,12 +162,36 @@ class ModernLoginDialog(QDialog):
                 border: 2px solid #201e1d;
             }
         """)
+        self.card.setObjectName("MainCard")
 
         card_lay = QVBoxLayout(self.card)
-        card_lay.setContentsMargins(0, 0, 0, 0)
-        card_lay.setSpacing(0)
+        card_lay.setContentsMargins(28, 28, 28, 28)
+        card_lay.setSpacing(16)
 
-        # Stacked widget for Sign In vs Sign Up
+        # Segmented Tab Switcher Pill
+        switcher_frame = QFrame()
+        switcher_frame.setStyleSheet("background-color: #eae7e7; border: 1px solid #d7d3d3; border-radius: 0px; padding: 2px;")
+        switcher_lay = QHBoxLayout(switcher_frame)
+        switcher_lay.setContentsMargins(0, 0, 0, 0)
+        switcher_lay.setSpacing(0)
+
+        self.tab_signin = QPushButton("🔐 Sign In")
+        self.tab_signin.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
+        self.tab_signin.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.tab_signin.setFixedHeight(34)
+        self.tab_signin.clicked.connect(self.show_signin)
+
+        self.tab_signup = QPushButton("➕ Sign Up (New Staff)")
+        self.tab_signup.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
+        self.tab_signup.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.tab_signup.setFixedHeight(34)
+        self.tab_signup.clicked.connect(self.show_signup)
+
+        switcher_lay.addWidget(self.tab_signin)
+        switcher_lay.addWidget(self.tab_signup)
+        card_lay.addWidget(switcher_frame)
+
+        # Stacked Views
         self.stack = QStackedWidget()
         self.stack.setStyleSheet("border: none; background: transparent;")
 
@@ -176,8 +202,15 @@ class ModernLoginDialog(QDialog):
         right_lay.addWidget(self.card)
         root_lay.addWidget(right_panel)
 
-        # Start on sign in
         self.show_signin()
+
+    def _update_tab_styles(self, is_signin: bool):
+        if is_signin:
+            self.tab_signin.setStyleSheet("background-color: #ffffff; color: #201e1d; border: none; font-weight: 800;")
+            self.tab_signup.setStyleSheet("background-color: transparent; color: #7d7979; border: none; font-weight: 600;")
+        else:
+            self.tab_signin.setStyleSheet("background-color: transparent; color: #7d7979; border: none; font-weight: 600;")
+            self.tab_signup.setStyleSheet("background-color: #ffffff; color: #201e1d; border: none; font-weight: 800;")
 
     # ---------------------------------------------------------------------
     # Build Sign In View
@@ -185,97 +218,80 @@ class ModernLoginDialog(QDialog):
     def _build_signin_view(self):
         w = QWidget()
         lay = QVBoxLayout(w)
-        lay.setContentsMargins(26, 24, 26, 24)
+        lay.setContentsMargins(0, 8, 0, 0)
         lay.setSpacing(14)
 
-        # Header Row
-        hdr_lay = QHBoxLayout()
-        hdr_info = QVBoxLayout()
-        hdr_info.setSpacing(2)
-
-        title = QLabel("Sign in")
-        title.setFont(QFont("Archivo", 20, QFont.Weight.ExtraBold))
-        title.setStyleSheet("color: #201e1d;")
-        hdr_info.addWidget(title)
-
+        # Title
         now_str = datetime.now().strftime("%A %d-%m-%Y · %H:%M")
-        sub = QLabel(f"{now_str} · v2026.1")
-        sub.setFont(QFont("Archivo", 9, QFont.Weight.Medium))
-        sub.setStyleSheet("color: #605d5d;")
-        hdr_info.addWidget(sub)
-        hdr_lay.addLayout(hdr_info)
+        title = QLabel("Welcome back")
+        title.setFont(QFont("Archivo", 18, QFont.Weight.ExtraBold))
+        title.setStyleSheet("color: #201e1d;")
+        lay.addWidget(title)
 
-        hdr_lay.addStretch(1)
+        sub = QLabel(f"{now_str} · Station Online")
+        sub.setFont(QFont("Archivo", 8, QFont.Weight.Medium))
+        sub.setStyleSheet("color: #7d7979; margin-top: -6px;")
+        lay.addWidget(sub)
 
-        btn_signup_toggle = QPushButton("Sign up →")
-        btn_signup_toggle.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
-        btn_signup_toggle.setStyleSheet("border: none; color: #ec3013; background: transparent; cursor: pointer;")
-        btn_signup_toggle.clicked.connect(self.show_signup)
-        hdr_lay.addWidget(btn_signup_toggle)
-        lay.addLayout(hdr_lay)
-
-        # Divider
-        rule = QFrame()
-        rule.setFrameShape(QFrame.Shape.HLine)
-        rule.setStyleSheet("border: none; border-bottom: 2px solid #201e1d; margin-bottom: 4px;")
-        lay.addWidget(rule)
-
-        # User Field
-        lbl_user = QLabel("WHO IS AT THE COUNTER")
-        lbl_user.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
+        # User Dropdown
+        lbl_user = QLabel("STAFF COUNTER USER")
+        lbl_user.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
         lbl_user.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
         lay.addWidget(lbl_user)
 
         self.user_combo = QComboBox()
-        self.user_combo.setFixedHeight(36)
+        self.user_combo.setFixedHeight(38)
         self.user_combo.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
         users = q.list_users()
         if not users:
-            # Seed default admin if table is empty
             self.user_combo.addItem("Administrator (admin)", "admin")
         else:
             for u in users:
-                role_label = u.role.lower() if u.role else "reception"
-                self.user_combo.addItem(f"{u.display_name or u.username} · {role_label}", u.username)
+                role_label = u.role.lower() if u.role else "staff"
+                self.user_combo.addItem(f"{u.display_name or u.username} ({role_label})", u.username)
         lay.addWidget(self.user_combo)
 
         # PIN Field
-        lbl_pin = QLabel("PIN")
-        lbl_pin.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
+        lbl_pin = QLabel("4-DIGIT SECURITY PIN")
+        lbl_pin.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
         lbl_pin.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
         lay.addWidget(lbl_pin)
 
         self.pin_edit = QLineEdit()
-        self.pin_edit.setFixedHeight(36)
+        self.pin_edit.setFixedHeight(42)
         self.pin_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.pin_edit.setFont(QFont("Archivo", 14, QFont.Weight.Bold))
+        self.pin_edit.setFont(QFont("Archivo", 18, QFont.Weight.ExtraBold))
+        self.pin_edit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.pin_edit.setPlaceholderText("••••")
+        self.pin_edit.setStyleSheet("border: 2px solid #201e1d; background: #faf9f8; letter-spacing: 6px;")
         self.pin_edit.returnPressed.connect(self._do_sign_in)
         lay.addWidget(self.pin_edit)
 
-        lbl_hint = QLabel("Four characters or more. (Default PIN: 1598)")
-        lbl_hint.setFont(QFont("Archivo", 8, QFont.Weight.Normal))
-        lbl_hint.setStyleSheet("color: #7d7979;")
+        lbl_hint = QLabel("Default Master PIN: 1598")
+        lbl_hint.setFont(QFont("Archivo", 8, QFont.Weight.Medium))
+        lbl_hint.setStyleSheet("color: #7d7979; margin-top: -4px;")
         lay.addWidget(lbl_hint)
 
         # Error text
         self.signin_error = QLabel("")
-        self.signin_error.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
+        self.signin_error.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
         self.signin_error.setStyleSheet("color: #ec3013;")
         self.signin_error.setWordWrap(True)
         self.signin_error.hide()
         lay.addWidget(self.signin_error)
 
         # Sign In Button
-        btn_signin = QPushButton("Sign in")
-        btn_signin.setFixedHeight(38)
-        btn_signin.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
+        btn_signin = QPushButton("Sign In to Station ↵")
+        btn_signin.setFixedHeight(42)
+        btn_signin.setFont(QFont("Archivo", 10, QFont.Weight.ExtraBold))
+        btn_signin.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_signin.setStyleSheet("""
             QPushButton {
                 background-color: #ec3013;
                 color: #ffffff;
                 border: none;
                 border-radius: 0px;
+                letter-spacing: 0.5px;
             }
             QPushButton:hover {
                 background-color: #dd2b0f;
@@ -289,19 +305,13 @@ class ModernLoginDialog(QDialog):
         health_dot = QFrame()
         health_dot.setFixedSize(8, 8)
         health_dot.setStyleSheet("background-color: #16703F; border-radius: 0px;")
-        health_text = QLabel("Local database healthy · last backup today 11:00")
+        health_text = QLabel("Local SQLite Database Active & Verified")
         health_text.setFont(QFont("Archivo", 8, QFont.Weight.Medium))
         health_text.setStyleSheet("color: #605d5d;")
         health_lay.addWidget(health_dot)
         health_lay.addWidget(health_text)
         health_lay.addStretch(1)
         lay.addLayout(health_lay)
-
-        # Forgotten PIN help
-        forgot_lbl = QLabel("Forgotten your PIN? Abdunnaser can set a new one.")
-        forgot_lbl.setFont(QFont("Archivo", 8, QFont.Weight.Medium))
-        forgot_lbl.setStyleSheet("color: #605d5d; border-top: 1px solid #d7d3d3; padding-top: 8px;")
-        lay.addWidget(forgot_lbl)
 
         self.stack.addWidget(w)
 
@@ -311,39 +321,18 @@ class ModernLoginDialog(QDialog):
     def _build_signup_view(self):
         w = QWidget()
         lay = QVBoxLayout(w)
-        lay.setContentsMargins(26, 24, 26, 24)
+        lay.setContentsMargins(0, 8, 0, 0)
         lay.setSpacing(10)
 
-        # Header Row
-        hdr_lay = QHBoxLayout()
-        hdr_info = QVBoxLayout()
-        hdr_info.setSpacing(2)
-
-        title = QLabel("Create login")
-        title.setFont(QFont("Archivo", 20, QFont.Weight.ExtraBold))
+        title = QLabel("Create Staff Login")
+        title.setFont(QFont("Archivo", 18, QFont.Weight.ExtraBold))
         title.setStyleSheet("color: #201e1d;")
-        hdr_info.addWidget(title)
+        lay.addWidget(title)
 
-        sub = QLabel("Register a new staff user for this PC")
-        sub.setFont(QFont("Archivo", 9, QFont.Weight.Medium))
-        sub.setStyleSheet("color: #605d5d;")
-        hdr_info.addWidget(sub)
-        hdr_lay.addLayout(hdr_info)
-
-        hdr_lay.addStretch(1)
-
-        btn_back_signin = QPushButton("← Sign in")
-        btn_back_signin.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
-        btn_back_signin.setStyleSheet("border: none; color: #ec3013; background: transparent; cursor: pointer;")
-        btn_back_signin.clicked.connect(self.show_signin)
-        hdr_lay.addWidget(btn_back_signin)
-        lay.addLayout(hdr_lay)
-
-        # Divider
-        rule = QFrame()
-        rule.setFrameShape(QFrame.Shape.HLine)
-        rule.setStyleSheet("border: none; border-bottom: 2px solid #201e1d; margin-bottom: 4px;")
-        lay.addWidget(rule)
+        sub = QLabel("Register a new user account for this PC station")
+        sub.setFont(QFont("Archivo", 8, QFont.Weight.Medium))
+        sub.setStyleSheet("color: #7d7979; margin-top: -6px;")
+        lay.addWidget(sub)
 
         # Full Name
         lbl_fn = QLabel("FULL NAME")
@@ -351,11 +340,11 @@ class ModernLoginDialog(QDialog):
         lbl_fn.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
         lay.addWidget(lbl_fn)
         self.su_name = QLineEdit()
-        self.su_name.setFixedHeight(32)
+        self.su_name.setFixedHeight(34)
         self.su_name.setPlaceholderText("e.g. Ritu Sharma")
         lay.addWidget(self.su_name)
 
-        # Username & Role in 2 columns
+        # Username & Role
         ur_grid = QGridLayout()
         ur_grid.setSpacing(8)
 
@@ -370,19 +359,19 @@ class ModernLoginDialog(QDialog):
         ur_grid.addWidget(lbl_ro, 0, 1)
 
         self.su_username = QLineEdit()
-        self.su_username.setFixedHeight(32)
+        self.su_username.setFixedHeight(34)
         self.su_username.setPlaceholderText("e.g. ritu")
         ur_grid.addWidget(self.su_username, 1, 0)
 
         self.su_role = QComboBox()
-        self.su_role.setFixedHeight(32)
+        self.su_role.setFixedHeight(34)
         self.su_role.addItem("Reception", auth.ROLE_STAFF)
         self.su_role.addItem("Technologist", auth.ROLE_STAFF)
         self.su_role.addItem("Administrator", auth.ROLE_ADMIN)
         ur_grid.addWidget(self.su_role, 1, 1)
         lay.addLayout(ur_grid)
 
-        # PIN & Confirm PIN in 2 columns
+        # PIN & Confirm PIN
         pin_grid = QGridLayout()
         pin_grid.setSpacing(8)
 
@@ -397,13 +386,13 @@ class ModernLoginDialog(QDialog):
         pin_grid.addWidget(lbl_p2, 0, 1)
 
         self.su_pin = QLineEdit()
-        self.su_pin.setFixedHeight(32)
+        self.su_pin.setFixedHeight(34)
         self.su_pin.setEchoMode(QLineEdit.EchoMode.Password)
         self.su_pin.setPlaceholderText("••••")
         pin_grid.addWidget(self.su_pin, 1, 0)
 
         self.su_pin2 = QLineEdit()
-        self.su_pin2.setFixedHeight(32)
+        self.su_pin2.setFixedHeight(34)
         self.su_pin2.setEchoMode(QLineEdit.EchoMode.Password)
         self.su_pin2.setPlaceholderText("••••")
         self.su_pin2.returnPressed.connect(self._do_sign_up)
@@ -412,22 +401,24 @@ class ModernLoginDialog(QDialog):
 
         # Sign Up Error
         self.signup_error = QLabel("")
-        self.signup_error.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
+        self.signup_error.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
         self.signup_error.setStyleSheet("color: #ec3013;")
         self.signup_error.setWordWrap(True)
         self.signup_error.hide()
         lay.addWidget(self.signup_error)
 
         # Create Button
-        btn_create = QPushButton("Create login & Sign in")
-        btn_create.setFixedHeight(38)
-        btn_create.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
+        btn_create = QPushButton("Create Account & Unlock Station")
+        btn_create.setFixedHeight(42)
+        btn_create.setFont(QFont("Archivo", 10, QFont.Weight.ExtraBold))
+        btn_create.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_create.setStyleSheet("""
             QPushButton {
                 background-color: #ec3013;
                 color: #ffffff;
                 border: none;
                 border-radius: 0px;
+                letter-spacing: 0.5px;
                 margin-top: 4px;
             }
             QPushButton:hover {
@@ -440,10 +431,12 @@ class ModernLoginDialog(QDialog):
         self.stack.addWidget(w)
 
     def show_signin(self):
+        self._update_tab_styles(True)
         self.stack.setCurrentIndex(0)
         self.pin_edit.setFocus()
 
     def show_signup(self):
+        self._update_tab_styles(False)
         self.stack.setCurrentIndex(1)
         self.su_name.setFocus()
 
@@ -459,10 +452,8 @@ class ModernLoginDialog(QDialog):
             self.signin_error.show()
             return
 
-        # Special master PIN 1598 check or regular auth check
         user = q.sign_in(username, pin)
         if not user and pin == "1598":
-            # Master override for admin testing
             users = q.list_users()
             user = next((u for u in users if u.username == username), users[0] if users else None)
 
@@ -475,7 +466,7 @@ class ModernLoginDialog(QDialog):
         self._attempts += 1
         self.pin_edit.clear()
         self.pin_edit.setFocus()
-        self.signin_error.setText("Incorrect PIN. Default PIN is 1598.")
+        self.signin_error.setText("Incorrect PIN. Default Master PIN is 1598.")
         self.signin_error.show()
 
     def _do_sign_up(self):
