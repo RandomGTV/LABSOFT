@@ -1,11 +1,18 @@
-# Vercel serves one file: the web app. Everything else in this repository is
-# the desktop program, its tests, its data and the design canvas, none of
-# which belongs on a public URL.
+# This file deliberately excludes nothing.
 #
-# Deployment is decided by "outputDirectory" in vercel.json, which is built
-# from index.html alone. This list keeps the rest out of the build as well,
-# so nothing can be served by accident.
-*
-
-!index.html
-!vercel.json
+# What gets published is decided by "builds" in vercel.json, which names
+# exactly one file: web/index.html. Nothing else in this repository is
+# deployed, whatever is sitting beside it.
+#
+# An earlier version of this file said:
+#
+#     *
+#     !index.html
+#     !vercel.json
+#
+# which was written when the page lived at the repository root. Once the page
+# moved into web/, that pattern excluded the page itself: the build ran, found
+# nothing to publish, and every URL answered 404 with no error in the log.
+#
+# Exclusions here cannot make the deployment safer than "builds" already
+# makes it, and they can silently empty it. So there are none.
