@@ -53,7 +53,11 @@ class SendDialog(QDialog):
         self.pdf_path: Optional[Path] = None
 
         self.setWindowTitle(f"Send report — {self.job['report_no']}")
-        self.setMinimumWidth(560)
+        # Wide enough for the button row. At 560 the last two buttons were
+        # cut off by the edge of the dialog, which is a poor place to keep
+        # "Open WhatsApp & send".
+        self.setMinimumWidth(700)
+        self.resize(720, 560)
         self._build()
         self._prepare()
 
@@ -66,16 +70,23 @@ class SendDialog(QDialog):
         self.file_label = label("", "")
         self.file_hint = label("", "hint")
         card = QFrame()
+        # Scoped by object name: an unscoped rule put a border round every
+        # label inside the card as well as round the card.
+        card.setObjectName("fileCard")
         card.setStyleSheet(
-            f"background: {style.PANEL}; border: 1px solid {style.LINE}; border-radius: 0;")
+            f"#fileCard {{ background: {style.PANEL}; "
+            f"border: 1px solid {style.LINE2}; border-radius: 10px; }}"
+            f"#fileCard QLabel {{ background: transparent; border: 0; }}")
         card_lay = QHBoxLayout(card)
         card_lay.setContentsMargins(14, 12, 14, 12)
         tag = QLabel("PDF")
         tag.setFixedSize(40, 48)
         tag.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tag.setObjectName("fileTag")
         tag.setStyleSheet(
-            f"background: white; border: 1px solid {style.LINE}; border-radius: 4px;"
-            f"color: {style.RED}; font-weight: 800; font-size: 9pt;")
+            f"#fileTag {{ background: {style.PANEL}; border: 1px solid {style.LINE}; "
+            f"border-radius: 6px; color: {style.RED}; font-weight: 800; "
+            f"font-size: 9pt; }}")
         card_lay.addWidget(tag)
         inner = QVBoxLayout()
         inner.setSpacing(2)
@@ -93,6 +104,9 @@ class SendDialog(QDialog):
 
         lay.addWidget(field_label("Message"))
         self.message_edit = QPlainTextEdit()
+        # Tab moves on rather than typing a tab character: a text box you
+        # cannot leave with the keyboard is a keyboard trap.
+        self.message_edit.setTabChangesFocus(True)
         self.message_edit.setFixedHeight(108)
         lay.addWidget(self.message_edit)
 
@@ -102,9 +116,14 @@ class SendDialog(QDialog):
 
         self.print_button = button("Print", "", self._print)
         self.folder_button = button("Open folder", "", self._open_folder)
+        # Quiet, and last: the browser can carry the message but never the
+        # report, so it is a way out when the desktop app is missing rather
+        # than an equal choice.
         self.web_button = button(
-            "Use WhatsApp Web", "", lambda: self._send(force_mode="web"),
-            "Open the chat in your browser instead of the desktop app")
+            "Browser (no report)", "quiet",
+            lambda: self._send(force_mode="web"),
+            "Opens WhatsApp Web with the message. The report is NOT attached — "
+            "a browser cannot take a file from LabSoft.")
         self.close_button = button("Close", "", self.reject)
         self.send_button = button("Open WhatsApp && send", "go", self._send)
         lay.addWidget(row(self.print_button, self.folder_button, self.web_button,
@@ -135,15 +154,26 @@ class SendDialog(QDialog):
         self._check_phone()
         self.phone_edit.textChanged.connect(lambda _t: self._check_phone())
 
-        # Structured Clinical Results Summary
+        # The results, listed in the message.
+        #
+        # This read `test_name` / `name` / `unit` off the rows returned by
+        # results_for_job, which carry none of the three -- a result row has
+        # job_test_id, the values, the range and the flag, and the test's name
+        # lives on the job_tests row. So `name` was always None, the list was
+        # always empty, and every message ever sent fell through to the bare
+        # template. job_screen._open_whatsapp_dispatch already joins the two
+        # correctly; this now does the same.
         stored = q.results_for_job(self.job_id)
         test_lines = []
-        for jt in stored.values():
-            name = jt.get("test_name") or jt.get("name")
-            val = jt.get("display_value") or jt.get("raw_value")
-            u = jt.get("unit") or ""
-            if name and val:
-                test_lines.append(f"• *{name}:* {val} {u}".strip())
+        for t in q.job_tests(self.job_id):
+            r = stored.get(t["job_test_id"], {}) or {}
+            val = r.get("display_value") or r.get("raw_value")
+            if not val:
+                continue
+            unit = (t.get("unit") or "").strip()
+            flag = {"H": " (high)", "L": " (low)"}.get(r.get("flag") or "", "")
+            test_lines.append(
+                f"• *{t['name']}:* {val} {unit}".rstrip() + flag)
 
         test_summary = "\n".join(test_lines)
         lab_full = (self.settings.get("lab_name_prefix", "") + " " +
@@ -201,7 +231,7 @@ class SendDialog(QDialog):
     def _send(self, force_mode: str = "") -> None:
         if not self.pdf_path:
             return
-        mode = force_mode or self.settings.get("whatsapp_mode", "auto")
+        mode = force_mode or self.settings.get("whatsapp_mode", "desktop")
         sender = snd.get_sender("whatsapp", self.settings.get("country_code", "91"),
                                 mode)
         try:
@@ -220,7 +250,7 @@ class SendDialog(QDialog):
         self.close_button.setText("Done")
         # Kept enabled: if the desktop app opened but did nothing visible, the
         # operator needs a second route without redoing the whole job.
-        self.web_button.setText("Open in WhatsApp Web")
+        self.web_button.setText("Browser (no report)")
 
         auto = str(self.settings.get("auto_attach", "1")).strip() in ("1", "true", "yes")
         if auto and winauto.supported():

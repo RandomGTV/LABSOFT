@@ -262,8 +262,24 @@ def apply_tests_import(preview: dict, update_existing: bool = True) -> dict:
                     payload["decimals"] = old["decimals"]
                     payload["result_type"] = old["result_type"]
                     payload["options"] = old["options"]
+                    # A BLANK CELL MEANS "LEAVE IT ALONE", not "set it to
+                    # nothing". Only `formula` was guarded, so importing a
+                    # sheet of two columns -- Code and Test, to rename a few
+                    # tests -- rewrote the rate of every test it touched to
+                    # ₹0.00, moved the turnaround to 24 hours, emptied the
+                    # unit and dropped the department. Every bill after that
+                    # charged nothing, and the dialog said only "1 existing
+                    # test will be updated".
                     if not payload["formula"]:
                         payload["formula"] = old["formula"]
+                    if not str(rec["rate"]).strip():
+                        payload["rate_paise"] = old["rate_paise"]
+                    if not str(rec["tat"]).strip():
+                        payload["tat_hours"] = old["tat_hours"]
+                    if not str(rec["unit"]).strip():
+                        payload["unit"] = old["unit"]
+                    if not str(rec["group_name"]).strip():
+                        payload["group_name"] = old["group_name"]
                 tid = q.save_test(payload)
 
                 if rec["normal"]:

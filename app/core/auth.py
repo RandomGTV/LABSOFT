@@ -102,6 +102,13 @@ MIN_PIN = 4
 MAX_PIN = 32
 
 
+#: PINs nobody may choose. 1598 is on the list because it was LabSoft's own
+#: master PIN, printed on the sign-in screen of the web application and in the
+#: error message of the desktop one. Anyone who ever saw this program knows it.
+KNOWN_DEFAULTS = ("1598", "1234", "0000", "1111", "9999",
+                  "12345", "123456", "1212", "4321")
+
+
 class PinError(ValueError):
     """Raised with a message written for the person choosing the PIN."""
 
@@ -118,8 +125,8 @@ def check_pin_quality(pin: str) -> str:
         return f"The PIN must be at least {MIN_PIN} characters."
     if len(pin) > MAX_PIN:
         return f"The PIN must be {MAX_PIN} characters or fewer."
-    if pin in ("1234", "0000", "1111", "12345", "123456", "9999"):
-        return "That PIN is too easy to guess. Please choose another."
+    if pin in KNOWN_DEFAULTS:
+        return "That PIN is too well known. Please choose another."
     return ""
 
 
@@ -128,6 +135,10 @@ def hash_pin(pin: str, salt: Optional[bytes] = None) -> str:
     problem = check_pin_quality(pin)
     if problem:
         raise PinError(problem)
+    # Hash what check_pin_quality checked, and what the sign-in screen sends.
+    # It hashed the raw string while both of those strip it, so a PIN set as
+    # "7391 " could never afterwards be typed in.
+    pin = (pin or "").strip()
     salt = salt or os.urandom(16)
     digest = hashlib.pbkdf2_hmac("sha256", pin.encode("utf-8"), salt, ITERATIONS)
     return f"pbkdf2${ITERATIONS}${salt.hex()}${digest.hex()}"
@@ -135,6 +146,7 @@ def hash_pin(pin: str, salt: Optional[bytes] = None) -> str:
 
 def verify_pin(pin: str, stored: str) -> bool:
     """Constant-time check of a typed PIN against the stored hash."""
+    pin = (pin or "").strip()
     if not stored or not pin:
         return False
     try:

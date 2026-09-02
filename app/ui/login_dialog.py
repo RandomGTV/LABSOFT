@@ -1,527 +1,299 @@
-"""Signing in, and creating accounts (Artboard 09: Full Borderless Modern Freshness).
+"""Signing in, and creating the accounts that make signing in mean anything.
 
-Left side: Full-height Red poster with offline-first facts.
-Right side: Full-height clean surface with Sign in and Admin-authorized Sign up.
+Two panels. The left is the laboratory: its name, and three facts about this
+PC read from the database rather than typed in. The right asks the only two
+questions there are -- who is at the counter, and their PIN.
+
+Nothing here carries a colour of its own. Every surface is named in
+``style.stylesheet_for``, so the night theme repaints it with the rest.
+
+--------------------------------------------------------------------------
+What this file used to do
+--------------------------------------------------------------------------
+The previous version accepted ``1598`` as a PIN for *any* account. Typing it
+signed you in as whoever was selected in the dropdown -- an administrator
+included, on every installation -- and the error message printed the number
+when you got a PIN wrong. The same constant authorised creating accounts. It
+also re-created an ``admin`` / ``1598`` login whenever the user list came
+back empty, which quietly undid removing that account anywhere else.
+
+All of it is gone. A PIN is checked against the stored hash and nothing
+else. The only account that can be made without an administrator's PIN is
+the very first one, on a database that has no accounts at all.
 """
 
 from __future__ import annotations
 
+import platform
 from datetime import datetime
 from typing import Optional
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QColor, QPalette
 from PyQt6.QtWidgets import (
-    QApplication, QComboBox, QDialog, QFrame, QGridLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
+    QComboBox, QDialog, QFrame, QGridLayout, QHBoxLayout, QLineEdit,
+    QStackedWidget, QVBoxLayout, QWidget,
 )
 
+from .. import config
 from ..core import auth
-from ..db import queries as q
-from . import style
+from ..db import connection, queries as q
+from .widgets import button, elevate, fade_in, label, row
 
 
 class ModernLoginDialog(QDialog):
-    """Full-screen borderless modern freshness Sign In & Sign Up dialog."""
+    """The sign-in screen."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("LabSoft 2026 — Sign In")
-        # Full-screen borderless window
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, False)
         self.user: Optional[auth.User] = None
         self._attempts = 0
+        self.setWindowTitle("LabSoft — sign in")
+        self.setObjectName("signInWindow")
+        self.resize(1100, 700)
+        # A dialog gets no minimise button and, full screen, no way off the
+        # screen at all: the sign-in filled the monitor with nothing to press
+        # but Sign in. These are the buttons every other window has.
+        self.setWindowFlags(
+            self.windowFlags()
+            | Qt.WindowType.WindowMinimizeButtonHint
+            | Qt.WindowType.WindowCloseButtonHint
+            | Qt.WindowType.WindowSystemMenuHint)
+        self._build()
+        self._refresh_users_combo()
 
-        # Main horizontal split
-        root_lay = QHBoxLayout(self)
-        root_lay.setContentsMargins(0, 0, 0, 0)
-        root_lay.setSpacing(0)
+    # ----------------------------------------------------------------- build
+    def _build(self) -> None:
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        lay.addWidget(self._build_hero(), 55)
+        lay.addWidget(self._build_side(), 45)
 
-        # -----------------------------------------------------------------
-        # LEFT PANEL: the accent run as a full field -- the one screen in the
-        # program where it covers more than an edge, because there is nothing
-        # else on it to compete with.
-        # -----------------------------------------------------------------
-        left_panel = QFrame()
-        left_panel.setStyleSheet(
-            f"background-color: {style.ACCENT_INK}; color: #ffffff; border: none;")
-        left_lay = QVBoxLayout(left_panel)
-        left_lay.setContentsMargins(64, 56, 64, 52)
-        left_lay.setSpacing(0)
+    def _build_hero(self) -> QWidget:
+        """The laboratory's own panel: who this is, and how the PC is doing."""
+        hero = QFrame()
+        hero.setObjectName("hero")
+        lay = QVBoxLayout(hero)
+        lay.setContentsMargins(56, 48, 56, 44)
+        lay.setSpacing(0)
 
-        # Top Kicker Pill
-        kicker_lay = QHBoxLayout()
-        kicker_pill = QFrame()
-        kicker_pill.setStyleSheet("background-color: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 0px; padding: 4px 10px;")
-        k_inner = QHBoxLayout(kicker_pill)
-        k_inner.setContentsMargins(10, 5, 10, 5)
-        k_inner.setSpacing(10)
+        lay.addWidget(label("LABSOFT", "herowordmark"))
+        lay.addStretch(1)
 
-        kicker = QLabel("LABSOFT")
-        kicker_font = QFont("Archivo", 12, QFont.Weight.ExtraBold)
-        kicker_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 3)
-        kicker.setFont(kicker_font)
-        kicker.setStyleSheet("color: #ffffff; text-transform: uppercase; border: none; background: transparent;")
+        prefix = q.get_setting("lab_name_prefix") or ""
+        name = q.get_setting("lab_name") or "Laboratory"
+        subtitle = q.get_setting("lab_subtitle") or ""
+        title = label(f"{prefix} {name}".strip(), "heroname")
+        title.setWordWrap(True)
+        lay.addWidget(title)
+        if subtitle:
+            lay.addWidget(label(subtitle.title(), "herosub"))
 
-        badge = QLabel("2026.1")
-        badge.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
-        badge.setStyleSheet(
-            f"background-color: #ffffff; color: {style.ACCENT_INK}; padding: 1px 6px; "
-            f"border-radius: 0px; border: none;")
+        blurb = label(
+            "Everything runs on this PC. Signing in needs no internet, and "
+            "neither does anything you do after it.", "heroblurb")
+        blurb.setWordWrap(True)
+        blurb.setMaximumWidth(460)
+        lay.addSpacing(18)
+        lay.addWidget(blurb)
+        lay.addStretch(1)
 
-        k_inner.addWidget(kicker)
-        k_inner.addWidget(badge)
-        kicker_lay.addWidget(kicker_pill)
-        kicker_lay.addStretch(1)
-        left_lay.addLayout(kicker_lay)
+        rule = QFrame()
+        rule.setObjectName("heroRule")
+        rule.setFixedHeight(1)
+        lay.addWidget(rule)
+        lay.addSpacing(18)
 
-        left_lay.addStretch(1)
+        facts = QHBoxLayout()
+        facts.setContentsMargins(0, 0, 0, 0)
+        facts.setSpacing(40)
+        for caption, value in self._facts():
+            block = QVBoxLayout()
+            block.setContentsMargins(0, 0, 0, 0)
+            block.setSpacing(4)
+            block.addWidget(label(caption, "herolabel"))
+            block.addWidget(label(value, "herofact"))
+            facts.addLayout(block)
+        facts.addStretch(1)
+        lay.addLayout(facts)
+        return hero
 
-        lab_name_prefix = q.get_setting("lab_name_prefix") or "MITHRA"
-        lab_name = q.get_setting("lab_name") or "MEDICAL LABORATORY"
-        hero_text = f"{lab_name_prefix}\n{lab_name}".replace(" \\n ", "\n")
-        if "Sunrise" in hero_text or "Pathology\nLab" in hero_text:
-            hero_text = "MITHRA\nMEDICAL\nLABORATORY"
+    @staticmethod
+    def _facts() -> list:
+        """Three things about this machine, all read rather than written.
 
-        hero_label = QLabel(hero_text)
-        hero_font = QFont("Archivo", 46, QFont.Weight.ExtraBold)
-        hero_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, -1)
-        hero_label.setFont(hero_font)
-        hero_label.setStyleSheet("color: #ffffff; line-height: 0.95; border: none; background: transparent;")
-        left_lay.addWidget(hero_label)
-
-        # Tagline
-        tagline = QLabel("Offline-first pathology operating workstation. Fast, accurate reports without relying on the internet.")
-        tagline.setFont(QFont("Archivo", 12, QFont.Weight.Medium))
-        tagline.setWordWrap(True)
-        tagline.setStyleSheet("color: rgba(255,255,255,0.95); margin-top: 24px; line-height: 1.5; border: none; background: transparent;")
-        left_lay.addWidget(tagline)
-
-        left_lay.addStretch(1)
-
-        # Bottom stats bar
-        stats_frame = QFrame()
-        stats_frame.setStyleSheet("border: none; border-top: 2px solid rgba(255,255,255,0.35); padding-top: 18px; background: transparent;")
-        stats_lay = QHBoxLayout(stats_frame)
-        stats_lay.setContentsMargins(0, 18, 0, 0)
-        stats_lay.setSpacing(16)
-
-        def _make_stat_box(title_text: str, val_text: str) -> QFrame:
-            box = QFrame()
-            box.setStyleSheet("background-color: rgba(0,0,0,0.12); border: 1px solid rgba(255,255,255,0.15); padding: 10px 14px;")
-            b_lay = QVBoxLayout(box)
-            b_lay.setContentsMargins(4, 4, 4, 4)
-            b_lay.setSpacing(2)
-            lbl = QLabel(title_text)
-            lbl.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-            lbl.setStyleSheet("color: rgba(255,255,255,0.8); letter-spacing: 1px; border: none; background: transparent;")
-            val = QLabel(val_text)
-            val.setFont(QFont("Archivo", 11, QFont.Weight.Bold))
-            val.setStyleSheet("color: #ffffff; border: none; background: transparent;")
-            b_lay.addWidget(lbl)
-            b_lay.addWidget(val)
-            return box
-
+        The panel used to claim "4,812 patients on file" whether or not the
+        database held any. A number on a sign-in screen that nobody can check
+        is worse than no number.
+        """
         try:
-            p_count = q.patient_count() or 4812
+            people = f"{q.patient_count():,}"
         except Exception:
-            p_count = 4812
+            people = "—"
+        last = connection.last_backup_time()
+        return [
+            ("This PC", platform.node() or "this computer"),
+            ("Patients on file", people),
+            ("Last backup", last.strftime("%d-%m %H:%M") if last else "none yet"),
+        ]
 
-        stats_lay.addWidget(_make_stat_box("THIS PC", "PC-01 · Reception"))
-        stats_lay.addWidget(_make_stat_box("PATIENTS ON FILE", f"{p_count:,}"))
-        stats_lay.addWidget(_make_stat_box("LOCAL DB", "Verified Healthy"))
+    def _build_side(self) -> QWidget:
+        side = QFrame()
+        side.setObjectName("signInSide")
+        outer = QVBoxLayout(side)
+        outer.setContentsMargins(40, 40, 40, 40)
+        outer.addStretch(1)
 
-        left_lay.addWidget(stats_frame)
-        root_lay.addWidget(left_panel, 1)
-
-        # -----------------------------------------------------------------
-        # RIGHT PANEL: Ground (#f4f3f2) + Modern Interaction Card (#ffffff)
-        # -----------------------------------------------------------------
-        right_panel = QFrame()
-        right_panel.setStyleSheet("background-color: #f4f3f2; border: none;")
-        right_lay = QVBoxLayout(right_panel)
-        right_lay.setContentsMargins(32, 28, 32, 32)
-
-        # Minimal Top-Right Window Controls (Minimize & Close)
-        win_ctrl_lay = QHBoxLayout()
-        win_ctrl_lay.addStretch(1)
-
-        btn_min = QPushButton("—")
-        btn_min.setFixedSize(36, 30)
-        btn_min.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
-        btn_min.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_min.setStyleSheet("border: none; background: transparent; color: #7d7979; font-weight: bold;")
-        btn_min.clicked.connect(self.showMinimized)
-
-        btn_close = QPushButton("✕")
-        btn_close.setFixedSize(36, 30)
-        btn_close.setFont(QFont("Archivo", 11, QFont.Weight.Bold))
-        btn_close.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_close.setStyleSheet("border: none; background: transparent; color: #7d7979; font-weight: bold;")
-        btn_close.clicked.connect(self.reject)
-
-        win_ctrl_lay.addWidget(btn_min)
-        win_ctrl_lay.addWidget(btn_close)
-        right_lay.addLayout(win_ctrl_lay)
-
-        # Center Card Area
-        right_lay.addStretch(1)
-        center_card_lay = QHBoxLayout()
-        center_card_lay.addStretch(1)
+        holder = QHBoxLayout()
+        holder.addStretch(1)
 
         self.card = QFrame()
-        self.card.setFixedWidth(440)
-        self.card.setStyleSheet("""
-            QFrame#MainCard {
-                background-color: #ffffff;
-                border: 1px solid #eae7e7;
-                border-radius: 0px;
-            }
-            QLabel { border: none; background: transparent; }
-            QLineEdit, QComboBox {
-                border: 1px solid #bab6b6;
-                border-radius: 0px;
-                padding: 6px 10px;
-                font-size: 13px;
-                background-color: #ffffff;
-                color: #201e1d;
-            }
-            QLineEdit:focus, QComboBox:focus {
-                border: 2px solid #201e1d;
-            }
-        """)
-        self.card.setObjectName("MainCard")
-
+        self.card.setObjectName("signInCard")
+        self.card.setFixedWidth(420)
         card_lay = QVBoxLayout(self.card)
-        card_lay.setContentsMargins(32, 30, 32, 30)
-        card_lay.setSpacing(16)
+        card_lay.setContentsMargins(32, 30, 32, 28)
+        card_lay.setSpacing(0)
 
-        # Segmented Tab Switcher Pill
-        switcher_frame = QFrame()
-        switcher_frame.setStyleSheet("background-color: #eae7e7; border: 1px solid #d7d3d3; border-radius: 0px; padding: 2px;")
-        switcher_lay = QHBoxLayout(switcher_frame)
-        switcher_lay.setContentsMargins(0, 0, 0, 0)
-        switcher_lay.setSpacing(0)
-
-        self.tab_signin = QPushButton("🔐 Sign In")
-        self.tab_signin.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
-        self.tab_signin.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.tab_signin.setFixedHeight(34)
-        self.tab_signin.clicked.connect(self.show_signin)
-
-        self.tab_signup = QPushButton("➕ Sign Up (Requires Admin)")
-        self.tab_signup.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
-        self.tab_signup.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.tab_signup.setFixedHeight(34)
-        self.tab_signup.clicked.connect(self.show_signup)
-
-        switcher_lay.addWidget(self.tab_signin)
-        switcher_lay.addWidget(self.tab_signup)
-        card_lay.addWidget(switcher_frame)
-
-        # Stacked Views
         self.stack = QStackedWidget()
-        self.stack.setStyleSheet("border: none; background: transparent;")
-
-        self._build_signin_view()
-        self._build_signup_view()
-
+        self.stack.addWidget(self._build_signin_view())
+        self.stack.addWidget(self._build_signup_view())
         card_lay.addWidget(self.stack)
-        center_card_lay.addWidget(self.card)
-        center_card_lay.addStretch(1)
-        right_lay.addLayout(center_card_lay)
-        right_lay.addStretch(1)
 
-        root_lay.addWidget(right_panel, 1)
+        # Qt stylesheets have no box-shadow, so the card is lifted off the
+        # ground with a graphics effect instead.
+        elevate(self.card, 2)
+        holder.addWidget(self.card)
+        holder.addStretch(1)
+        outer.addLayout(holder)
+        outer.addStretch(1)
+        return side
 
-        self.show_signin()
+    # -------------------------------------------------------------- sign in
+    def _build_signin_view(self) -> QWidget:
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
 
-    def _update_tab_styles(self, is_signin: bool):
-        if is_signin:
-            self.tab_signin.setStyleSheet("background-color: #ffffff; color: #201e1d; border: none; font-weight: 800;")
-            self.tab_signup.setStyleSheet("background-color: transparent; color: #7d7979; border: none; font-weight: 600;")
-        else:
-            self.tab_signin.setStyleSheet("background-color: transparent; color: #7d7979; border: none; font-weight: 600;")
-            self.tab_signup.setStyleSheet("background-color: #ffffff; color: #201e1d; border: none; font-weight: 800;")
+        lay.addWidget(label("Sign in", "cardtitle"))
+        self.when = label("", "hint")
+        lay.addWidget(self.when)
+        lay.addSpacing(22)
 
-    # ---------------------------------------------------------------------
-    # Build Sign In View
-    # ---------------------------------------------------------------------
-    def _build_signin_view(self):
-        w = QWidget()
-        lay = QVBoxLayout(w)
-        lay.setContentsMargins(0, 8, 0, 0)
-        lay.setSpacing(14)
-
-        # Title
-        now_str = datetime.now().strftime("%A %d-%m-%Y · %H:%M")
-        title = QLabel("Welcome back")
-        title.setFont(QFont("Archivo", 19, QFont.Weight.ExtraBold))
-        title.setStyleSheet("color: #201e1d;")
-        lay.addWidget(title)
-
-        sub = QLabel(f"{now_str} · Station Online")
-        sub.setFont(QFont("Archivo", 8, QFont.Weight.Medium))
-        sub.setStyleSheet("color: #7d7979; margin-top: -6px;")
-        lay.addWidget(sub)
-
-        # User Dropdown
-        lbl_user = QLabel("STAFF COUNTER USER")
-        lbl_user.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        lbl_user.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
-        lay.addWidget(lbl_user)
-
+        lay.addWidget(label("Who is at the counter", "field"))
+        lay.addSpacing(6)
         self.user_combo = QComboBox()
-        self.user_combo.setFixedHeight(38)
-        self.user_combo.setFont(QFont("Archivo", 10, QFont.Weight.Bold))
-        self._refresh_users_combo()
+        self.user_combo.setFixedHeight(44)
         lay.addWidget(self.user_combo)
+        lay.addSpacing(16)
 
-        # PIN Field
-        lbl_pin = QLabel("4-DIGIT SECURITY PIN")
-        lbl_pin.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        lbl_pin.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
-        lay.addWidget(lbl_pin)
-
+        lay.addWidget(label("PIN", "field"))
+        lay.addSpacing(6)
         self.pin_edit = QLineEdit()
-        self.pin_edit.setFixedHeight(44)
+        self.pin_edit.setObjectName("pinField")
         self.pin_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.pin_edit.setFont(QFont("Archivo", 18, QFont.Weight.ExtraBold))
+        self.pin_edit.setFixedHeight(44)
         self.pin_edit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.pin_edit.setPlaceholderText("••••")
-        self.pin_edit.setStyleSheet("border: 2px solid #201e1d; background: #faf9f8; letter-spacing: 6px;")
         self.pin_edit.returnPressed.connect(self._do_sign_in)
         lay.addWidget(self.pin_edit)
 
-        lbl_hint = QLabel("Default Master PIN: 1598")
-        lbl_hint.setFont(QFont("Archivo", 8, QFont.Weight.Medium))
-        lbl_hint.setStyleSheet("color: #7d7979; margin-top: -4px;")
-        lay.addWidget(lbl_hint)
-
-        # Error text
-        self.signin_error = QLabel("")
-        self.signin_error.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
-        self.signin_error.setStyleSheet(f"color: {style.ACCENT_INK}; font-weight: 700;")
+        self.signin_error = label("", "error")
         self.signin_error.setWordWrap(True)
         self.signin_error.hide()
+        lay.addSpacing(8)
         lay.addWidget(self.signin_error)
 
-        # Sign In Button
-        btn_signin = QPushButton("Sign In to Station ↵")
-        btn_signin.setFixedHeight(44)
-        btn_signin.setFont(QFont("Archivo", 10, QFont.Weight.ExtraBold))
-        btn_signin.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_signin.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {style.ACCENT_INK};
-                color: #ffffff;
-                border: none;
-                border-radius: 0px;
-                letter-spacing: 0.5px;
-            }}
-            QPushButton:hover {{
-                background-color: {style.BRAND_DARK};
-            }}
-        """)
-        btn_signin.clicked.connect(self._do_sign_in)
-        lay.addWidget(btn_signin)
+        lay.addSpacing(18)
+        go = button("Sign in", "primary", self._do_sign_in)
+        go.setFixedHeight(46)
+        lay.addWidget(go)
 
-        # Health status indicator
-        health_lay = QHBoxLayout()
-        health_dot = QFrame()
-        health_dot.setFixedSize(8, 8)
-        health_dot.setStyleSheet("background-color: #16703F; border-radius: 0px;")
-        health_text = QLabel("Local SQLite Database Active & Verified")
-        health_text.setFont(QFont("Archivo", 8, QFont.Weight.Medium))
-        health_text.setStyleSheet("color: #605d5d;")
-        health_lay.addWidget(health_dot)
-        health_lay.addWidget(health_text)
-        health_lay.addStretch(1)
-        lay.addLayout(health_lay)
+        lay.addSpacing(20)
+        rule = QFrame()
+        rule.setObjectName("cardRule")
+        rule.setFixedHeight(1)
+        lay.addWidget(rule)
+        lay.addSpacing(14)
 
-        self.stack.addWidget(w)
+        health = QHBoxLayout()
+        health.setSpacing(9)
+        dot = QFrame()
+        dot.setObjectName("signedInDot")
+        dot.setFixedSize(8, 8)
+        health.addWidget(dot)
+        self.health = label("", "hint")
+        health.addWidget(self.health)
+        health.addStretch(1)
+        lay.addLayout(health)
 
-    def _refresh_users_combo(self):
+        lay.addSpacing(6)
+        self.forgotten = label("", "hint")
+        self.forgotten.setWordWrap(True)
+        lay.addWidget(self.forgotten)
+
+        lay.addSpacing(10)
+        self.add_account = button("Add a staff account", "quiet", self.show_signup)
+        lay.addWidget(row(self.add_account, None))
+        return page
+
+    def _refresh_users_combo(self) -> None:
+        """Fill the list, and say plainly when there is nobody to fill it with.
+
+        This used to create an administrator with a fixed PIN when the list
+        came back empty. A program that invents its own way in is a program
+        with no way of keeping anybody out.
+        """
         self.user_combo.clear()
         users = q.list_users()
-        if not users:
-            try:
-                q.create_user("admin", "Administrator", "1598", auth.ROLE_ADMIN, auth.ALL_PERMISSIONS)
-                users = q.list_users()
-            except Exception:
-                pass
-        if not users:
-            self.user_combo.addItem("Administrator (admin)", "admin")
-        else:
-            for u in users:
-                role_label = u.role.lower() if u.role else "staff"
-                self.user_combo.addItem(f"{u.display_name or u.username} ({role_label})", u.username)
+        for u in users:
+            role = "administrator" if u.is_admin else (u.role or "staff")
+            self.user_combo.addItem(f"{u.display_name or u.username} · {role}",
+                                    u.username)
 
-    # ---------------------------------------------------------------------
-    # Build Sign Up View (Protected: Requires Lab Owner / Admin Authorization)
-    # ---------------------------------------------------------------------
-    def _build_signup_view(self):
-        w = QWidget()
-        lay = QVBoxLayout(w)
-        lay.setContentsMargins(0, 8, 0, 0)
-        lay.setSpacing(9)
+        first_run = not users
+        self.user_combo.setEnabled(not first_run)
+        self.pin_edit.setEnabled(not first_run)
+        self.add_account.setText("Create the first account" if first_run
+                                 else "Add a staff account")
+        if first_run:
+            self.user_combo.addItem("No accounts yet", "")
+            self.signin_error.setText(
+                "Nobody can sign in yet. Create the first account to begin — "
+                "it will be the administrator.")
+            self.signin_error.show()
 
-        title = QLabel("Create Staff Login")
-        title.setFont(QFont("Archivo", 18, QFont.Weight.ExtraBold))
-        title.setStyleSheet("color: #201e1d;")
-        lay.addWidget(title)
+        now = datetime.now()
+        self.when.setText(now.strftime("%A %d-%m-%Y · %H:%M")
+                          + f" · version {config.APP_VERSION}")
+        last = connection.last_backup_time()
+        self.health.setText(
+            f"Database open · last backup {last.strftime('%d-%m %H:%M')}"
+            if last else "Database open · no backup taken yet")
+        self.forgotten.setText(
+            "Forgotten your PIN? An administrator can set a new one for you "
+            "under Staff.")
+        # The name is nearly always already right, so the cursor starts where
+        # the typing starts.
+        if not first_run:
+            self.pin_edit.setFocus()
 
-        sub = QLabel("Owner / Admin permission is required to create accounts")
-        sub.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
-        sub.setStyleSheet(f"color: {style.INK3}; margin-top: -6px;")
-        lay.addWidget(sub)
-
-        # Full Name
-        lbl_fn = QLabel("FULL NAME")
-        lbl_fn.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        lbl_fn.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
-        lay.addWidget(lbl_fn)
-        self.su_name = QLineEdit()
-        self.su_name.setFixedHeight(32)
-        self.su_name.setPlaceholderText("e.g. Ritu Sharma")
-        lay.addWidget(self.su_name)
-
-        # Username & Role
-        ur_grid = QGridLayout()
-        ur_grid.setSpacing(8)
-
-        lbl_un = QLabel("USERNAME")
-        lbl_un.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        lbl_un.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
-        ur_grid.addWidget(lbl_un, 0, 0)
-
-        lbl_ro = QLabel("ROLE")
-        lbl_ro.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        lbl_ro.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
-        ur_grid.addWidget(lbl_ro, 0, 1)
-
-        self.su_username = QLineEdit()
-        self.su_username.setFixedHeight(32)
-        self.su_username.setPlaceholderText("e.g. ritu")
-        ur_grid.addWidget(self.su_username, 1, 0)
-
-        self.su_role = QComboBox()
-        self.su_role.setFixedHeight(32)
-        self.su_role.addItem("Reception", auth.ROLE_STAFF)
-        self.su_role.addItem("Technologist", auth.ROLE_STAFF)
-        self.su_role.addItem("Administrator", auth.ROLE_ADMIN)
-        ur_grid.addWidget(self.su_role, 1, 1)
-        lay.addLayout(ur_grid)
-
-        # PIN & Confirm PIN
-        pin_grid = QGridLayout()
-        pin_grid.setSpacing(8)
-
-        lbl_p1 = QLabel("NEW USER 4-DIGIT PIN")
-        lbl_p1.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        lbl_p1.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
-        pin_grid.addWidget(lbl_p1, 0, 0)
-
-        lbl_p2 = QLabel("CONFIRM PIN")
-        lbl_p2.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        lbl_p2.setStyleSheet("color: #605d5d; letter-spacing: 1px;")
-        pin_grid.addWidget(lbl_p2, 0, 1)
-
-        self.su_pin = QLineEdit()
-        self.su_pin.setFixedHeight(32)
-        self.su_pin.setEchoMode(QLineEdit.EchoMode.Password)
-        self.su_pin.setPlaceholderText("••••")
-        pin_grid.addWidget(self.su_pin, 1, 0)
-
-        self.su_pin2 = QLineEdit()
-        self.su_pin2.setFixedHeight(32)
-        self.su_pin2.setEchoMode(QLineEdit.EchoMode.Password)
-        self.su_pin2.setPlaceholderText("••••")
-        pin_grid.addWidget(self.su_pin2, 1, 1)
-        lay.addLayout(pin_grid)
-
-        # ADMIN AUTHORIZATION PIN (Mandatory requirement for owner/admin verification)
-        lbl_admin_auth = QLabel("ADMIN / OWNER AUTHORIZATION PIN")
-        lbl_admin_auth.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        lbl_admin_auth.setStyleSheet(
-            f"color: {style.ACCENT_INK}; letter-spacing: 1px;")
-        lay.addWidget(lbl_admin_auth)
-
-        self.su_admin_pin = QLineEdit()
-        self.su_admin_pin.setFixedHeight(34)
-        self.su_admin_pin.setEchoMode(QLineEdit.EchoMode.Password)
-        self.su_admin_pin.setPlaceholderText("Admin Master PIN (1598) required")
-        self.su_admin_pin.setStyleSheet(
-            f"border: 2px solid {style.ACCENT_INK}; background: {style.BRAND_SOFT};")
-        self.su_admin_pin.returnPressed.connect(self._do_sign_up)
-        lay.addWidget(self.su_admin_pin)
-
-        # Sign Up Error
-        self.signup_error = QLabel("")
-        self.signup_error.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
-        self.signup_error.setStyleSheet(f"color: {style.ACCENT_INK}; font-weight: 700;")
-        self.signup_error.setWordWrap(True)
-        self.signup_error.hide()
-        lay.addWidget(self.signup_error)
-
-        # Create Button
-        btn_create = QPushButton("Authorize & Create Account")
-        btn_create.setFixedHeight(40)
-        btn_create.setFont(QFont("Archivo", 10, QFont.Weight.ExtraBold))
-        btn_create.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_create.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {style.ACCENT_INK};
-                color: #ffffff;
-                border: none;
-                border-radius: 0px;
-                letter-spacing: 0.5px;
-                margin-top: 4px;
-            }}
-            QPushButton:hover {{
-                background-color: {style.BRAND_DARK};
-            }}
-        """)
-        btn_create.clicked.connect(self._do_sign_up)
-        lay.addWidget(btn_create)
-
-        self.stack.addWidget(w)
-
-    def show_signin(self):
-        self._update_tab_styles(True)
-        self._refresh_users_combo()
-        self.stack.setCurrentIndex(0)
-        self.pin_edit.setFocus()
-
-    def show_signup(self):
-        self._update_tab_styles(False)
-        self.stack.setCurrentIndex(1)
-        self.su_name.setFocus()
-
-    # ---------------------------------------------------------------------
-    # Action Handlers
-    # ---------------------------------------------------------------------
-    def _do_sign_in(self):
-        username = (self.user_combo.currentData() or self.user_combo.currentText()).strip()
+    def _do_sign_in(self) -> None:
+        username = (self.user_combo.currentData() or "").strip()
         pin = self.pin_edit.text().strip()
 
+        if not username:
+            self.signin_error.setText("There is nobody to sign in as yet.")
+            self.signin_error.show()
+            return
         if not pin:
-            self.signin_error.setText("Please enter your PIN.")
+            self.signin_error.setText("Enter your PIN.")
             self.signin_error.show()
             return
 
+        # The only check there is. A PIN either matches the stored hash for
+        # this account or it does not, and there is no other way through.
         user = q.sign_in(username, pin)
-        if not user and pin == "1598":
-            user = q.get_user_by_name(username) or (q.list_users()[0] if q.list_users() else None)
-            if not user:
-                try:
-                    uid = q.create_user("admin", "Administrator", "1598", auth.ROLE_ADMIN, auth.ALL_PERMISSIONS)
-                    user = q.get_user(uid)
-                except Exception:
-                    user = auth.User(id=1, username="admin", display_name="Administrator", role=auth.ROLE_ADMIN,
-                                     permissions=set(auth.ALL_PERMISSIONS), active=True)
-
         if user:
             self.user = user
             auth.set_current(user)
@@ -531,72 +303,217 @@ class ModernLoginDialog(QDialog):
         self._attempts += 1
         self.pin_edit.clear()
         self.pin_edit.setFocus()
-        self.signin_error.setText("Incorrect PIN. Default Master PIN is 1598.")
+        self.signin_error.setText(
+            "That PIN does not match this account."
+            + ("  An administrator can set you a new one under Staff."
+               if self._attempts >= 3 else ""))
         self.signin_error.show()
 
-    def _do_sign_up(self):
+    # -------------------------------------------------------------- sign up
+    def _build_signup_view(self) -> QWidget:
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+
+        lay.addWidget(label("New account", "cardtitle"))
+        self.signup_note = label("", "hint")
+        self.signup_note.setWordWrap(True)
+        lay.addWidget(self.signup_note)
+        lay.addSpacing(20)
+
+        lay.addWidget(label("Their name", "field"))
+        lay.addSpacing(6)
+        self.su_name = QLineEdit()
+        self.su_name.setFixedHeight(40)
+        self.su_name.setPlaceholderText("Ritu Patil")
+        lay.addWidget(self.su_name)
+        lay.addSpacing(14)
+
+        grid = QGridLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(12)
+        grid.setVerticalSpacing(6)
+        grid.addWidget(label("Username", "field"), 0, 0)
+        grid.addWidget(label("Role", "field"), 0, 1)
+        self.su_username = QLineEdit()
+        self.su_username.setFixedHeight(40)
+        self.su_username.setPlaceholderText("ritu")
+        self.su_role = QComboBox()
+        self.su_role.setFixedHeight(40)
+        self.su_role.addItem("Reception", auth.ROLE_STAFF)
+        self.su_role.addItem("Technologist", auth.ROLE_STAFF)
+        self.su_role.addItem("Administrator", auth.ROLE_ADMIN)
+        grid.addWidget(self.su_username, 1, 0)
+        grid.addWidget(self.su_role, 1, 1)
+        lay.addLayout(grid)
+        lay.addSpacing(14)
+
+        pins = QGridLayout()
+        pins.setContentsMargins(0, 0, 0, 0)
+        pins.setHorizontalSpacing(12)
+        pins.setVerticalSpacing(6)
+        pins.addWidget(label("PIN", "field"), 0, 0)
+        pins.addWidget(label("PIN again", "field"), 0, 1)
+        self.su_pin = QLineEdit()
+        self.su_pin2 = QLineEdit()
+        for box in (self.su_pin, self.su_pin2):
+            box.setFixedHeight(40)
+            box.setEchoMode(QLineEdit.EchoMode.Password)
+            box.setPlaceholderText("••••")
+        pins.addWidget(self.su_pin, 1, 0)
+        pins.addWidget(self.su_pin2, 1, 1)
+        lay.addLayout(pins)
+        lay.addSpacing(14)
+
+        self.admin_block = QWidget()
+        ab = QVBoxLayout(self.admin_block)
+        ab.setContentsMargins(0, 0, 0, 0)
+        ab.setSpacing(6)
+        ab.addWidget(label("An administrator's PIN", "field"))
+        pair = QHBoxLayout()
+        pair.setSpacing(12)
+        self.su_admin_user = QComboBox()
+        self.su_admin_user.setFixedHeight(40)
+        self.su_admin_pin = QLineEdit()
+        self.su_admin_pin.setFixedHeight(40)
+        self.su_admin_pin.setEchoMode(QLineEdit.EchoMode.Password)
+        self.su_admin_pin.setPlaceholderText("their PIN")
+        # Names are longer than PINs, so they get more of the row.
+        pair.addWidget(self.su_admin_user, 3)
+        pair.addWidget(self.su_admin_pin, 2)
+        ab.addLayout(pair)
+        lay.addWidget(self.admin_block)
+
+        self.signup_error = label("", "error")
+        self.signup_error.setWordWrap(True)
+        self.signup_error.hide()
+        lay.addSpacing(8)
+        lay.addWidget(self.signup_error)
+
+        lay.addSpacing(18)
+        make = button("Create the account", "primary", self._do_sign_up)
+        make.setFixedHeight(46)
+        lay.addWidget(make)
+        lay.addSpacing(10)
+        lay.addWidget(row(button("Back to sign in", "quiet", self.show_signin), None))
+        return page
+
+    def show_signin(self) -> None:
+        self.signup_error.hide()
+        self.stack.setCurrentIndex(0)
+        self._refresh_users_combo()
+        self.pin_edit.setFocus()
+
+    def show_signup(self) -> None:
+        """Open the new-account page, asking for authority unless it is day one."""
+        admins = [u for u in q.list_users() if u.is_admin]
+        self.su_admin_user.clear()
+        for u in admins:
+            self.su_admin_user.addItem(u.display_name or u.username, u.username)
+
+        # The one account that needs nobody's permission is the very first one
+        # on a database with NO accounts at all.
+        #
+        # This used to test "are there any administrators", which is not the
+        # same question: an installation whose first account was created as
+        # Reception then had staff and no admin for ever, and the free path
+        # stayed open -- so anyone who sat down at the locked sign-in screen
+        # could press "Add a staff account" and make themselves one.
+        first_run = not q.list_users(include_inactive=True)
+        self.admin_block.setVisible(not first_run)
+        self.signup_note.setText(
+            "An administrator has to approve a new account."
+            if not first_run else
+            "This is the first account on this PC, so it is the "
+            "administrator. Choose a PIN only you know.")
+        # And it is an administrator whether or not the role box says so:
+        # a lab with staff accounts and nobody who can reach Settings has
+        # locked itself out of its own program.
+        index = self.su_role.findData(auth.ROLE_ADMIN)
+        if first_run and index >= 0:
+            self.su_role.setCurrentIndex(index)
+        self.su_role.setEnabled(not first_run)
+        self.signup_error.hide()
+        self.stack.setCurrentIndex(1)
+        self.su_name.setFocus()
+
+    def _do_sign_up(self) -> None:
         name = self.su_name.text().strip()
         username = self.su_username.text().strip().lower()
         role = self.su_role.currentData() or auth.ROLE_STAFF
         pin = self.su_pin.text().strip()
         pin2 = self.su_pin2.text().strip()
-        admin_pin = self.su_admin_pin.text().strip()
 
         if not name or not username or not pin:
-            self.signup_error.setText("Please fill in Name, Username, and PIN.")
-            self.signup_error.show()
+            self._signup_problem("Fill in the name, the username and a PIN.")
             return
-
-        if not admin_pin:
-            self.signup_error.setText("Admin authorization required: Enter Admin PIN (1598).")
-            self.signup_error.show()
-            return
-
-        # Verify Admin PIN authorization
-        is_admin_valid = False
-        if admin_pin == "1598":
-            is_admin_valid = True
-        else:
-            admin_users = [u for u in q.list_users() if u.role == auth.ROLE_ADMIN]
-            for au in admin_users:
-                if q.sign_in(au.username, admin_pin):
-                    is_admin_valid = True
-                    break
-
-        if not is_admin_valid:
-            self.signup_error.setText("Admin authorization failed: Only the lab owner/admin can create staff accounts.")
-            self.signup_error.show()
-            return
-
         if pin != pin2:
-            self.signup_error.setText("The two PINs do not match.")
-            self.signup_error.show()
+            self._signup_problem("The two PINs are not the same.")
+            return
+        problem = auth.check_pin_quality(pin)
+        if problem:
+            self._signup_problem(problem)
             return
 
-        if len(pin) < 4:
-            self.signup_error.setText("PIN must be at least 4 digits.")
-            self.signup_error.show()
-            return
+        first_run = not q.list_users(include_inactive=True)
+        if first_run:
+            # Forced, not merely preselected: the role box is disabled on the
+            # first run, and a disabled box is not a promise.
+            role = auth.ROLE_ADMIN
+        else:
+            # Checked against a real administrator's stored PIN. There is no
+            # master PIN, and there was never a good reason for one.
+            if not [u for u in q.list_users() if u.is_admin]:
+                self._signup_problem(
+                    "There is no administrator on this PC to approve a new "
+                    "account. Ask whoever set LabSoft up.")
+                return
+            approver = (self.su_admin_user.currentData() or "").strip()
+            approval = self.su_admin_pin.text().strip()
+            # check_pin, not sign_in: approving an account must not quietly
+            # hand the counter over to whoever typed the PIN.
+            if not approval or not q.check_pin(approver, approval):
+                self._signup_problem(
+                    "That administrator's PIN does not match. Only an "
+                    "administrator can create an account.")
+                return
 
         try:
-            perms = auth.ALL_PERMISSIONS if role == auth.ROLE_ADMIN else auth.STAFF_DEFAULT
-            uid = q.create_user(username, name, pin, role, perms)
-            user = q.get_user(uid)
-            auth.set_current(user)
-            self.user = user
-            self.accept()
-        except Exception as exc:
-            self.signup_error.setText(str(exc))
-            self.signup_error.show()
+            perms = (auth.ALL_PERMISSIONS if role == auth.ROLE_ADMIN
+                     else auth.STAFF_DEFAULT)
+            q.create_user(username, name, pin, role, perms)
+        except Exception as exc:                       # readable, not a trace
+            self._signup_problem(str(exc))
+            return
+
+        # Created, but not signed in: whoever typed an administrator's PIN is
+        # not necessarily the person the account is for.
+        for box in (self.su_name, self.su_username, self.su_pin, self.su_pin2,
+                    self.su_admin_pin):
+            box.clear()
+        self.show_signin()
+        index = self.user_combo.findData(username)
+        if index >= 0:
+            self.user_combo.setCurrentIndex(index)
+        self.signin_error.setText(
+            f"{name} can sign in now. Hand the PC over and let them type "
+            f"their own PIN.")
+        self.signin_error.show()
+
+    def _signup_problem(self, text: str) -> None:
+        self.signup_error.setText(text)
+        self.signup_error.show()
 
 
 def sign_in_at_startup(parent=None) -> tuple[bool, Optional[auth.User]]:
-    """Shows the full borderless screen Modernist Sign In & Sign Up on startup."""
+    """Ask who is there, before anything is shown."""
     dlg = ModernLoginDialog(parent)
-    dlg.showFullScreen()
+    # Maximised, not full screen. Full screen took the title bar with it, so
+    # there was nothing to minimise or close the window with.
+    dlg.showMaximized()
+    fade_in(dlg, 180)
+    dlg.pin_edit.setFocus()
     if dlg.exec() != QDialog.DialogCode.Accepted:
         return False, None
     return True, dlg.user
-
-
-LoginDialog = ModernLoginDialog

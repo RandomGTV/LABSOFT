@@ -160,10 +160,47 @@ def test_clipboard_failure_is_told_to_the_operator(pdf, monkeypatch):
 
 
 def test_success_says_where_it_opened_and_for_whom(pdf, monkeypatch):
-    monkeypatch.setattr(snd, "desktop_app_available", lambda: False)
+    monkeypatch.setattr(snd, "desktop_app_available", lambda: True)
     monkeypatch.setattr(snd, "open_url", lambda url: True)
     monkeypatch.setattr(snd, "copy_file_to_clipboard", lambda p: True)
 
     result = snd.WhatsAppDesktopSender("91", "auto").send(pdf, "9876543210", "hi")
     assert "919876543210" in result.manual_step
     assert "Ctrl+V" in result.manual_step
+
+
+def test_the_browser_never_claims_the_report_is_on_the_clipboard(pdf, monkeypatch):
+    """A browser tab cannot take a file from LabSoft.
+
+    It used to say "press Ctrl+V then Enter to attach the report" whichever
+    of the two opened, so a report sent through WhatsApp Web went out as a
+    message with nothing attached and LabSoft recorded it as sent.
+    """
+    monkeypatch.setattr(snd, "desktop_app_available", lambda: False)
+    monkeypatch.setattr(snd, "open_url", lambda url: True)
+    monkeypatch.setattr(snd, "copy_file_to_clipboard", lambda p: True)
+
+    result = snd.WhatsAppDesktopSender("91", "auto").send(pdf, "9876543210", "hi")
+    assert result.channel == "whatsapp_web"
+    assert "Ctrl+V" not in result.manual_step
+    assert "Open folder" in result.manual_step
+
+
+def test_desktop_only_never_opens_the_browser(pdf, monkeypatch):
+    """The default. A message with no report on it is not a sent report."""
+    opened = []
+    monkeypatch.setattr(snd, "desktop_app_available", lambda: False)
+    monkeypatch.setattr(snd, "open_url", lambda url: opened.append(url) or True)
+    monkeypatch.setattr(snd, "copy_file_to_clipboard", lambda p: True)
+
+    with pytest.raises(snd.SendError) as caught:
+        snd.WhatsAppDesktopSender("91", "desktop").send(pdf, "9876543210", "hi")
+    assert opened == [], f"it opened {opened}"
+    assert "not installed" in str(caught.value)
+    assert str(pdf) in str(caught.value)
+
+
+def test_the_default_mode_is_the_application(pdf, monkeypatch):
+    from app import config
+
+    assert config.DEFAULT_SETTINGS["whatsapp_mode"] == "desktop"

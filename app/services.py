@@ -330,8 +330,6 @@ def report_path_for(job: dict) -> Path:
     details card was written into another.
     """
     folder = patient_folder(job["patient_id"])
-    when = q.to_dt(job.get("reported_at")) or q.to_dt(job.get("received_at")) \
-        or datetime.now()
     rev = int(job.get("revision_no") or 1)
     suffix = "" if rev <= 1 else f" R{rev}"
     return folder / f"Report_{job['report_no']}{suffix}.pdf"
@@ -496,13 +494,21 @@ def create_revision(job_id: int, reason: str = "") -> int:
 
     with q.transaction() as c:
         cur = c.execute(
+            # age_value_at_test / age_unit_at_test come across too. Without
+            # them the amended report fell back to the patient's age TODAY, so
+            # a correction issued months later re-ranged every result against
+            # the wrong age -- the exact thing the _at_test snapshot exists to
+            # prevent. A 10-day-old's haemoglobin came back HIGH on the
+            # corrected copy and normal on the original.
             "INSERT INTO jobs (report_no, patient_id, referrer_id, received_at, "
             "due_at, reported_at, status, name_at_test, age_at_test, sex_at_test, "
+            "age_value_at_test, age_unit_at_test, "
             "referrer_name, remarks, revision_no) "
-            "VALUES (?,?,?,?,?,NULL,?,?,?,?,?,?,?)",
+            "VALUES (?,?,?,?,?,NULL,?,?,?,?,?,?,?,?,?)",
             (job["report_no"], job["patient_id"], job["referrer_id"],
              job["received_at"], job["due_at"], turnaround.STATUS_IN_PROGRESS,
              job["name_at_test"], job["age_at_test"], job["sex_at_test"],
+             job["age_value_at_test"], job["age_unit_at_test"],
              job["referrer_name"], job["remarks"], next_rev))
         new_id = int(cur.lastrowid)
         for t in tests:

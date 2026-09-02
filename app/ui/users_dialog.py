@@ -135,9 +135,14 @@ class UsersDialog(QDialog):
         lay.setSpacing(10)
         lay.addWidget(label("Everyone who can sign in, and what each may do.", "hint"))
 
-        self.table = Table(["Name", "Username", "Account", "May…"],
+        self.table = Table(["Name", "Username", "Account", "Can do"],
                            stretch_column=3,
                            empty_text="No staff accounts yet.")
+        # Wide enough for a real name and a real role: at the default width
+        # every row read "Saheed ..." and "Administ...".
+        self.table.verticalHeader().setDefaultSectionSize(44)
+        for column, width in ((0, 220), (1, 150), (2, 150)):
+            self.table.setColumnWidth(column, width)
         self.table.doubleClicked.connect(self._edit)
         lay.addWidget(self.table, 1)
 

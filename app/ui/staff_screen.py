@@ -9,13 +9,15 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QFrame, QHBoxLayout, QLineEdit, QVBoxLayout, QWidget,
+)
 
 from ..core import auth
 from ..db import queries as q
 from . import style
 from .widgets import (
-    SearchBox, Table, button, confirm, info, label, row, warn,
+    SearchBox, Table, button, confirm, gutter, info, label, row, warn,
 )
 
 
@@ -26,36 +28,85 @@ class StaffScreen(QWidget):
         self._build()
         self.refresh()
 
+    #: caption and key for the figures over the list
+    FIGURES = [("Accounts", "total"), ("Can sign in", "active"),
+               ("Administrators", "admins"), ("Turned off", "off")]
+
     def _build(self) -> None:
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(14, 12, 14, 10)
-        lay.setSpacing(10)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        lay.addWidget(self._build_filter_bar())
 
-        lay.addWidget(label(
-            "Everyone who can sign in. Each person gets their own username and "
-            "PIN, and you tick exactly what they may do — every report, bill "
-            "and change is recorded against whoever made it.", "hint"))
-
-        self.search = SearchBox("Search staff by name or username…")
-        self.search.searched.connect(lambda _t: self.refresh())
-        lay.addWidget(row(self.search,
-                          button("Create login", "primary", self._add,
-                                 "Add a person with their own username and PIN"),
-                          button("Edit", "", self._edit),
-                          button("Set a new PIN", "", self._reset_pin),
-                          button("Turn off access", "danger", self._deactivate)))
-
-        self.table = Table(["Name", "Username", "Account", "May…"],
+        self.table = Table(["Name", "Username", "Account", "Can do"],
                            stretch_column=3,
                            empty_text="No staff accounts yet.\n\n"
                                       "Create one and LabSoft will ask for a PIN "
                                       "next time it opens.")
+        self.table.setObjectName("boardTable")
+        self.table.verticalHeader().setDefaultSectionSize(48)
+        for column, width in ((0, 250), (1, 180), (2, 190)):
+            self.table.setColumnWidth(column, width)
         self.table.doubleClicked.connect(self._edit)
-        lay.addWidget(self.table, 1)
+        lay.addWidget(gutter(self.table), 1)
+        lay.addWidget(self._build_foot())
 
-        self.note = label("", "hint")
-        self.note.setWordWrap(True)
+    def _build_filter_bar(self) -> QWidget:
+        bar = QFrame()
+        bar.setObjectName("filterBar")
+        lay = QVBoxLayout(bar)
+        lay.setContentsMargins(24, 20, 24, 18)
+        lay.setSpacing(12)
+
+        self.search = SearchBox("Search staff by name or username…")
+        self.search.searched.connect(lambda _t: self.refresh())
+        self.search.setFixedWidth(320)
+        self.search.setFixedHeight(34)
+
+        top = QHBoxLayout()
+        top.setSpacing(9)
+        top.addWidget(self.search)
+        top.addStretch(1)
+        top.addWidget(button("Turn off access", "danger", self._deactivate))
+        top.addWidget(button("Set a new PIN", "", self._reset_pin))
+        top.addWidget(button("Edit", "", self._edit))
+        top.addWidget(button("Create login", "primary", self._add,
+                             "Add a person with their own username and PIN"))
+        lay.addLayout(top)
+
+        figures = QHBoxLayout()
+        figures.setContentsMargins(0, 0, 0, 0)
+        figures.setSpacing(28)
+        self.figures = {}
+        for caption, key in self.FIGURES:
+            block = QFrame()
+            block.setObjectName("statBlock")
+            bl = QVBoxLayout(block)
+            bl.setContentsMargins(12, 0, 0, 0)
+            bl.setSpacing(0)
+            bl.addWidget(label(caption, "statlabel"))
+            value = label("—", "statvalue")
+            self.figures[key] = value
+            bl.addWidget(value)
+            figures.addWidget(block)
+        figures.addStretch(1)
+        lay.addLayout(figures)
+        return bar
+
+    def _build_foot(self) -> QWidget:
+        foot = QFrame()
+        foot.setObjectName("footBar")
+        foot.setFixedHeight(56)
+        lay = QHBoxLayout(foot)
+        lay.setContentsMargins(24, 0, 24, 0)
+        lay.setSpacing(20)
+        self.note = label("", "foot")
         lay.addWidget(self.note)
+        lay.addStretch(1)
+        lay.addWidget(label(
+            "PINs are stored scrambled — nobody can read one back, only set a "
+            "new one", "foot"))
+        return foot
 
     # ------------------------------------------------------------------ data
     def refresh(self) -> None:
@@ -84,13 +135,27 @@ class StaffScreen(QWidget):
 
         me = auth.current()
         active = sum(1 for u in everyone if u.active)
+        shown = {
+            "total": len(everyone),
+            "active": active,
+            "admins": sum(1 for u in everyone if u.is_admin and u.active),
+            "off": sum(1 for u in everyone if not u.active),
+        }
+        for _caption, key in self.FIGURES:
+            widget = self.figures[key]
+            widget.setText(str(shown[key]))
+            # Nobody able to sign in, or no administrator left, are the two
+            # states an operator has to notice from across the room.
+            alert = (key == "admins" and shown["admins"] == 0) or \
+                    (key == "active" and shown["active"] == 0)
+            widget.setProperty("alert", "true" if alert else "false")
+            widget.style().unpolish(widget)
+            widget.style().polish(widget)
+
         self.note.setText(
-            f"{active} account{'s' if active != 1 else ''} can sign in."
-            + (f"   Signed in as {me.label}." if me else
-               "   Nobody is signed in — LabSoft is running without accounts, "
-               "so everything is available to whoever is at the PC.")
-            + "\nPINs are stored scrambled: nobody, not even an administrator, "
-              "can read one back — you can only set a new one.")
+            f"Signed in as {me.label}" if me else
+            "Nobody is signed in — LabSoft is running without accounts, so "
+            "everything is available to whoever is at the PC")
 
     def _selected(self) -> Optional[auth.User]:
         i = self.table.selected_row()

@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QComboBox, QDialog, QVBoxLayout
 from ..core import turnaround
 from ..db import queries as q
 from . import style
-from .widgets import Table, button, field_label, label, row
+from .widgets import dialog_header, Table, button, field_label, label, row
 
 
 class HistoryDialog(QDialog):
@@ -22,6 +22,9 @@ class HistoryDialog(QDialog):
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(16, 14, 16, 14)
+        lay.addWidget(dialog_header(
+            f"History · {patient.get('name', '')}",
+            "Every result this patient has had here, newest first."))
         lay.setSpacing(10)
 
         bits = [patient.get("name", "")]
@@ -33,7 +36,14 @@ class HistoryDialog(QDialog):
             bits.append(patient["sex"])
         lay.addWidget(label("   ·   ".join(b for b in bits if b), "h1"))
 
-        self.jobs_table = Table(["Report No", "Date", "Tests", "Status"], stretch_column=2)
+        self.jobs_table = Table(
+            ["Report No", "Date", "Tests", "Status"], stretch_column=2,
+            empty_text="No visits recorded for this patient yet.\n\n"
+                       "Their first job will appear here.")
+        # A date column narrow enough to show "02-09-2..." is a date column
+        # that answers nothing.
+        for column, width in ((0, 110), (1, 130)):
+            self.jobs_table.setColumnWidth(column, width)
         lay.addWidget(field_label("Visits"))
         lay.addWidget(self.jobs_table, 1)
 
@@ -42,7 +52,11 @@ class HistoryDialog(QDialog):
         self.test_combo.currentIndexChanged.connect(self._load_trend)
         lay.addWidget(self.test_combo)
 
-        self.trend_table = Table(["Report No", "Date", "Result", ""], stretch_column=2)
+        self.trend_table = Table(
+            ["Report No", "Date", "Result", "Flag"], stretch_column=2,
+            empty_text="Pick a test above to see how it has moved.")
+        for column, width in ((0, 110), (1, 130)):
+            self.trend_table.setColumnWidth(column, width)
         lay.addWidget(self.trend_table, 1)
 
         lay.addWidget(row(None, button("Close", "primary", self.accept)))

@@ -1,127 +1,143 @@
-"""80mm POS Thermal Receipt Preview & Print Dialog."""
+"""The 80mm counter slip: what it will look like, and printing it.
+
+What is on screen here is the slip itself, painted by ``output.receipt`` at
+the size it prints. That is deliberate. The previous version drew its own
+HTML copy of a receipt, which meant two renderers that could disagree — and
+they did, in three ways at once:
+
+  * it read ``charged_paise`` and ``paid_paise`` off the bill row. The bills
+    table has neither column: it holds gross, discount and net, and what has
+    been paid is the sum of the payments table. Both reads fell through to
+    their defaults, so every slip printed "Amount Paid" equal to the total
+    and "Balance Due ₹0.00" however much was actually owed.
+  * every colour in it was written as ``#000`` and ``#444``, so in the night
+    theme the whole receipt was black text on a dark panel.
+  * printing did not print the receipt. It drew two lines of text — the
+    report number and a figure — and stopped.
+
+A receipt is white paper in both themes, so the preview is an image of the
+paper on a plain mount rather than a screen-coloured imitation of it.
+"""
 
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QPainter
+from PyQt6.QtGui import QPixmap
+from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
 from PyQt6.QtWidgets import (
-    QDialog, QFrame, QHBoxLayout, QLabel, QTextEdit,
-    QVBoxLayout, QWidget
+    QDialog, QFileDialog, QFrame, QScrollArea, QVBoxLayout, QWidget,
 )
-from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 
+from .. import config, services
 from ..core import billing
 from ..db import queries as q
-from . import style
-from .widgets import button, label, row
+from ..output import receipt as rcpt
+from .widgets import button, dialog_header, error, info, label, row
+
+#: the slip on screen, in pixels. 80mm at roughly 5 px/mm reads comfortably.
+PREVIEW_W = 400
 
 
 class POSReceiptDialog(QDialog):
-    """80mm POS Thermal Bill Receipt Preview & Printer."""
+    """Preview and print the 80mm slip for one job."""
 
     def __init__(self, parent: QWidget | None, job_id: int):
         super().__init__(parent)
-        self.setWindowTitle("80mm POS Thermal Receipt Preview")
-        self.setFixedWidth(400)
-        self.setFixedHeight(600)
         self.job_id = job_id
         self.job = q.get_job(job_id) or {}
-        self.bill = q.get_bill(job_id) or {}
-        self.settings = q.all_settings()
-        self._build_ui()
+        self.setWindowTitle(f"Counter slip — report {self.job.get('report_no', '')}")
+        self.resize(520, 720)
+        self._build()
+        self.refresh()
 
-    def _build_ui(self) -> None:
+    # ----------------------------------------------------------------- build
+    def _build(self) -> None:
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(18, 18, 18, 18)
-        lay.setSpacing(12)
+        lay.setContentsMargins(16, 14, 16, 14)
+        lay.setSpacing(10)
+        lay.addWidget(dialog_header(
+            "Counter slip · 80mm",
+            "Exactly what the thermal printer will put on the roll."))
 
-        lay.addWidget(label("80mm Thermal Receipt (POS Slip)", "strong"))
+        self.paper = label("")
+        self.paper.setAlignment(Qt.AlignmentFlag.AlignHCenter
+                                | Qt.AlignmentFlag.AlignTop)
 
-        # Thermal Receipt Card
-        receipt_frame = QFrame()
-        receipt_frame.setStyleSheet(
-            f"background: {style.PANEL}; border: 1px solid {style.FIELD_BORDER}; "
-            f"border-radius: 0; padding: 12px;"
-        )
-        rl = QVBoxLayout(receipt_frame)
-        rl.setSpacing(2)
+        mount = QFrame()
+        mount.setObjectName("slipMount")
+        ml = QVBoxLayout(mount)
+        ml.setContentsMargins(20, 20, 20, 20)
+        ml.addWidget(self.paper)
+        ml.addStretch(1)
 
-        lab_prefix = self.settings.get("lab_name_prefix", "MITHRA")
-        lab_name = self.settings.get("lab_name", "DIAGNOSTIC LABORATORY")
-        address = self.settings.get("lab_address", "Medical Centre Road")
-        phone = self.settings.get("lab_phone", "9876543210")
+        scroll = QScrollArea()
+        scroll.setObjectName("slipScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(mount)
+        lay.addWidget(scroll, 1)
 
-        header_html = (
-            f"<div style='text-align:center; font-family:monospace;'>"
-            f"<b style='font-size:12pt; color:#000;'>{lab_prefix} {lab_name}</b><br>"
-            f"<span style='font-size:8pt; color:#444;'>{address}<br>Ph: {phone}</span><br>"
-            f"<b>----------------------------------------</b><br>"
-            f"<b style='font-size:9.5pt;'>TAX INVOICE / CASH RECEIPT</b><br>"
-            f"<b>----------------------------------------</b>"
-            f"</div>"
-        )
-        rl.addWidget(QLabel(header_html))
+        self.summary = label("", "hint")
+        lay.addWidget(self.summary)
 
-        p_name = self.job.get("name_at_test") or self.job.get("patient_name", "")
-        r_no = self.job.get("report_no", self.job_id)
-        date_str = str(self.job.get("received_at", ""))[:16]
-        doctor = self.job.get("referrer_name", "SELF / DIRECT")
+        lay.addWidget(row(
+            None,
+            button("Save as PDF", "", self._save_pdf),
+            button("Close", "", self.reject),
+            button("Print slip", "primary", self._print)))
 
-        meta_html = (
-            f"<div style='font-family:monospace; font-size:8.5pt; color:#000; line-height:1.4;'>"
-            f"Bill No: <b>#{r_no}</b> &nbsp;&nbsp; Date: {date_str}<br>"
-            f"Patient: <b>{p_name}</b><br>"
-            f"Ref By : {doctor}<br>"
-            f"----------------------------------------"
-            f"</div>"
-        )
-        rl.addWidget(QLabel(meta_html))
+    # ------------------------------------------------------------------ data
+    def refresh(self) -> None:
+        try:
+            self.data = services.build_bill_data(self.job_id)
+        except Exception as exc:
+            error(self, "Nothing to print", str(exc))
+            self.summary.setText("")
+            return
 
-        # Items Table
-        tests = q.job_tests(self.job_id)
-        items_html = "<table style='width:100%; font-family:monospace; font-size:8.5pt; color:#000;'>"
-        items_html += "<tr><th align='left'>Test Description</th><th align='right'>Amount</th></tr>"
-        total_p = 0
-        for t in tests:
-            rate = t.get("rate_paise", 0)
-            total_p += rate
-            items_html += f"<tr><td>{t['name'][:24]}</td><td align='right'>₹{rate/100:.2f}</td></tr>"
-        items_html += "</table>"
-        rl.addWidget(QLabel(items_html))
+        image = rcpt.render_slip(self.data, PREVIEW_W)
+        self.paper.setPixmap(QPixmap.fromImage(image))
+        self.paper.setFixedSize(image.width(), image.height())
 
-        charged_p = self.bill.get("charged_paise", total_p)
-        disc_p = self.bill.get("discount_paise", 0)
-        paid_p = self.bill.get("paid_paise", charged_p)
-        bal_p = max(0, charged_p - disc_p - paid_p)
+        totals = self.data.totals()
+        money = q.job_money(self.job_id)
+        # Read back from the ledger as well as from the document, and say so
+        # if the two ever disagree — that is the failure this screen had.
+        agrees = (not money["billed"]
+                  or (money["net_paise"] == totals.net_paise
+                      and money["paid_paise"] == totals.paid_paise))
+        self.summary.setText(
+            f"Net {billing.format_rupees(totals.net_paise)} · "
+            f"paid {billing.format_rupees(totals.paid_paise)} · "
+            f"balance {billing.format_rupees(totals.balance_paise)}"
+            + ("" if agrees else
+               "   ⚠ this does not match the ledger — reopen the bill and save it"))
+        self.summary.setProperty("role", "hint" if agrees else "error")
+        self.summary.style().unpolish(self.summary)
+        self.summary.style().polish(self.summary)
 
-        totals_html = (
-            f"<div style='font-family:monospace; font-size:8.5pt; color:#000; line-height:1.5; margin-top:6px;'>"
-            f"----------------------------------------<br>"
-            f"Gross Total : <b style='float:right;'>₹{charged_p/100:.2f}</b><br>"
-            f"Discount    : <span style='float:right;'>₹{disc_p/100:.2f}</span><br>"
-            f"<b style='font-size:10pt;'>NET PAYABLE : <span style='float:right;'>₹{(charged_p - disc_p)/100:.2f}</span></b><br>"
-            f"Amount Paid : <span style='float:right;'>₹{paid_p/100:.2f}</span><br>"
-            f"Balance Due : <span style='float:right;'>₹{bal_p/100:.2f}</span><br>"
-            f"----------------------------------------<br>"
-            f"<div style='text-align:center; font-size:8pt; margin-top:4px;'>* Thank You & Wish You Good Health *</div>"
-            f"</div>"
-        )
-        rl.addWidget(QLabel(totals_html))
-        lay.addWidget(receipt_frame, 1)
-
-        print_btn = button("🖨️ Print 80mm Receipt", "primary", self._print_pos)
-        close_btn = button("Close", "", self.accept)
-        lay.addWidget(row(None, close_btn, print_btn))
-
-    def _print_pos(self) -> None:
+    # --------------------------------------------------------------- actions
+    def _print(self) -> None:
         printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-        dialog = QPrintDialog(printer, self)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            painter = QPainter(printer)
-            painter.setFont(QFont("Courier", 9))
-            p_name = self.job.get("name_at_test") or self.job.get("patient_name", "")
-            r_no = self.job.get("report_no", self.job_id)
-            painter.drawText(10, 20, f"LAB #{r_no} - {p_name}")
-            painter.drawText(10, 40, f"Paid: ₹{self.bill.get('paid_paise', 0)/100:.2f}")
-            painter.end()
-            self.accept()
+        printer.setFullPage(True)
+        if QPrintDialog(printer, self).exec() != QDialog.DialogCode.Accepted:
+            return
+        try:
+            rcpt.print_slip(self.data, printer)
+        except Exception as exc:
+            error(self, "The slip did not print", str(exc))
+            return
+        q.log_action("slip_printed", "job", self.job_id)
+        self.accept()
+
+    def _save_pdf(self) -> None:
+        default = config.exports_dir() / f"slip_{self.data.bill_no}.pdf"
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save the slip", str(default), "PDF (*.pdf)")
+        if not path:
+            return
+        try:
+            written = rcpt.write_slip_pdf(self.data, path)
+        except Exception as exc:
+            error(self, "The slip was not saved", str(exc))
+            return
+        info(self, "Saved", f"Written to:\n{written}")

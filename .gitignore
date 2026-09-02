@@ -1,21 +1,41 @@
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.pytest_cache/
-.coverage
-htmlcov/
+# Nothing belonging to a patient leaves this PC through git.
+#
+# There was no .gitignore here at all, and PUSH TO GIT.bat runs `git add -A`
+# from this folder — so the database, every backup of it, and every report PDF
+# were staged along with the code. It has happened once already; PURGE PATIENT
+# PDFS FROM HISTORY.bat exists to undo that push.
+
+# The database and its copies
+data/
 *.db
-*.sqlite3
-*.log
-scratch/
-.system_generated/
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Everything written about a patient
 patients/
 reports/
 exports/
-backups/
-LabSoft.zip
+logs/
 
-# Patient reports uploaded to the design canvas. Kept on this PC,
-# never sent to GitHub.
-labsoft-design-system/project/uploads/
+# Machine-local
+python_path.txt
+__pycache__/
+*.pyc
+.venv/
+venv/
+build/
+dist/
+*.spec
+
+# The design handoff bundle. Its project/uploads/ folder holds real patient
+# reports — the ones the screens were drawn from — and none of it is read by
+# the program. CLEAN UP.bat removes it; this keeps it out of git meanwhile.
+labsoft-design-system/
+*.zip
+
+# Editors
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -51,7 +51,7 @@ class AnalyticsScreen(QWidget):
 
         body = QWidget()
         body_lay = QHBoxLayout(body)
-        body_lay.setContentsMargins(18, 16, 18, 16)
+        body_lay.setContentsMargins(24, 20, 24, 20)
         body_lay.setSpacing(18)
 
         self.tests_table = Table(["Department", "Tests"], stretch_column=0,
@@ -65,9 +65,9 @@ class AnalyticsScreen(QWidget):
 
         foot = QWidget()
         foot.setObjectName("footBar")
-        foot.setFixedHeight(40)
+        foot.setFixedHeight(52)
         fl = QHBoxLayout(foot)
-        fl.setContentsMargins(18, 0, 18, 0)
+        fl.setContentsMargins(24, 0, 24, 0)
         self.as_of = label("", "foot")
         fl.addWidget(self.as_of)
         fl.addStretch(1)
@@ -79,7 +79,7 @@ class AnalyticsScreen(QWidget):
         bar = QWidget()
         bar.setObjectName("filterBar")
         lay = QVBoxLayout(bar)
-        lay.setContentsMargins(18, 14, 18, 14)
+        lay.setContentsMargins(24, 20, 24, 18)
         lay.setSpacing(12)
 
         head = QHBoxLayout()

@@ -602,9 +602,12 @@ class JobScreen(QWidget):
                 cell = self.bill_stats[caption]
                 cell.setText(text)
                 loud = due and caption in ("Discount", "Outstanding")
+                # MONEY_ALERT, not BRAND: see the token's own note. Weight as
+                # well as colour, so the two figures that say money is owed
+                # read as louder even where the difference is subtle.
                 cell.setStyleSheet(
-                    f"color: {style.BRAND if loud else style.ON_INK}; "
-                    f"font-size: 12.5pt; font-weight: 700;")
+                    f"color: {style.MONEY_ALERT if loud else style.ON_MONEY}; "
+                    f"font-size: 12.5pt; font-weight: {800 if loud else 700};")
 
         if not self.job_id:
             self.bill_summary.setText("—")
@@ -800,6 +803,8 @@ class JobScreen(QWidget):
 
         block, inner = self._counsel_block("Clinical Remarks & Smear Impression")
         self.remarks_edit = QTextEdit()
+        # Tab leaves the box rather than typing a tab into it.
+        self.remarks_edit.setTabChangesFocus(True)
         self.remarks_edit.setFixedHeight(72)
         self.remarks_edit.setPlaceholderText("Enter clinical remarks and smear impression...")
         self.remarks_edit.textChanged.connect(self._remarks_changed)
@@ -881,8 +886,15 @@ class JobScreen(QWidget):
         self._refresh_printed_name()
         self.phone_edit.setText(job["patient_phone"] or "")
         self.sex_combo.setCurrentText(job["patient_sex"] or "")
-        self.age_spin.setValue(int(job["age_value"] or 0))
-        self.age_unit.setCurrentText((job["age_unit"] or "Years").title())
+        # The age recorded ON THIS JOB, not the patient's age today. Reading
+        # the patient row showed "3 Years" in the box while the report printed
+        # the "10 Days" the job was actually taken at.
+        age_value = job["age_value_at_test"]
+        age_unit = job["age_unit_at_test"]
+        if age_value is None:
+            age_value, age_unit = job["age_value"], job["age_unit"]
+        self.age_spin.setValue(int(age_value or 0))
+        self.age_unit.setCurrentText((age_unit or "Years").title())
         self._reload_referrers(keep_id=job["referrer_id"])
         self._reload_panels()
 
@@ -929,12 +941,21 @@ class JobScreen(QWidget):
             self.name_matches.addItem(item)
         self.name_matches.setVisible(bool(matches))
 
-    def _pick_existing_patient(self, item: QListWidgetItem) -> None:
-        pid = item.data(Qt.ItemDataRole.UserRole)
-        p = q.get_patient(pid)
+    def new_job_for(self, patient_id: int) -> None:
+        """A fresh job with the patient already filled in.
+
+        Reception has just found this person on the Patients screen; making
+        them type the name again is how a second record for the same person
+        gets created.
+        """
+        self.new_job()
+        self._fill_patient_fields(q.get_patient(patient_id))
+
+    def _fill_patient_fields(self, p) -> None:
+        """Put a patient's details into the intake fields."""
         if not p:
             return
-        self.patient_id = pid
+        self.patient_id = int(p["id"])
         self.name_edit.setText(p["name"])
         self.initial_edit.setText(p["initial"] or "")
         self._refresh_printed_name()
@@ -943,12 +964,19 @@ class JobScreen(QWidget):
         self.age_spin.setValue(int(p["age_value"] or 0))
         self.age_unit.setCurrentText((p["age_unit"] or "Years").title())
         self.name_matches.hide()
+
+    def _pick_existing_patient(self, item: QListWidgetItem) -> None:
+        person = q.get_patient(item.data(Qt.ItemDataRole.UserRole))
+        if not person:
+            return
+        self._fill_patient_fields(person)
         self.history_button.setEnabled(True)
         if hasattr(self, 'remarks_edit'):
             self.remarks_edit.clear()
         self.repeat_row.setVisible(bool(self._previous_test_ids()))
         self.test_search.setFocus()
-        self.message.setText(f"Loaded {p['name']} — details filled in from their last visit.")
+        self.message.setText(
+            f"Loaded {person['name']} — details filled in from their last visit.")
         self.message.setStyleSheet(f"color: {style.GREEN}; font-weight: 600;")
 
     ADD_DOCTOR = -1        # the "add a new one" entry at the foot of the list
@@ -1340,6 +1368,10 @@ class JobScreen(QWidget):
         except Exception as exc:                      # pragma: no cover - defensive
             self.message.setText(f"Could not calculate: {exc}")
             self.message.setProperty("role", "error")
+            # An inline rule beats the sheet, and save() leaves one behind in
+            # the success green — so a failure was reported in the colour that
+            # means "saved".
+            self.message.setStyleSheet(f"color: {style.RED}; font-weight: 600;")
             return
 
         for jt, rr in self.rows.items():
@@ -1450,7 +1482,7 @@ class JobScreen(QWidget):
         elif "sent" in st:
             st_type = "sent"
         fg, bg, edge = style.status_fill(st_type)
-        self.status_label.setText(turnaround.status_label(job["status"]).upper())
+        self.status_label.setText(turnaround.status_label(job["status"]))
         self.status_label.setStyleSheet(
             f"color: {fg}; background: {bg}; border: 1px solid {edge}; "
             f"padding: 2px 9px; font-size: 8pt; font-weight: 800;")
@@ -1594,7 +1626,14 @@ class JobScreen(QWidget):
                      # Stored as printed, so a name corrected later never
                      # changes what a report already sent out said.
                      name_at_test=q.full_name(data["name"], data.get("initial")),
-                     sex_at_test=data["sex"] or "")
+                     sex_at_test=data["sex"] or "",
+                     # The age as well. The reference range that decides
+                     # whether a result reads normal or HIGH is chosen by it,
+                     # so an age correction that stops at the patient record
+                     # is a correction that never reaches the report.
+                     age_at_test=q.age_text(data),
+                     age_value_at_test=data.get("age_value"),
+                     age_unit_at_test=(data.get("age_unit") or "").lower())
         self._recalc()
         self.message.setText("Saved")
         self.message.setProperty("role", "ok")

@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import urllib.parse
-import webbrowser
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QLabel, QTextEdit,
     QVBoxLayout, QWidget
 )
 
+from ..db import queries as q
 from . import style
-from .widgets import button, label, row, info
+from .widgets import button, label, row, info, warn
 
 
 class WhatsAppDialog(QDialog):
@@ -27,7 +26,11 @@ class WhatsAppDialog(QDialog):
             self.phone = "91" + self.phone
 
         self.msg_text = (
-            f"*🧪 MITHRA DIAGNOSTIC CLINICAL LABORATORY*\n"
+            # The laboratory's real name, not one written into the code:
+            # "MITHRA DIAGNOSTIC CLINICAL LABORATORY" is not what the
+            # letterhead says, and a lab that renames itself under Settings
+            # would have gone on sending the old name here for ever.
+            f"*🧪 {((q.get_setting('lab_name_prefix') + ' ' + q.get_setting('lab_name')).strip() or 'Laboratory').upper()}*\n"
             f"*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━*\n"
             f"👤 *Patient:* {job_data.get('patient_name', '')}\n"
             f"📋 *Report No:* #{job_data.get('report_no', '')}\n"
@@ -47,8 +50,8 @@ class WhatsAppDialog(QDialog):
         lay.setContentsMargins(20, 20, 20, 20)
         lay.setSpacing(12)
 
-        title = label("WhatsApp Dispatch (Direct Clinician/Patient Dispatch)", "strong")
-        title.setStyleSheet(f"font-size: 12pt; color: {style.INK}; font-weight: 800;")
+        title = label("Send this report on WhatsApp", "cardtitle")
+        title.setStyleSheet(f"font-size: 13pt; color: {style.INK}; font-weight: 700;")
         lay.addWidget(title)
 
         meta = QLabel(f"Recipient: <b>+{self.phone}</b> ({self.job_data.get('patient_name', '')})")
@@ -81,8 +84,37 @@ class WhatsAppDialog(QDialog):
         info(self, "Copied", "WhatsApp message text copied to clipboard!")
 
     def _open_whatsapp(self) -> None:
-        text = self.preview_box.toPlainText()
-        encoded = urllib.parse.quote(text)
-        url = f"https://wa.me/{self.phone}?text={encoded}"
-        webbrowser.open(url)
+        """Open the chat through the shared sender, not through wa.me.
+
+        This used to build `https://wa.me/<number>?text=<the whole report>`
+        and hand it to the browser. Every result on the job — HIV, HBsAg, a
+        pregnancy test — travelled to Meta's redirect service as a query
+        string, and stayed in the browser's history and address bar. The
+        sender opens the WhatsApp application on the right chat instead, and
+        only the covering message goes in the URL.
+        """
+        from ..output import sender as snd
+
+        try:
+            result = snd.open_chat(
+                self.phone, self.covering_message(),
+                q.get_setting("country_code") or "91",
+                q.get_setting("whatsapp_mode") or "desktop")
+        except snd.SendError as exc:
+            warn(self, "WhatsApp did not open", str(exc))
+            return
+        info(self, "WhatsApp opened",
+             f"{result.manual_step}\n\nThe results are on the clipboard if "
+             f"you want them in the message — paste them yourself. Nothing "
+             f"has been sent.")
         self.accept()
+
+    def covering_message(self) -> str:
+        """The short line that goes in the URL. Not the results."""
+        name = (self.job_data.get("patient_name")
+                or self.job_data.get("name") or "").strip()
+        report = self.job_data.get("report_no", "")
+        lab = (q.get_setting("lab_name_prefix") + " "
+               + q.get_setting("lab_name")).strip()
+        return (f"Dear {name}, your report {report} from {lab} is ready. "
+                f"The report is attached.").strip()

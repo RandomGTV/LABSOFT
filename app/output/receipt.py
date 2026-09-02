@@ -16,13 +16,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from PyQt6.QtCore import QMarginsF, QRectF
+from PyQt6.QtCore import QMarginsF, QRectF, QSizeF, Qt
 from PyQt6.QtGui import QColor, QImage, QPageLayout, QPageSize, QPainter, QPdfWriter
 
 from ..core import billing
 from .report import (
     BLACK, GREY, MARGIN_B, MARGIN_L, MARGIN_R, PAGE_H, PAGE_W, SANS, SERIF,
-    BLUE_DARK, BLUE_PRIMARY, BLUE_TINT, _Renderer, _require_qt_application,
+    BLUE_DARK, BLUE_TINT, _Renderer, _require_qt_application,
 )
 
 ITEM_H = 5.6
@@ -326,3 +326,237 @@ def print_bill(data: BillData, printer, with_header: Optional[bool] = None) -> N
                    with_header=with_header)
     finally:
         painter.end()
+
+
+# ==========================================================================
+# The 80mm counter slip
+# ==========================================================================
+#
+# A different document from the A4 bill above, not a shrunk copy of it. A
+# thermal roll is 80mm wide with about 72mm of printable paper, has no colour,
+# and is cut to whatever length the content needs rather than to a page.
+#
+# The slip this replaces was built as HTML in the preview dialog, with the
+# figures read from columns the bills table does not have and the colours
+# hardcoded to black -- so it printed the wrong totals in the daylight theme
+# and was invisible in the night one. There is one renderer now, and what the
+# preview shows is what the printer is handed.
+
+SLIP_W = 80.0                  # the paper
+SLIP_MARGIN = 4.0              # unprintable edge on a typical 80mm head
+SLIP_LH = 4.2                  # a line of body text
+SLIP_MONO = "Consolas"         # falls back through the style hint below
+
+
+def _slip_content_w() -> float:
+    return SLIP_W - 2 * SLIP_MARGIN
+
+
+class _Slip:
+    """A tiny painter for the roll. Millimetres in, device units out."""
+
+    def __init__(self, painter: QPainter, dpmm: float):
+        self.p = painter
+        self.k = dpmm
+        self.y = SLIP_MARGIN
+
+    def font(self, size_pt: float, bold: bool = False):
+        from PyQt6.QtGui import QFont
+
+        f = QFont(SLIP_MONO)
+        f.setPointSizeF(size_pt)
+        f.setBold(bold)
+        # Fixed pitch: a column of rupees on a receipt has to line up, and a
+        # proportional face on a 72mm roll never does.
+        f.setStyleHint(QFont.StyleHint.TypeWriter)
+        f.setFixedPitch(True)
+        return f
+
+    def _metrics(self, font):
+        from PyQt6.QtGui import QFontMetricsF
+
+        return QFontMetricsF(font, self.p.device())
+
+    def fit(self, s: str, font, width_mm: float) -> str:
+        if not s:
+            return ""
+        return self._metrics(font).elidedText(
+            s, Qt.TextElideMode.ElideRight, int(max(0.0, width_mm) * self.k))
+
+    def line_of(self, s: str, font, align: str = "left",
+                x: float = None, width: float = None,
+                colour: QColor = BLACK, advance: float = None) -> None:
+        from PyQt6.QtGui import QPen
+
+        x = SLIP_MARGIN if x is None else x
+        width = _slip_content_w() if width is None else width
+        self.p.setFont(font)
+        self.p.setPen(QPen(colour))
+        h = self._metrics(font).height() / self.k
+        flag = {"left": Qt.AlignmentFlag.AlignLeft,
+                "center": Qt.AlignmentFlag.AlignHCenter,
+                "right": Qt.AlignmentFlag.AlignRight}[align]
+        self.p.drawText(
+            QRectF(x * self.k, self.y * self.k, width * self.k, h * 1.5 * self.k),
+            int(flag | Qt.AlignmentFlag.AlignVCenter), s)
+        self.y += advance if advance is not None else h * 1.25
+
+    def pair(self, left: str, right: str, font, bold_right: bool = False,
+             right_font=None) -> None:
+        """A caption on the left and a figure hard against the right edge."""
+        rf = right_font or font
+        w = _slip_content_w()
+        self.p.setFont(font)
+        h = self._metrics(font).height() / self.k
+        self.line_of(self.fit(left, font, w * 0.62), font, advance=0)
+        self.line_of(right, rf, align="right", advance=h * 1.25)
+
+    def rule(self, dashed: bool = True) -> None:
+        from PyQt6.QtGui import QPen
+
+        pen = QPen(BLACK)
+        pen.setWidthF(max(1.0, 0.25 * self.k))
+        if dashed:
+            pen.setDashPattern([3, 3])
+        self.p.setPen(pen)
+        # Set clear of the line above it: at 0.8mm the rule was printing
+        # through the descenders of the row before it.
+        y = (self.y + 1.6) * self.k
+        self.p.drawLine(int(SLIP_MARGIN * self.k), int(y),
+                        int((SLIP_W - SLIP_MARGIN) * self.k), int(y))
+        self.y += 4.0
+
+    def gap(self, mm: float = 1.6) -> None:
+        self.y += mm
+
+
+def paint_slip(painter: QPainter, data: BillData, dpmm: float) -> float:
+    """Draw the counter slip. Returns the height used, in millimetres."""
+    s = _Slip(painter, dpmm)
+    totals = data.totals()
+
+    name = f"{data.setting('lab_name_prefix')} {data.setting('lab_name')}".strip()
+    s.line_of(s.fit(name or "Laboratory", s.font(11, bold=True), _slip_content_w()),
+              s.font(11, bold=True), align="center")
+    for extra in (data.setting("lab_address_1"), data.setting("lab_address_2"),
+                  data.setting("lab_phone")):
+        if extra.strip():
+            s.line_of(s.fit(extra.strip(), s.font(7), _slip_content_w()),
+                      s.font(7), align="center")
+    s.gap(1.0)
+    # No "TAX INVOICE". This laboratory does not issue one, and printing the
+    # words on a slip that carries no tax number is a claim it cannot support.
+    s.line_of("CASH RECEIPT", s.font(9, bold=True), align="center")
+    s.rule()
+
+    body = s.font(8)
+    bodyb = s.font(8, bold=True)
+    s.pair("Bill no", data.bill_no, body, right_font=bodyb)
+    s.pair("Date", data.date_text, body)
+    s.pair("Patient", s.fit(data.name, bodyb, _slip_content_w() * 0.55), body,
+           right_font=bodyb)
+    who = " / ".join(x for x in (data.sex, data.age) if x)
+    if who:
+        s.pair("Sex / Age", who, body)
+    if (data.referred_by or "").strip():
+        s.pair("Ref. by", s.fit(data.referred_by, body, _slip_content_w() * 0.55),
+               body)
+    s.rule()
+
+    s.pair("Item", "Amount", bodyb)
+    s.rule()
+    for item in data.lines:
+        label = item.label if item.qty <= 1 else f"{item.label} x{item.qty}"
+        s.pair(s.fit(label, body, _slip_content_w() * 0.62),
+               billing.format_rupees(item.amount_paise, symbol=False), body)
+    s.rule()
+
+    s.pair("Gross", billing.format_rupees(totals.gross_paise, symbol=False), body)
+    if totals.discount_paise:
+        s.pair("Discount",
+               "-" + billing.format_rupees(totals.discount_paise, symbol=False), body)
+    s.pair("NET PAYABLE",
+           billing.format_rupees(totals.net_paise, symbol=False),
+           s.font(9.5, bold=True))
+    s.pair("Paid", billing.format_rupees(totals.paid_paise, symbol=False), body)
+    s.pair("Balance", billing.format_rupees(totals.balance_paise, symbol=False),
+           bodyb)
+    s.rule()
+
+    for pay in data.payments:
+        s.line_of(f"{billing.format_rupees(pay.amount_paise, symbol=False)}"
+                  f"  {(pay.mode or 'cash').title()}"
+                  f"  {(pay.when or '')[:16]}", s.font(7))
+    if data.payments:
+        s.gap(0.8)
+
+    if data.made_by:
+        s.line_of(f"Billed by {data.made_by}", s.font(7), align="center")
+    s.line_of("Thank you, and keep well.", s.font(8), align="center")
+    s.gap(6.0)                      # room for the cutter
+    return s.y
+
+
+def slip_height_mm(data: BillData, dpmm: float = 12.0) -> float:
+    """How long the roll has to be. Measured by painting it and throwing it away."""
+    _require_qt_application()
+
+    probe = QImage(int(SLIP_W * dpmm), int(600 * dpmm), QImage.Format.Format_RGB32)
+    probe.fill(0xFFFFFFFF)
+    painter = QPainter(probe)
+    try:
+        return paint_slip(painter, data, dpmm)
+    finally:
+        painter.end()
+
+
+def render_slip(data: BillData, width_px: int = 420) -> QImage:
+    """The slip as one image, at the width the preview shows it."""
+    _require_qt_application()
+
+    dpmm = width_px / SLIP_W
+    height = slip_height_mm(data, dpmm)
+    image = QImage(width_px, int(round(height * dpmm)), QImage.Format.Format_RGB32)
+    image.fill(0xFFFFFFFF)
+    painter = QPainter(image)
+    try:
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, True)
+        paint_slip(painter, data, dpmm)
+    finally:
+        painter.end()
+    return image
+
+
+def print_slip(data: BillData, printer) -> None:
+    """Send the slip to a thermal printer at its own resolution."""
+    dpmm = printer.resolution() / 25.4
+    painter = QPainter()
+    if not painter.begin(printer):
+        raise RuntimeError("The printer could not be opened.")
+    try:
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, True)
+        paint_slip(painter, data, dpmm)
+    finally:
+        painter.end()
+
+
+def write_slip_pdf(data: BillData, path: Path, dpi: int = 300) -> Path:
+    """The slip as a PDF on 80mm paper, for a lab with no thermal printer."""
+    _require_qt_application()
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    height = max(60.0, slip_height_mm(data))
+    writer = QPdfWriter(str(path))
+    writer.setResolution(dpi)
+    writer.setPageSize(QPageSize(QSizeF(SLIP_W, height), QPageSize.Unit.Millimeter,
+                                 "Slip", QPageSize.SizeMatchPolicy.ExactMatch))
+    writer.setPageMargins(QMarginsF(0, 0, 0, 0), QPageLayout.Unit.Millimeter)
+    painter = QPainter(writer)
+    try:
+        paint_slip(painter, data, writer.resolution() / 25.4)
+    finally:
+        painter.end()
+    return path

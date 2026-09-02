@@ -1,4 +1,9 @@
-"""Settings: everything about the lab that appears on a report."""
+"""Settings: everything about the lab that appears on a report.
+
+Nine sections down a rail on the left, one of them shown at a time. It was
+one scrolling column of nine boxed groups and about sixty fields, which meant
+finding "Back up now" involved scrolling past the whole letterhead.
+"""
 
 from __future__ import annotations
 
@@ -6,9 +11,11 @@ import shutil
 from pathlib import Path
 from typing import Dict
 
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
-    QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout, QGroupBox,
-    QLineEdit, QPlainTextEdit, QScrollArea, QVBoxLayout, QWidget,
+    QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout, QFrame,
+    QHBoxLayout, QLineEdit, QListWidget, QPlainTextEdit, QScrollArea,
+    QStackedWidget, QVBoxLayout, QWidget,
 )
 
 from .. import config
@@ -17,7 +24,14 @@ from . import style
 from .widgets import button, confirm, error, field_label, info, label, row, warn
 
 
+#: One label column for every group on the page.
+LABEL_W = 168
+
+
 class SettingsScreen(QWidget):
+    #: raised after Save, so the shell can re-read the laboratory's name
+    settings_saved = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.editors: Dict[str, QWidget] = {}
@@ -25,166 +39,349 @@ class SettingsScreen(QWidget):
         self.reload()
 
     def _build(self) -> None:
+        """A rail of sections on the left, one section at a time on the right.
+
+        Settings used to be every group stacked into one scrolling column --
+        nine cards and about sixty fields, with the only way to reach the
+        backup buttons being to scroll past all of it. The same content is
+        here; it is just no longer all on screen at once.
+        """
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(14, 12, 14, 10)
-        outer.setSpacing(10)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        head = QFrame()
+        head.setObjectName("filterBar")
+        hl = QVBoxLayout(head)
+        hl.setContentsMargins(24, 16, 24, 14)
+        hl.setSpacing(3)
+        hl.addWidget(label("Settings", "h1"))
+        hl.addWidget(label(
+            "The laboratory's own details, how the report prints, and where "
+            "backups go. Changes take effect on the next report.", "hint"))
+        outer.addWidget(head)
+
+        body = QWidget()
+        bl = QHBoxLayout(body)
+        bl.setContentsMargins(0, 0, 0, 0)
+        bl.setSpacing(0)
+
+        self.rail = QListWidget()
+        self.rail.setObjectName("settingsRail")
+        self.rail.setFixedWidth(232)
+        self.rail.setAccessibleName("Settings sections")
+        bl.addWidget(self.rail)
+
+        self.pages = QStackedWidget()
+        bl.addWidget(self.pages, 1)
+        outer.addWidget(body, 1)
+
+        for title, blurb, build in (
+                ("Laboratory", "The name, address and phone line that print "
+                 "at the top of every report.", self._page_laboratory),
+                ("Signatories", "Who signs the report, and what goes under "
+                 "each name.", self._page_signatories),
+                ("Report layout", "What the printed page carries, and how "
+                 "the letterhead is drawn.", self._page_report),
+                ("Images", "The logo, the header photo, the watermark and "
+                 "the signature.", self._page_images),
+                ("Numbering", "Where the report numbers carry on from.",
+                 self._page_numbering),
+                ("WhatsApp", "How reports reach the patient, and the message "
+                 "that goes with them.", self._page_whatsapp),
+                ("Backups", "Where the data lives, and the copies of it.",
+                 self._page_backups),
+                ("Staff", "Who may sign in, and what each of them may do.",
+                 self._page_staff),
+                ("Appearance", "How LabSoft looks on this screen.",
+                 self._page_appearance)):
+            self.rail.addItem(title)
+            self.pages.addWidget(self._section(title, blurb, build))
+        self.rail.currentRowChanged.connect(self.pages.setCurrentIndex)
+        self.rail.setCurrentRow(0)
+
+        foot = QFrame()
+        foot.setObjectName("footBar")
+        foot.setFixedHeight(56)
+        fl = QHBoxLayout(foot)
+        fl.setContentsMargins(24, 0, 24, 0)
+        fl.setSpacing(9)
+        self.saved_note = label("", "ok")
+        fl.addWidget(label("Nothing is saved until you press Save", "foot"))
+        fl.addStretch(1)
+        fl.addWidget(self.saved_note)
+        fl.addWidget(button("Reload", "", self.reload))
+        fl.addWidget(button("Save settings", "primary", self.save))
+        outer.addWidget(foot)
+
+    # ---------------------------------------------------------------- pieces
+    def _section(self, title: str, blurb: str, build) -> QWidget:
+        """One section: its heading, one line saying what it is for, and a
+        scrolling body. Every section is built the same way, so they cannot
+        drift apart the way nine hand-laid group boxes did."""
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(28, 22, 28, 10)
+        lay.setSpacing(3)
+        lay.addWidget(label(title, "h1"))
+        note = label(blurb, "hint")
+        note.setWordWrap(True)
+        lay.addWidget(note)
+        lay.addSpacing(16)
+
+        host = QWidget()
+        host.setObjectName("settingsHost")
+        inner = QVBoxLayout(host)
+        inner.setContentsMargins(0, 0, 14, 0)
+        inner.setSpacing(14)
+        build(inner)
+        inner.addStretch(1)
 
         scroll = QScrollArea()
+        scroll.setObjectName("settingsScroll")
         scroll.setWidgetResizable(True)
-        host = QWidget()
-        lay = QVBoxLayout(host)
-        lay.setSpacing(12)
+        scroll.setWidget(host)
+        lay.addWidget(scroll, 1)
+        return page
 
-        for group_name, fields in config.SETTINGS_GROUPS:
-            box = QGroupBox(group_name)
-            form = QFormLayout(box)
-            form.setSpacing(8)
-            for key, caption in fields:
-                if key == "whatsapp_template":
-                    editor = QPlainTextEdit()
-                    editor.setFixedHeight(110)
-                else:
-                    editor = QLineEdit()
-                self.editors[key] = editor
-                form.addRow(caption, editor)
-            lay.addWidget(box)
+    def _fields(self, into, keys) -> None:
+        """A block of plain text settings, one per row, in one label column."""
+        form = QFormLayout()
+        form.setSpacing(10)
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        for key, caption in keys:
+            if key == "whatsapp_template":
+                editor = QPlainTextEdit()
+                editor.setTabChangesFocus(True)
+                editor.setFixedHeight(104)
+            else:
+                editor = QLineEdit()
+                editor.setMaximumWidth(520)
+            self.editors[key] = editor
+            cap = field_label(caption)
+            cap.setFixedWidth(LABEL_W)
+            cap.setBuddy(editor)
+            editor.setAccessibleName(caption)
+            form.addRow(cap, editor)
+        into.addLayout(form)
 
-        appearance = QGroupBox("Appearance")
-        alay = QVBoxLayout(appearance)
-        self.theme_combo = QComboBox()
-        self.theme_combo.addItem("Daylight — white background", "light")
-        self.theme_combo.addItem("Night — dark background", "dark")
-        self.theme_combo.setMaximumWidth(320)
-        self.theme_combo.currentIndexChanged.connect(self._theme_changed)
-        alay.addWidget(row(field_label("On-screen theme"), self.theme_combo, None))
-        alay.addWidget(label(
-            "Changes as soon as you pick it. Reports are always printed on "
-            "white — the night theme is for the screen only.", "hint"))
-        lay.addWidget(appearance)
+    @staticmethod
+    def _group(keys):
+        return dict(config.SETTINGS_GROUPS)[keys]
 
-        printing = QGroupBox("Printing")
-        pform = QVBoxLayout(printing)
+    def _explain(self, into, text: str) -> None:
+        note = label(text, "hint")
+        note.setWordWrap(True)
+        into.addWidget(note)
+
+    # ----------------------------------------------------------------- pages
+    def _page_laboratory(self, into) -> None:
+        self._fields(into, self._group("Laboratory"))
+        self._explain(into,
+                      "The prefix and the name are printed together at the top "
+                      "of the letterhead — “New” and “MITHRA” read as “New "
+                      "MITHRA”.")
+
+    def _page_signatories(self, into) -> None:
+        self._fields(into, self._group("Signatories"))
+        self._explain(into,
+                      "Up to three signatures print across the foot of the "
+                      "report. Leave the middle one empty for two.")
+
+    def _page_report(self, into) -> None:
+        letter = QHBoxLayout()
+        letter.setSpacing(10)
         self.header_style_combo = QComboBox()
-        self.header_style_combo.addItem("Modern — teal band (new design)", "modern")
-        self.header_style_combo.addItem("Classic — plain heading (as before)", "classic")
+        self.header_style_combo.addItem("Modern — navy band", "modern")
+        self.header_style_combo.addItem("Classic — plain heading", "classic")
         self.header_style_combo.setMaximumWidth(320)
-        pform.addWidget(row(field_label("Letterhead design"),
-                            self.header_style_combo, None))
+        self.header_style_combo.setAccessibleName("Letterhead design")
+        cap = field_label("Letterhead design")
+        cap.setFixedWidth(LABEL_W)
+        cap.setBuddy(self.header_style_combo)
+        letter.addWidget(cap)
+        letter.addWidget(self.header_style_combo)
+        letter.addStretch(1)
+        into.addLayout(letter)
+
         self.print_header_check = QCheckBox(
             "Print the letterhead (turn off when using preprinted paper)")
-        self.watermark_check = QCheckBox("Print the watermark")
+        self.watermark_check = QCheckBox("Print the watermark behind the results")
         self.print_flags_check = QCheckBox(
-            "Mark abnormal values on the printed report with ↑ and ↓")
+            "Mark abnormal values with ↑ and ↓")
         self.specimen_check = QCheckBox(
             "Show the specimen (Serum, Plasma, Whole Blood…) under each heading")
         self.detail_check = QCheckBox(
             "Give long-form tests (HbA1c, TSH…) their own detailed PDF as well")
-        self.disclaimer_check = QCheckBox(
-            "Print bottom disclaimer note on reports")
-        pform.addWidget(self.print_header_check)
-        pform.addWidget(self.watermark_check)
-        pform.addWidget(self.print_flags_check)
-        pform.addWidget(self.specimen_check)
-        pform.addWidget(self.detail_check)
-        pform.addWidget(self.disclaimer_check)
-        pform.addWidget(label(
-            "The WhatsApp PDF always includes the letterhead, whatever is set "
-            "here — a PDF with a blank top is not a usable document.", "hint"))
-        lay.addWidget(printing)
+        self.disclaimer_check = QCheckBox("Print the disclaimer at the bottom")
+        for box in (self.print_header_check, self.watermark_check,
+                    self.print_flags_check, self.specimen_check,
+                    self.detail_check, self.disclaimer_check):
+            into.addWidget(box)
 
-        images = QGroupBox("Images & Logo")
-        ilay = QVBoxLayout(images)
-        ilay.addWidget(label(
-            "Recommended specifications for uploading images:\n"
-            "  • Logo: Square or circular badge (PNG with transparent background or JPG/WebP)\n"
-            "    Recommended size: 512×512 px to 1024×1024 px (1:1 ratio, 300 DPI)\n"
-            "  • Header Banner Photo: Landscape image (PNG/JPG)\n"
-            "    Recommended size: 1200×300 px to 1600×400 px (4:1 ratio)\n"
-            "  • Signature: Scanned signature on white/transparent background (PNG/JPG)\n"
-            "    Recommended size: 400×180 px to 600×250 px\n\n"
-            "Uploaded files are automatically saved into the 'assets/' folder.", "hint"))
-        ilay.addWidget(row(
-            button("Choose logo…", "", lambda: self._pick_image("logo_file")),
-            button("Choose header photo…", "", lambda: self._pick_image("header_photo_file")),
-            button("Choose signature…", "", lambda: self._pick_image("signature_file")),
-            None))
-        lay.addWidget(images)
+        self._explain(into,
+                      "The WhatsApp PDF always includes the letterhead, whatever "
+                      "is set here — a PDF with a blank top is not a usable "
+                      "document.")
+        self._fields(into, self._group("Report & Letterhead"))
 
-        whatsapp = QGroupBox("WhatsApp")
-        wlay = QVBoxLayout(whatsapp)
+    def _page_images(self, into) -> None:
+        self.image_rows = {}
+        for key, caption, advice in (
+                ("logo_file", "Logo",
+                 "Square badge, 512×512 to 1024×1024, PNG with a clear background."),
+                ("header_photo_file", "Header photo",
+                 "Landscape banner, about 1200×300, 4:1."),
+                ("watermark_file", "Watermark",
+                 "Printed very pale behind the results. Leave it empty to use "
+                 "the logo instead."),
+                ("signature_file", "Signature",
+                 "Scanned on white or transparent, about 400×180.")):
+            card = QFrame()
+            card.setObjectName("imageCard")
+            cl = QVBoxLayout(card)
+            cl.setContentsMargins(16, 13, 16, 13)
+            cl.setSpacing(5)
+            cl.addWidget(label(caption, "group"))
+            shown = label("", "hint")
+            shown.setWordWrap(True)
+            self.image_rows[key] = shown
+            cl.addWidget(shown)
+            cl.addWidget(label(advice, "hint"))
+            cl.addWidget(row(
+                button(f"Choose {caption.lower()}…", "",
+                       lambda _c=False, k=key: self._pick_image(k)),
+                button("Remove", "quiet", lambda _c=False, k=key: self._clear_image(k)),
+                None))
+            into.addWidget(card)
+        self._explain(into,
+                      "Whatever you choose is copied into the assets folder "
+                      "beside LabSoft, so the report still finds it if the "
+                      "original is moved or deleted.")
+
+    def _page_numbering(self, into) -> None:
+        self._fields(into, self._group("Numbering"))
+        self._explain(into,
+                      "The next job registered takes this number, and it counts "
+                      "up from there. Set it once, when moving over from a "
+                      "register or from other software.")
+
+    def _page_whatsapp(self, into) -> None:
         self.wa_status = label("", "hint")
-        wlay.addWidget(self.wa_status)
+        self.wa_status.setWordWrap(True)
+        into.addWidget(self.wa_status)
+
+        mode_row = QHBoxLayout()
+        mode_row.setSpacing(10)
+        self.wa_mode_combo = QComboBox()
+        # A list, not a text box that had to be typed as "auto", "desktop" or
+        # "web" and was rejected on Save when it was not one of the three.
+        self.wa_mode_combo.addItem("The WhatsApp app (attaches the report)", "desktop")
+        self.wa_mode_combo.addItem("The app if it is installed, else the browser", "auto")
+        self.wa_mode_combo.addItem("The browser only (message, no report)", "web")
+        self.wa_mode_combo.setMaximumWidth(380)
+        self.wa_mode_combo.setAccessibleName("Open WhatsApp in")
+        cap = field_label("Open WhatsApp in")
+        cap.setFixedWidth(LABEL_W)
+        cap.setBuddy(self.wa_mode_combo)
+        mode_row.addWidget(cap)
+        mode_row.addWidget(self.wa_mode_combo)
+        mode_row.addStretch(1)
+        into.addLayout(mode_row)
 
         self.auto_attach_check = QCheckBox(
             "Attach the report into WhatsApp automatically")
-        wlay.addWidget(self.auto_attach_check)
-        wlay.addWidget(label(
-            "LabSoft brings WhatsApp to the front and pastes the report in for "
-            "you. Pressing Send is always left to you. If another window steals "
-            "focus, LabSoft stops rather than pasting into the wrong place.",
-            "hint"))
+        into.addWidget(self.auto_attach_check)
+        self._explain(into,
+                      "LabSoft brings WhatsApp to the front and pastes the "
+                      "report in for you. Pressing Send is always left to you. "
+                      "If another window steals focus, LabSoft stops rather "
+                      "than pasting into the wrong place. This only works with "
+                      "the WhatsApp application — a browser will not take a "
+                      "file from LabSoft.")
+
+        self._fields(into, [(k, c) for k, c in self._group("WhatsApp")
+                            if k != "whatsapp_mode"])
+
         self.wa_number = QLineEdit()
         self.wa_number.setPlaceholderText("Your own mobile number, to test with")
-        self.wa_number.setMaximumWidth(260)
-        wlay.addWidget(row(self.wa_number,
+        self.wa_number.setFixedWidth(320)
+        self.wa_number.setAccessibleName("Number to test with")
+        into.addWidget(row(self.wa_number,
                            button("Open a test chat", "", self._test_whatsapp),
                            None))
-        wlay.addWidget(label(
-            "This opens WhatsApp on that number with a short test message. "
-            "Nothing is sent until you press Enter yourself.", "hint"))
-        lay.addWidget(whatsapp)
+        self._explain(into,
+                      "This opens WhatsApp on that number with a short test "
+                      "message. Nothing is sent until you press Enter yourself.")
 
-        cloudbox = QGroupBox("Cloud backup")
-        clay = QVBoxLayout(cloudbox)
+    def _page_backups(self, into) -> None:
+        self.backup_label = label("", "hint")
+        self.backup_label.setWordWrap(True)
+        into.addWidget(self.backup_label)
+        into.addWidget(row(button("Back up now", "primary", self._backup_now),
+                           button("Restore from a backup…", "", self._restore),
+                           button("Open data folder", "", self._open_data), None))
+
+        card = QFrame()
+        card.setObjectName("imageCard")
+        cl = QVBoxLayout(card)
+        cl.setContentsMargins(16, 13, 16, 13)
+        cl.setSpacing(7)
+        cl.addWidget(label("Cloud copy", "group"))
         self.cloud_check = QCheckBox(
             "Also copy every backup to Google Drive (or another synced folder)")
-        clay.addWidget(self.cloud_check)
+        cl.addWidget(self.cloud_check)
         self.cloud_status = label("", "hint")
         self.cloud_status.setWordWrap(True)
-        clay.addWidget(self.cloud_status)
+        cl.addWidget(self.cloud_status)
         self.cloud_folder_edit = QLineEdit()
         self.cloud_folder_edit.setPlaceholderText(
             "Leave empty to find Google Drive automatically")
-        clay.addWidget(row(self.cloud_folder_edit,
-                           button("Choose folder…", "", self._pick_cloud_folder),
-                           button("Copy now", "", self._cloud_copy_now)))
-        clay.addWidget(label(
-            "Install Google Drive for Desktop and LabSoft will find it by itself. "
-            "Nothing is uploaded by LabSoft — the copy is put in the Drive "
-            "folder and Google syncs it, so this works even with no internet at "
-            "the time.", "hint"))
-        lay.addWidget(cloudbox)
+        self.cloud_folder_edit.setAccessibleName("Cloud backup folder")
+        cl.addWidget(row(self.cloud_folder_edit,
+                         button("Choose folder…", "", self._pick_cloud_folder),
+                         button("Copy now", "", self._cloud_copy_now)))
+        cl.addWidget(label(
+            "Install Google Drive for Desktop and LabSoft will find it by "
+            "itself. Nothing is uploaded by LabSoft — the copy is put in the "
+            "Drive folder and Google syncs it, so this works even with no "
+            "internet at the time.", "hint"))
+        into.addWidget(card)
 
-        staff = QGroupBox("Staff")
-        slay = QVBoxLayout(staff)
+    def _page_staff(self, into) -> None:
         self.staff_label = label("", "hint")
-        slay.addWidget(self.staff_label)
-        slay.addWidget(row(button("Manage staff and permissions", "", self._open_staff),
-                           button("Change my PIN", "", self._change_own_pin), None))
-        slay.addWidget(label(
-            "Each person gets their own username and PIN, and you tick exactly "
-            "what they may do. Every report, bill and change is recorded against "
-            "the person who made it.", "hint"))
-        lay.addWidget(staff)
+        self.staff_label.setWordWrap(True)
+        into.addWidget(self.staff_label)
+        into.addWidget(row(
+            button("Manage staff and permissions", "primary", self._open_staff),
+            button("Change my PIN", "", self._change_own_pin), None))
+        self._explain(into,
+                      "Each person gets their own username and PIN, and you "
+                      "tick exactly what they may do. Every report, bill and "
+                      "change is recorded against the person who made it.")
 
-        backups = QGroupBox("Data and backups")
-        blay = QVBoxLayout(backups)
-        self.backup_label = label("", "hint")
-        blay.addWidget(self.backup_label)
-        blay.addWidget(row(button("Back up now", "", self._backup_now),
-                           button("Restore from a backup…", "", self._restore),
-                           button("Open data folder", "", self._open_data), None))
-        lay.addWidget(backups)
-
-        lay.addStretch(1)
-        scroll.setWidget(host)
-        outer.addWidget(scroll, 1)
-
-        self.saved_note = label("", "ok")
-        outer.addWidget(row(button("Reload", "", self.reload),
-                            None,
-                            self.saved_note, 8,
-                            button("Save settings", "primary", self.save)))
+    def _page_appearance(self, into) -> None:
+        theme_row = QHBoxLayout()
+        theme_row.setSpacing(10)
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItem("Daylight — white background", "light")
+        self.theme_combo.addItem("Night — dark background", "dark")
+        self.theme_combo.setMaximumWidth(320)
+        self.theme_combo.setAccessibleName("On-screen theme")
+        self.theme_combo.currentIndexChanged.connect(self._theme_changed)
+        cap = field_label("On-screen theme")
+        cap.setFixedWidth(LABEL_W)
+        cap.setBuddy(self.theme_combo)
+        theme_row.addWidget(cap)
+        theme_row.addWidget(self.theme_combo)
+        theme_row.addStretch(1)
+        into.addLayout(theme_row)
+        self._explain(into,
+                      "Changes as soon as you pick it. Reports are always "
+                      "printed on white — the night theme is for the screen "
+                      "only.")
 
     # ------------------------------------------------------------------ data
     @staticmethod
@@ -224,7 +421,21 @@ class SettingsScreen(QWidget):
         self._select(self.theme_combo,
                      style.normalise_theme(q.get_setting("theme")), "light")
         self.theme_combo.blockSignals(False)
+        self._select(self.wa_mode_combo,
+                     (q.get_setting("whatsapp_mode") or "desktop").lower(),
+                     "desktop")
         self.auto_attach_check.setChecked(q.setting_bool("auto_attach"))
+        for key, shown in self.image_rows.items():
+            name = (q.get_setting(key) or "").strip()
+            here = (config.assets_dir() / name) if name else None
+            missing = bool(name) and not (here and here.exists())
+            shown.setText(
+                f"{name}  ·  in the assets folder" if name and not missing
+                else (f"{name}  ·  this file is not in the assets folder"
+                      if name else "None chosen"))
+            shown.setProperty("missing", "true" if missing else "false")
+            shown.style().unpolish(shown)
+            shown.style().polish(shown)
         self.cloud_check.setChecked(q.setting_bool("cloud_backup"))
         self.cloud_folder_edit.setText(q.get_setting("cloud_folder"))
         self.cloud_status.setText(self._cloud_message())
@@ -261,6 +472,7 @@ class SettingsScreen(QWidget):
         values["print_disclaimer"] = "1" if self.disclaimer_check.isChecked() else "0"
         values["header_style"] = self.header_style_combo.currentData() or "modern"
         values["theme"] = self.theme_combo.currentData() or "light"
+        values["whatsapp_mode"] = self.wa_mode_combo.currentData() or "desktop"
         values["auto_attach"] = "1" if self.auto_attach_check.isChecked() else "0"
         values["cloud_backup"] = "1" if self.cloud_check.isChecked() else "0"
         values["cloud_folder"] = self.cloud_folder_edit.text().strip()
@@ -292,6 +504,16 @@ class SettingsScreen(QWidget):
         return ""
 
     def save(self) -> bool:
+        # The Settings tab is also shown to whoever manages staff, so this is
+        # the check that keeps them out of the letterhead, the signatories and
+        # the report numbering.
+        from ..core import auth
+
+        if not auth.can(auth.P_SETTINGS):
+            warn(self, "Not allowed",
+                 "Changing the laboratory's settings needs the settings "
+                 "permission. An administrator can grant it under Staff.")
+            return False
         values = self.collect()
         problem = self.validate(values)
         if problem:
@@ -299,6 +521,10 @@ class SettingsScreen(QWidget):
             return False
 
         q.set_settings(values)
+        # The window title and the bar carry the laboratory's name and were
+        # read once, at startup. Changing it under Settings put the new name
+        # on every report and left the old one on the screen.
+        self.settings_saved.emit()
         self.saved_note.setText("Settings saved")
         self.saved_note.setStyleSheet(f"color: {style.GREEN}; font-weight: 600;")
         return True
@@ -385,13 +611,17 @@ class SettingsScreen(QWidget):
         from ..output import sender
 
         if sender.desktop_app_available():
-            return "WhatsApp Desktop is installed — reports will open in the app."
+            return ("The WhatsApp application is installed on this PC. Reports "
+                    "will open in it with the PDF ready to attach.")
         import platform
 
         if platform.system() != "Windows":
-            return "Not running on Windows; reports will open in WhatsApp Web."
-        return ("WhatsApp Desktop was not found on this PC — reports will open "
-                "in WhatsApp Web in your browser instead.")
+            return ("This is not a Windows PC, so the WhatsApp application "
+                    "cannot be opened from here.")
+        return ("The WhatsApp application was not found on this PC. Install "
+                "WhatsApp for Windows and sign in once — until then a report "
+                "cannot be attached, because a browser will not take a file "
+                "from LabSoft.")
 
     def _test_whatsapp(self) -> None:
         from ..output import sender
@@ -402,11 +632,7 @@ class SettingsScreen(QWidget):
                  "Type a complete mobile number to test with, such as your own.")
             return
 
-        mode = (self.editors["whatsapp_mode"].text().strip().lower() or "auto")
-        if mode not in ("auto", "desktop", "web"):
-            warn(self, "Setting not understood",
-                 "'Open using' must be auto, desktop or web.")
-            return
+        mode = self.wa_mode_combo.currentData() or "desktop"
 
         try:
             # open_chat, not send: this must not put anything on the clipboard.
@@ -420,7 +646,8 @@ class SettingsScreen(QWidget):
         info(self, "WhatsApp opened",
              f"{result.manual_step}\n\nNothing has been sent — press Enter in "
              f"WhatsApp yourself if you want to send the test message.\n\n"
-             f"If nothing appeared, set 'Open using' to web and try again.")
+             f"If nothing appeared, the WhatsApp application is probably not "
+             f"installed — choose the browser above and try again.")
 
     # ---------------------------------------------------------------- images
     def _pick_image(self, key: str) -> None:
@@ -436,10 +663,15 @@ class SettingsScreen(QWidget):
         except OSError as exc:
             error(self, "Could not copy the image", str(exc))
             return
-        self.editors[key].setText(dest.name)
-        self.save()
+        q.set_settings({key: dest.name})
+        self.reload()
         info(self, "Image set",
              f"{dest.name} will be used from the next report onwards.")
+
+    def _clear_image(self, key: str) -> None:
+        """Unset an image without deleting the file it points at."""
+        q.set_settings({key: ""})
+        self.reload()
 
     # --------------------------------------------------------------- backups
     def _backup_now(self) -> None:
@@ -452,6 +684,18 @@ class SettingsScreen(QWidget):
         info(self, "Backed up", f"A copy has been saved as:\n{path.name}")
 
     def _restore(self) -> None:
+        # A restore replaces the users table along with everything else, so
+        # whoever can do it can hand themselves an administrator account by
+        # bringing their own lab.db on a USB stick. It is a delete-grade act
+        # and it is confined to this PC's own backup folder.
+        from ..core import auth
+
+        if not auth.can(auth.P_DELETE):
+            warn(self, "Not allowed",
+                 "Restoring a backup replaces everything in LabSoft, including "
+                 "the staff accounts. It needs the delete permission, which an "
+                 "administrator can grant under Staff.")
+            return
         backups = connection.list_backups()
         if not backups:
             warn(self, "No backups", "There are no backups to restore from yet.")
@@ -460,6 +704,13 @@ class SettingsScreen(QWidget):
             self, "Choose a backup to restore", str(config.backup_dir()),
             "Database (*.db)")
         if not path:
+            return
+        chosen = Path(path).resolve()
+        if chosen.parent != config.backup_dir().resolve():
+            warn(self, "Not a LabSoft backup",
+                 f"Only a backup LabSoft made itself can be restored, and those "
+                 f"live in:\n{config.backup_dir()}\n\nThe file you picked is "
+                 f"somewhere else, so it has not been opened.")
             return
         if not confirm(
                 self, "Restore this backup?",

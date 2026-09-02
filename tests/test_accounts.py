@@ -62,14 +62,30 @@ def test_the_same_pin_hashes_differently_each_time():
 @pytest.mark.parametrize("pin,complaint", [
     ("", "at least"),
     ("123", "at least"),
-    ("1234", "guess"),
-    ("0000", "guess"),
+    ("1234", "well known"),
+    ("0000", "well known"),
+    # LabSoft's own former master PIN. It was printed on the sign-in screen of
+    # the web application and in the error message of the desktop one, so it
+    # is the single most guessable PIN this program could be given.
+    ("1598", "well known"),
     ("x" * 40, "fewer"),
 ])
 def test_weak_pins_are_refused(pin, complaint):
     from app.core import auth
 
     assert complaint in auth.check_pin_quality(pin)
+
+
+def test_a_pin_typed_with_spaces_still_works():
+    """check_pin_quality stripped, hash_pin did not, sign-in stripped again.
+
+    So a PIN set as "7391 " under Staff could never afterwards be typed in.
+    """
+    from app.core import auth
+
+    stored = auth.hash_pin(" 7391 ")
+    assert auth.verify_pin("7391", stored)
+    assert auth.verify_pin(" 7391", stored)
 
 
 def test_a_reasonable_pin_is_accepted():

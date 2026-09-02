@@ -15,6 +15,7 @@ from ..core import billing
 from ..db import queries as q
 from . import style
 from .widgets import (
+    dialog_header,
     Table, button, confirm, error, field_label, info, label, row, warn,
 )
 
@@ -27,13 +28,17 @@ class BillDialog(QDialog):
         self.items: List[dict] = []
 
         self.setWindowTitle(f"Bill — Report {self.job['report_no']}")
-        self.resize(640, 560)
+        self.resize(700, 680)
         self._build()
         self._load()
 
     def _build(self) -> None:
         lay = QVBoxLayout(self)
         lay.setContentsMargins(16, 14, 16, 14)
+        lay.addWidget(dialog_header(
+            f"Bill · report {self.job['report_no']}",
+            "What is being charged, what has been taken, and what is left "
+            "to pay. Nothing is recorded until you save."))
         lay.setSpacing(9)
 
         lay.addWidget(label(f"{self.job['patient_name']}", "h1"))
@@ -45,7 +50,10 @@ class BillDialog(QDialog):
         self.items_table.horizontalHeader().setSectionResizeMode(
             0, QHeaderView.ResizeMode.Stretch)
         self.items_table.itemChanged.connect(lambda _i: self._recalc())
-        lay.addWidget(self.items_table, 1)
+        self.items_table.setMinimumHeight(150)
+        self.items_table.horizontalHeader().setDefaultAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lay.addWidget(self.items_table, 2)
 
         self.discount_type = QComboBox()
         self.discount_type.addItems(["Percent %", "Flat ₹"])
@@ -63,7 +71,7 @@ class BillDialog(QDialog):
 
         lay.addWidget(field_label("Payments"))
         self.payments_table = Table(["Amount", "Mode", "When"], stretch_column=2)
-        self.payments_table.setMaximumHeight(140)
+        self.payments_table.setMinimumHeight(120)
         lay.addWidget(self.payments_table)
 
         self.pay_amount = QDoubleSpinBox()
@@ -76,8 +84,8 @@ class BillDialog(QDialog):
                           button("Add payment", "", self._add_payment),
                           button("Remove selected", "quiet", self._remove_payment), None))
 
-        lay.addWidget(row(button("🖨️ Print A4 Invoice", "primary", self._print_a4),
-                          button("🧾 Print 80mm POS Slip", "", self._print_pos),
+        lay.addWidget(row(button("Print A4 bill", "primary", self._print_a4),
+                          button("Counter slip · 80mm", "", self._print_pos),
                           None, button("Close", "", self.reject),
                           button("Save bill", "", self._save)))
 
@@ -118,8 +126,16 @@ class BillDialog(QDialog):
             for p in self.payment_rows
         ])
 
-    def _read_items(self) -> List[dict]:
+    def _read_items(self, complain: bool = False) -> List[dict]:
+        """Read the charges table.
+
+        `to_paise` returns 0 for anything it cannot parse -- "8O" with a
+        letter O, "12.5.0" -- and the row then billed nothing with no sign
+        that a rate had been typed at all. When it matters (on save) the
+        operator is told instead.
+        """
         out = []
+        bad = []
         for r in range(self.items_table.rowCount()):
             base = self.items[r] if r < len(self.items) else {}
             rate_cell = self.items_table.item(r, 1)
@@ -128,13 +144,24 @@ class BillDialog(QDialog):
                 qty = max(1, int(float(qty_cell.text()))) if qty_cell else 1
             except ValueError:
                 qty = 1
+            typed = (rate_cell.text() if rate_cell else "").strip()
+            rate_paise = billing.to_paise(typed or 0)
+            if typed and rate_paise == 0 and typed.strip("0.,₹ ") :
+                bad.append((self.items_table.item(r, 0).text(), typed))
             out.append({
                 "label": self.items_table.item(r, 0).text(),
-                "rate_paise": billing.to_paise(rate_cell.text() if rate_cell else 0),
+                "rate_paise": rate_paise,
                 "qty": qty,
                 "test_id": base.get("test_id"),
                 "panel_id": base.get("panel_id"),
             })
+        if bad and complain:
+            first = ", ".join(f"{name}: “{typed}”" for name, typed in bad[:3])
+            warn(self, "A rate could not be read",
+                 f"These rates are not numbers, so they would be billed as "
+                 f"₹0.00:\n\n{first}\n\nCorrect them, or clear the cell to "
+                 f"charge nothing on purpose.")
+            return []
         return out
 
     def _recalc(self) -> None:
@@ -146,19 +173,51 @@ class BillDialog(QDialog):
             dtype, self.discount_value.value(),
             [billing.Payment(int(p["amount_paise"])) for p in getattr(self, "payment_rows", [])],
         )
-        colour = style.GREEN if totals.balance_paise <= 0 else style.AMBER
+        # Only the balance is coloured. Painting the whole line amber said
+        # "everything here is a warning" when two of the three numbers are
+        # plain facts, and it is the balance the counter needs to see.
+        settled = totals.balance_paise <= 0
+        colour = style.GREEN if settled else style.ALERT
         self.totals_label.setText(
-            f"Total {billing.format_rupees(totals.net_paise)}"
-            f"      Paid {billing.format_rupees(totals.paid_paise)}"
-            f"      Balance {billing.format_rupees(totals.balance_paise)}")
-        self.totals_label.setStyleSheet(
-            f"font-size: 12pt; font-weight: 700; color: {colour};")
+            f"<span style='color:{style.INK2}'>Total</span> "
+            f"<b>{billing.format_rupees(totals.net_paise)}</b>"
+            f"&nbsp;&nbsp;&nbsp;&nbsp;"
+            f"<span style='color:{style.INK2}'>Paid</span> "
+            f"<b>{billing.format_rupees(totals.paid_paise)}</b>"
+            f"&nbsp;&nbsp;&nbsp;&nbsp;"
+            f"<span style='color:{style.INK2}'>Balance</span> "
+            f"<b style='color:{colour}'>"
+            f"{billing.format_rupees(totals.balance_paise)}</b>"
+            + ("&nbsp;&nbsp;<span style='color:%s'>settled</span>" % style.GREEN
+               if settled else ""))
+        self.totals_label.setStyleSheet("font-size: 12.5pt; font-weight: 600;")
 
     # --------------------------------------------------------------- actions
+    def _may_bill(self) -> bool:
+        """P_MONEY is "see the ledger"; P_BILL is "change what is owed".
+
+        The Billing tab is gated on P_MONEY, and this dialog opens from it, so
+        without this check the ledger clerk could discount a bill to zero and
+        delete the payment row for cash they had pocketed.
+        """
+        from ..core import auth
+
+        if auth.can(auth.P_BILL):
+            return True
+        warn(self, "Not allowed",
+             "Changing a bill or a payment needs the billing permission. You "
+             "can see the ledger, but not alter it.")
+        return False
+
     def _save(self) -> int:
+        if not self._may_bill():
+            return 0
+        items = self._read_items(complain=True)
+        if not items and self.items_table.rowCount():
+            return 0
         dtype = (billing.DISCOUNT_PERCENT if self.discount_type.currentIndex() == 0
                  else billing.DISCOUNT_FLAT)
-        bill_id = q.save_bill(self.job_id, self._read_items(), dtype,
+        bill_id = q.save_bill(self.job_id, items, dtype,
                               self.discount_value.value())
         self._load_payments()
         self._recalc()
@@ -170,19 +229,21 @@ class BillDialog(QDialog):
         BillPreviewDialog(self.job_id, self).exec()
 
     def _print_pos(self) -> None:
-        from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
-        from ..output import receipt as rcpt
+        """Show the slip, then print it.
+
+        This used to send ``print_bill`` -- the A4 document -- to the printer
+        under the name "80mm POS Slip", so a thermal roll got a page laid out
+        for a sheet of paper. It opens the slip preview now, which prints the
+        slip.
+        """
+        from .pos_receipt_dialog import POSReceiptDialog
+
         self._save()
-        printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-        if QPrintDialog(printer, self).exec() == QPrintDialog.DialogCode.Accepted:
-            try:
-                data = services.build_bill_data(self.job_id)
-                rcpt.print_bill(data, printer, with_header=True)
-                info(self, "Receipt Printed", "80mm POS thermal receipt sent to printer.")
-            except Exception as exc:
-                error(self, "Printing failed", str(exc))
+        POSReceiptDialog(self, self.job_id).exec()
 
     def _add_payment(self) -> None:
+        if not self._may_bill():
+            return
         amount = billing.to_paise(self.pay_amount.value())
         if amount <= 0:
             warn(self, "Nothing to add", "Enter the amount received first.")
@@ -194,8 +255,11 @@ class BillDialog(QDialog):
         self._recalc()
 
     def _remove_payment(self) -> None:
+        if not self._may_bill():
+            return
         i = self.payments_table.selected_row()
         if i < 0 or i >= len(self.payment_rows):
+            warn(self, "Nothing chosen", "Pick a payment in the list first.")
             return
         p = self.payment_rows[i]
         if not confirm(self, "Remove this payment?",

@@ -153,27 +153,49 @@ def main() -> int:
 
     # Sign in before anything is shown, so the window is built with the right
     # tabs for whoever is actually standing there.
+    #
+    # This is a loop, not a single pass. Signing out used to close the window
+    # and end the program with it, which meant the second person on the counter
+    # had to start LabSoft again from the desktop. Now the window closing with
+    # was_signed_out set brings the sign-in screen back instead, and only
+    # closing the window any other way -- the X, Alt+F4, Windows shutting down
+    # -- ends the session.
     from app.ui.login_dialog import sign_in_at_startup
+    from app.core import auth
+    from app.db import queries
 
-    proceed, _user = sign_in_at_startup()
-    if not proceed:
-        return 0
+    while True:
+        proceed, _user = sign_in_at_startup()
+        if not proceed:
+            return 0
 
-    from app.ui.main_window import MainWindow
+        # Whoever signed in may keep a different theme from the last person.
+        style.apply_theme(app, queries.get_setting("theme") or "light")
 
-    window = MainWindow()
-    window.show()
+        from app.ui.main_window import MainWindow
 
-    if made:
-        QMessageBox.information(
-            window, "Welcome to LabSoft",
-            f"{made} common tests have been loaded, with their usual normal "
-            f"values.\n\nEverything is editable under the Tests tab — change "
-            f"the wording, rates and ranges to match your lab, and delete what "
-            f"you do not use.\n\nCheck the Settings tab to set your report "
-            f"number and add your logo.")
+        window = MainWindow()
+        window.show()
 
-    return app.exec()
+        if made:
+            QMessageBox.information(
+                window, "Welcome to LabSoft",
+                f"{made} common tests have been loaded, with their usual normal "
+                f"values.\n\nEverything is editable under the Tests tab — change "
+                f"the wording, rates and ranges to match your lab, and delete what "
+                f"you do not use.\n\nCheck the Settings tab to set your report "
+                f"number and add your logo.")
+            made = 0                     # said once, on the first sign-in only
+
+        code = app.exec()
+        if not window.was_signed_out:
+            return code
+
+        # Nobody is signed in between the two screens. Anything that asks
+        # "who is this" in that gap gets no answer, rather than the last
+        # person's answer.
+        auth.set_current(None)
+        window.deleteLater()
 
 
 if __name__ == "__main__":

@@ -66,11 +66,29 @@ LIGHT: Dict[str, str] = {
     "PANEL_BTN_BORDER": "#CBD5E1",
     "PANEL_BTN_HOVER": "#F1F5F9",
     "PRIMARY_OFF": "#E2E8F0",
-    "PRIMARY_OFF_TEXT": "#94A3B8",
+    # 4.61:1 on its own fill. A disabled button is exempt from the contrast
+    # rule, but "Check & make report" starts disabled and is the whole point
+    # of the Job screen: nobody can wait for a button they cannot read.
+    "PRIMARY_OFF_TEXT": "#5C6B7F",
     "GO_HOVER": "#062344",
     "GO_OFF": "#E2E8F0",
-    "GO_OFF_TEXT": "#94A3B8",
+    "GO_OFF_TEXT": "#5C6B7F",
     "TRACK": "#E2E8F0",
+    # The surface a printed page is previewed against. Deliberately darker
+    # than the page in both themes, so white paper has an edge.
+    "PAPER_MOUNT": "#6E7781",
+    # The "you still owe this" colour ON the navy money band. It cannot be
+    # BRAND: BRAND is red by day but cyan by night, and the band is filled
+    # with ACCENT_INK which is that same cyan -- so at night the Discount and
+    # Outstanding figures were painted cyan on cyan, 1.00:1, invisible.
+    # The money band across the Job screen, and what sits on it. Its own pair
+    # rather than ACCENT_INK: the accent is navy by day and cyan by NIGHT, so
+    # the band became a full-width slab of bright cyan in the dark theme --
+    # the brightest thing on a screen meant for a lab bench with the lights
+    # off -- and the figures painted on it disappeared into it.
+    "MONEY_BAND": "#0A3668",
+    "ON_MONEY": "#FFFFFF",
+    "MONEY_ALERT": "#FCA5A5",
     "TIP_BG": "#0F172A",
     "TIP_TEXT": "#F8FAFC",
     "FILL": "#F1F5F9",          # a filled surface that is not a card
@@ -88,6 +106,11 @@ LIGHT: Dict[str, str] = {
     # out the same colour as "in progress" the moment the lights went off.
     "ALERT": "#B91C1C",
     "ALERT_SOFT": "#FEF2F2",
+    # The sign-in panel. Its own pair, because the accent is navy by day and
+    # cyan by night, and a full field of cyan at 3 a.m. is a torch.
+    "HERO": "#0A3668",
+    "ON_HERO": "#FFFFFF",
+    "HERO_MUTED": "#A9C2DE",
 }
 
 # Dark theme. Backgrounds are a desaturated slate rather than black — pure
@@ -109,7 +132,11 @@ DARK: Dict[str, str] = {
     "INK2": "#CBD5E1",
     "INK3": "#94A3B8",
     "LINE": "#334155",
-    "LINE2": "#1E293B",
+    # A step above PANEL (#1E293B), not equal to it. At #1E293B every hairline
+    # in the night theme -- the rule between table rows, the edge of a card,
+    # the line under a section -- was drawn in exactly the colour behind it,
+    # so the dark tables had no row separation at all.
+    "LINE2": "#2C3B52",
     "BG": "#0B1120",
     "PANEL": "#1E293B",
     "FIELD_BORDER": "#7C8CA3",
@@ -120,11 +147,15 @@ DARK: Dict[str, str] = {
     "PANEL_BTN_BORDER": "#334155",
     "PANEL_BTN_HOVER": "#0F172A",
     "PRIMARY_OFF": "#1E293B",
-    "PRIMARY_OFF_TEXT": "#64748B",
+    "PRIMARY_OFF_TEXT": "#8A9AAF",
     "GO_HOVER": "#7DD3FC",
     "GO_OFF": "#1E293B",
-    "GO_OFF_TEXT": "#64748B",
+    "GO_OFF_TEXT": "#8A9AAF",
     "TRACK": "#0F172A",
+    "PAPER_MOUNT": "#111A28",
+    "MONEY_BAND": "#102A43",
+    "ON_MONEY": "#F8FAFC",
+    "MONEY_ALERT": "#FCA5A5",
     "TIP_BG": "#F8FAFC",
     "TIP_TEXT": "#0B1120",
     "FILL": "#0F172A",
@@ -136,6 +167,11 @@ DARK: Dict[str, str] = {
     "BAR_MUTED": "#94A3B8",
     "ALERT": "#F87171",
     "ALERT_SOFT": "#3B0A0A",
+    # Lifted a step off the night ground (#0B1120) so the two panels of the
+    # sign-in screen read as two panels. Still 13.99:1 under white.
+    "HERO": "#102A43",
+    "ON_HERO": "#F8FAFC",
+    "HERO_MUTED": "#93AFC9",
 }
 
 THEMES = {"light": LIGHT, "dark": DARK}
@@ -269,6 +305,127 @@ def normalise_theme(name: str) -> str:
     return name if name in THEMES else "light"
 
 
+_CHEVRONS: Dict[str, str] = {}
+
+
+def _cached_drawing(key: str, draw) -> str:
+    """Draw a small icon once, keep it on disk, and return a QSS-safe path.
+
+    Qt stylesheets can only put a *file* in ``image:``; they cannot draw. Every
+    small mark the sheet needs -- the dropdown chevron, the spin arrows, the
+    tick in a checkbox -- comes through here.
+    """
+    if key in _CHEVRONS:
+        return _CHEVRONS[key]
+    try:
+        from PyQt6.QtCore import Qt
+        from PyQt6.QtGui import QImage, QPainter
+
+        from .. import config
+
+        folder = config.data_dir() / "ui"
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / f"{key.replace('#', '')}.png"
+
+        if not path.exists():
+            scale = 2
+            img = QImage(10 * scale, 10 * scale,
+                         QImage.Format.Format_ARGB32_Premultiplied)
+            img.fill(Qt.GlobalColor.transparent)
+            p = QPainter(img)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+            draw(p, scale)
+            p.end()
+            if not img.save(str(path)):
+                _CHEVRONS[key] = ""
+                return ""
+        # Backslashes are escapes inside a Qt stylesheet url(), so a Windows
+        # path has to go in with forward slashes.
+        _CHEVRONS[key] = str(path).replace("\\", "/")
+    except Exception:
+        _CHEVRONS[key] = ""
+    return _CHEVRONS[key]
+
+
+def tick_icon(colour: str) -> str:
+    """The tick inside a ticked checkbox.
+
+    Without it a ticked box differs from an unticked one only by its fill, so
+    "print the watermark" on and off looked like two shades of the same
+    square. A tick is the mark people actually look for.
+    """
+    def draw(p, scale):
+        from PyQt6.QtCore import QPointF, Qt
+        from PyQt6.QtGui import QColor, QPen
+
+        pen = QPen(QColor(colour))
+        pen.setWidthF(1.9 * scale)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        p.setPen(pen)
+        p.drawPolyline([QPointF(2.1 * scale, 5.2 * scale),
+                        QPointF(4.2 * scale, 7.3 * scale),
+                        QPointF(8.0 * scale, 3.0 * scale)])
+
+    return _cached_drawing(f"tick-{colour.lower()}", draw)
+
+
+def chevron_icon(colour: str, up: bool = False) -> str:
+    """A small chevron, drawn once and cached on disk.
+
+    Qt stylesheets do not honour the CSS "zero-size box with borders" triangle
+    trick used for ``QComboBox::down-arrow``: it paints the whole border box
+    instead, which is why every dropdown in the program showed a small filled
+    rectangle where its arrow should be. Drawing a real image and pointing the
+    rule at it is the only way to get a chevron out of QSS.
+
+    Returns a path safe to drop into ``image: url(...)``, or "" if it could not
+    be drawn -- the caller then leaves the arrow out rather than showing the
+    rectangle again.
+    """
+    key = f"{colour.lower()}-{'up' if up else 'down'}"
+    if key in _CHEVRONS:
+        return _CHEVRONS[key]
+
+    try:
+        from PyQt6.QtCore import QPointF, Qt
+        from PyQt6.QtGui import QColor, QImage, QPainter, QPen
+
+        from .. import config
+
+        folder = config.data_dir() / "ui"
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / f"chevron-{key.lstrip('#')}.png"
+
+        if not path.exists():
+            # 2x for crispness on a scaled display; the rule sizes it down.
+            size, scale = 10, 2
+            img = QImage(size * scale, size * scale,
+                         QImage.Format.Format_ARGB32_Premultiplied)
+            img.fill(Qt.GlobalColor.transparent)
+            p = QPainter(img)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+            pen = QPen(QColor(colour))
+            pen.setWidthF(1.8 * scale)
+            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+            p.setPen(pen)
+            high, low = (7.0, 4.0) if up else (4.0, 7.0)
+            p.drawPolyline([QPointF(2.0 * scale, high * scale),
+                            QPointF(5.0 * scale, low * scale),
+                            QPointF(8.0 * scale, high * scale)])
+            p.end()
+            if not img.save(str(path)):
+                _CHEVRONS[key] = ""
+                return ""
+        # Backslashes are escapes inside a Qt stylesheet url(), so a Windows
+        # path has to go in with forward slashes.
+        _CHEVRONS[key] = str(path).replace("\\", "/")
+    except Exception:
+        _CHEVRONS[key] = ""
+    return _CHEVRONS[key]
+
+
 def apply_theme(app, name: str = "light") -> str:
     """Put a theme on the application: colours, palette and stylesheet.
 
@@ -350,7 +507,6 @@ def stylesheet_for(name: str = "light") -> str:
 
     BRAND = c["BRAND"]
     BRAND_DARK = c["BRAND_DARK"]
-    BRAND_SOFT = c["BRAND_SOFT"]
     RED = c["RED"]
     GREEN = c["GREEN"]
     INK = c["INK"]
@@ -362,7 +518,6 @@ def stylesheet_for(name: str = "light") -> str:
     PANEL = c["PANEL"]
     FILL = c["FILL"]
     RULE = c["RULE"]
-    ON_INK = c["ON_INK"]
     ON_ACCENT = c["ON_ACCENT"]
     ACCENT_INK = c["ACCENT_INK"]
     BAR = c["BAR"]
@@ -370,7 +525,13 @@ def stylesheet_for(name: str = "light") -> str:
     BAR_MUTED = c["BAR_MUTED"]
     ALERT = c["ALERT"]
     ALERT_SOFT = c["ALERT_SOFT"]
+    HERO = c["HERO"]
+    ON_HERO = c["ON_HERO"]
+    HERO_MUTED = c["HERO_MUTED"]
     FONT = FONT_STACK
+    CHEVRON = chevron_icon(INK2)
+    CHEVRON_UP = chevron_icon(INK2, up=True)
+    TICK = tick_icon(c["ON_ACCENT"])
 
     return f"""
 QWidget {{
@@ -401,7 +562,7 @@ QListWidget, QListView, QTreeView {{
     background: {PANEL};
     color: {INK};
     border: 1px solid {LINE};
-    border-radius: 4px;
+    border-radius: 8px;
 }}
 QListWidget::item {{ padding: 7px 9px; }}
 QListWidget::item:selected {{ background: {FILL}; color: {INK}; }}
@@ -429,18 +590,24 @@ QMenu::item:selected {{ background: {FILL}; }}
 }}
 #appBar QPushButton:hover {{ border-color: {ON_BAR}; }}
 #appBar QPushButton:focus {{ border: 2px solid {BRAND}; padding: 3px 10px; }}
-/* Sign out is the one destructive thing on the bar, so it wears the red. */
+/* Sign out is the one destructive thing on the bar, so it wears the red.
+   ALERT, not BRAND: BRAND is red by day but cyan by night, which painted
+   Sign out the same colour as Save settings and Open · Space -- the one
+   button you must not press by accident, dressed as the one you must. */
 #appBar QPushButton[kind="danger"] {{
-    background: {BRAND}; border-color: {BRAND}; color: #FFFFFF;
+    background: {ALERT}; border-color: {ALERT}; color: {c["ON_INK"] if dark else "#FFFFFF"};
 }}
-#appBar QPushButton[kind="danger"]:hover {{ background: #B91C1C; border-color: #B91C1C; }}
+#appBar QPushButton[kind="danger"]:hover {{
+    background: {"#FCA5A5" if dark else "#B91C1C"};
+    border-color: {"#FCA5A5" if dark else "#B91C1C"};
+}}
 
 /* The function-key strip under the tabs. */
 #keyStrip {{ background: {BAR}; }}
 #keyStrip QLabel[role="keyname"] {{ background: transparent; }}
 #keyStrip QLabel[role="keycap"] {{
     color: #FFFFFF; background: {ACCENT_INK if not dark else "#0C4A6E"};
-    font-size: 7.5pt; font-weight: 800; padding: 2px 6px; border-radius: 3px;
+    font-size: 7.5pt; font-weight: 800; padding: 2px 6px; border-radius: 6px;
 }}
 #keyStrip QLabel[role="keyname"] {{
     color: {BAR_MUTED}; font-size: 8pt; font-weight: 600;
@@ -487,10 +654,10 @@ QTabBar::tab:focus {{ text-decoration: underline; }}
 QPushButton {{
     background: {PANEL};
     border: 1px solid {LINE if not dark else "#3C464E"};
-    border-radius: 4px;
-    padding: 8px 15px;
+    border-radius: 8px;
+    padding: 10px 18px;
     font-weight: 600;
-    min-height: 24px;
+    min-height: 22px;
 }}
 QPushButton:hover {{ background: {LINE2}; border-color: {INK3}; }}
 QPushButton:pressed {{ background: {LINE}; }}
@@ -501,14 +668,25 @@ QPushButton:disabled {{
    otherwise tabbing through the screen leaves no trace of where you are. */
 QPushButton:focus {{
     border: 2px solid {BRAND};
-    padding: 7px 14px;
+    padding: 9px 17px;
 }}
 QCheckBox:focus, QRadioButton:focus {{ color: {BRAND}; }}
+/* A rounded square with a tick in it, not a circle. At 17px a border-radius
+   of 8 is a circle, so every checkbox in the program -- six of them on the
+   Settings page alone -- was drawn as a radio button, which says "one of
+   these" when it means "on or off". */
+/* The row a checkbox occupies is what you actually have to hit, and at 19px
+   it was under the 24px minimum -- nine of them on the Settings page. */
+QCheckBox {{ min-height: 28px; spacing: 9px; }}
 QCheckBox::indicator {{
-    width: 17px; height: 17px; border-radius: 4px;
+    width: 17px; height: 17px; border-radius: 5px;
     border: 1px solid {c["FIELD_BORDER"]}; background: {PANEL};
 }}
-QCheckBox::indicator:checked {{ background: {INK}; border-color: {INK}; }}
+QCheckBox::indicator:hover {{ border-color: {INK2}; }}
+QCheckBox::indicator:checked {{
+    background: {ACCENT_INK}; border-color: {ACCENT_INK};
+    {f"image: url({TICK});" if TICK else ""}
+}}
 QCheckBox::indicator:focus {{ border: 2px solid {BRAND}; }}
 /* Toggle buttons (the work-queue filters) must show which one is active. */
 QPushButton:checked {{
@@ -565,8 +743,9 @@ QPushButton[kind="danger"] {{ color: {RED}; }}
 QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateEdit, QPlainTextEdit, QTextEdit {{
     background: {PANEL};
     border: 1px solid {c["FIELD_BORDER"]};
-    border-radius: 4px;
-    padding: 6px 9px;
+    border-radius: 8px;
+    padding: 9px 13px;
+    min-height: 20px;
     selection-background-color: {BRAND};
     selection-color: {ON_ACCENT};
 }}
@@ -574,7 +753,7 @@ QLineEdit:hover, QComboBox:hover {{ border-color: {INK2}; }}
 QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus,
 QDateEdit:focus, QPlainTextEdit:focus, QTextEdit:focus {{
     border: 2px solid {BRAND};
-    padding: 5px 8px;
+    padding: 8px 12px;
 }}
 /* The result boxes carry the number that matters, so they are given the
    weight to match: bigger type in a taller box. */
@@ -588,94 +767,114 @@ QLineEdit:read-only {{
     background: {c["READONLY_BG"]}; color: {INK2}; border-style: dashed;
 }}
 QLineEdit:disabled {{ background: {LINE2}; color: {INK3}; }}
-QComboBox::drop-down {{ border: 0; width: 22px; }}
+QComboBox::drop-down {{ border: 0; width: 26px; }}
+/* A drawn chevron, not the CSS border triangle -- see chevron_icon(). */
 QComboBox::down-arrow {{
-    image: none;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid {INK2};
-    width: 0; height: 0; margin-right: 8px;
+    {f"image: url({CHEVRON});" if CHEVRON else "image: none;"}
+    width: 10px; height: 10px; margin-right: 9px;
 }}
 
 /* Spin boxes: Fusion draws tiny unreadable arrows at this size, so the
    buttons are given real width and a drawn triangle. */
 QSpinBox, QDoubleSpinBox {{ padding-right: 20px; }}
-QSpinBox::up-button, QDoubleSpinBox::up-button,
-QSpinBox::down-button, QDoubleSpinBox::down-button {{
+/* QDateEdit is not a QSpinBox -- both descend from QAbstractSpinBox -- so it
+   has to be named, or Windows draws its steppers itself and the date fields
+   on Billing end up wearing a different decade from everything beside them. */
+QAbstractSpinBox::up-button, QAbstractSpinBox::down-button {{
     subcontrol-origin: border;
-    width: 18px;
+    width: 20px;
     border: 0;
     background: {LINE2};
 }}
-QSpinBox::up-button, QDoubleSpinBox::up-button {{
+QAbstractSpinBox::up-button {{
     subcontrol-position: top right;
     border-bottom: 1px solid {LINE};
+    border-top-right-radius: 8px;
 }}
-QSpinBox::down-button, QDoubleSpinBox::down-button {{
+QAbstractSpinBox::down-button {{
     subcontrol-position: bottom right;
+    border-bottom-right-radius: 8px;
 }}
-QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
-QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
+QAbstractSpinBox::up-button:hover, QAbstractSpinBox::down-button:hover {{
     background: {LINE};
 }}
-QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
-    image: none;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-bottom: 5px solid {INK2};
-    width: 0; height: 0;
+/* Drawn chevrons again, for the same reason as the combo box: the CSS
+   triangle trick paints its whole border box, so every spin box in the
+   program showed two small filled rectangles instead of arrows. */
+QAbstractSpinBox::up-arrow {{
+    {f"image: url({CHEVRON_UP});" if CHEVRON_UP else "image: none;"}
+    width: 9px; height: 9px;
 }}
-QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{
-    image: none;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid {INK2};
-    width: 0; height: 0;
+QAbstractSpinBox::down-arrow {{
+    {f"image: url({CHEVRON});" if CHEVRON else "image: none;"}
+    width: 9px; height: 9px;
 }}
+/* A date field with a calendar popup has one drop-down, not a pair of
+   steppers, so it gets the combo box's treatment rather than the spin box's. */
+QAbstractSpinBox::drop-down {{ border: 0; width: 26px; }}
 
 /* Tables: a 2px rule under the head, hairlines between rows, no outer box. */
 QTableWidget, QTableView {{
     background: {PANEL};
     border: 0;
-    border-radius: 4px;
-    gridline-color: {LINE2};
+    border-radius: 8px;
+    gridline-color: transparent;
     selection-background-color: {FILL};
     selection-color: {INK};
 }}
 QHeaderView::section {{
     background: {PANEL};
     border: 0;
-    border-bottom: 1px solid {RULE};
+    border-bottom: 1px solid {LINE2};
     border-right: 0;
-    padding: 8px 10px;
-    font-size: 8.5pt;
-    font-weight: 700;
+    padding: 12px 12px;
+    font-size: 9pt;
+    font-weight: 600;
     color: {INK3};
-    text-transform: uppercase;
 }}
-QTableView::item {{ padding: 6px 8px; border-bottom: 1px solid {LINE2}; }}
+QTableView::item {{ padding: 10px 12px; border: 0; }}
+QTableView::item:hover {{ background: {FILL}; }}
 
-/* Group boxes are sections, not cards: a 2px rule along the top with the
-   name sitting on it, and no border round the rest. */
+/* Group boxes are cards, the way the web application draws a settings
+   section: paper on the page ground, a hairline round it, and the name in
+   the accent above the fields. */
+/* A settings section. The heading sits *above* a plain card rather than in a
+   notch cut through its border: the notched box with a tiny coloured caption
+   is the single most dated thing a Qt form can wear, and it made Settings
+   look a decade older than every other screen. */
 QGroupBox {{
-    border: 0;
-    border-top: 1px solid {RULE};
-    border-radius: 4px;
-    margin-top: 15px;
-    padding-top: 4px;
+    border: 1px solid {LINE2};
+    border-radius: 14px;
+    margin-top: 30px;
+    padding: 22px 20px 18px 20px;
     background: {PANEL};
+    font-size: 13pt;
     font-weight: 700;
+}}
+/* The heading's weight has to be set on the box, because Qt draws the title
+   with the box's own font; the children are put back to reading size here. */
+QGroupBox > QWidget, QGroupBox QLabel, QGroupBox QLineEdit, QGroupBox QComboBox,
+QGroupBox QCheckBox, QGroupBox QPlainTextEdit, QGroupBox QPushButton {{
+    font-size: 10.5pt;
+    font-weight: 400;
 }}
 QGroupBox::title {{
     subcontrol-origin: margin;
-    left: 0px;
-    padding: 0 8px 0 0;
+    subcontrol-position: top left;
+    left: 2px;
+    top: 4px;
+    padding: 0;
     color: {INK};
-    background: {PANEL};
-    font-size: 8.5pt;
-    font-weight: 800;
-    text-transform: uppercase;
+    background: transparent;
+    font-size: 13pt;
+    font-weight: 700;
 }}
+/* The band across the top of a dialog: its name, and one line saying what
+   it is for. Separated by a rule rather than a box, because a dialog is
+   already a box. */
+#dialogHeader {{ border-bottom: 1px solid {LINE}; background: transparent; }}
+#dialogHeader QLabel {{ background: transparent; }}
+#settingsScroll > QWidget > QWidget {{ background: {BG}; }}
 
 /* ── The Job screen's bands ────────────────────────────────────────────
    Four surfaces of falling weight: an ink money band, a white status rail
@@ -694,11 +893,11 @@ QGroupBox::title {{
 #leftRail QLineEdit, #leftRail QComboBox, #leftRail QSpinBox {{
     background: {PANEL};
 }}
-#moneyBand  {{ background: {ACCENT_INK}; }}
-#moneyBand QLabel {{ color: {ON_ACCENT}; }}
+#moneyBand  {{ background: {c["MONEY_BAND"]}; }}
+#moneyBand QLabel {{ color: {c["ON_MONEY"]}; }}
 #resultsField {{ background: {PANEL}; border-right: 1px solid {LINE}; }}
 #resultsHead {{ background: {PANEL}; border-bottom: 1px solid {RULE}; }}
-#footBar    {{ background: {BG}; border-top: 1px solid {RULE}; }}
+#footBar    {{ background: {PANEL}; border-top: 1px solid {LINE2}; }}
 /* A result outside the panic limits. The only place on the Job screen where
    the accent fills a whole band, because it is the only thing on it that
    must stop the operator rather than inform them. */
@@ -719,74 +918,199 @@ QLabel[role="panic"] {{
    A filter bar on paper, a strip of scopes on the ground, the board itself,
    and a foot bar. Every row of the board is drawn by BoardDelegate, which
    reads these same tokens at paint time, so a theme change carries. */
-#filterBar {{ background: {PANEL}; border-bottom: 1px solid {RULE}; }}
-#scopeStrip {{ background: {BG}; border-bottom: 1px solid {LINE}; }}
+#filterBar {{ background: {PANEL}; border-bottom: 1px solid {LINE2}; }}
+/* The Patients register: a column of paper against the page, with its own
+   heading block above the list. */
+#register {{ background: {PANEL}; border-right: 1px solid {LINE2}; }}
+#registerHead {{ background: {PANEL}; border-bottom: 1px solid {LINE2}; }}
+#registerList {{ background: {PANEL}; border: 0; }}
+/* The patient's name, set at the size the artboard gives it. */
+QLabel[role="person"] {{
+    font-size: 22pt; font-weight: 800; letter-spacing: -0.5px; color: {INK};
+}}
+QLabel[role="figure"] {{ font-size: 13pt; font-weight: 800; color: {INK}; }}
+QLabel[role="figure"][alert="true"] {{ color: {ALERT}; }}
+#scopeStrip {{ background: {PANEL}; border-bottom: 1px solid {LINE2}; }}
+/* The same chips inline in a filter bar rather than in a row of their own,
+   so they carry no rule under them. */
+#periodStrip {{ background: transparent; border: 0; }}
 #boardTable {{ background: {PANEL}; border: 0; }}
+/* No dotted focus rectangle. Qt draws one round the current cell whatever the
+   sheet says about ::item, and on a read-only list it reads as an editable
+   box -- it was sitting over "Blood Sugar F & PP" the moment the Bill dialog
+   opened, and round the first report number on the Billing ledger. */
+QTableView, QTableWidget, QListView, QListWidget, QTreeView {{ outline: 0; }}
 /* No font rules here on purpose: a stylesheet cannot set letter-spacing, and
    whatever it does set would override the font the header is given in code. */
 #boardTable QHeaderView::section {{
-    background: {FILL};
-    color: {INK2};
+    background: {PANEL};
+    color: {INK3};
     border: 0;
-    border-bottom: 1px solid {RULE};
-    padding: 0 18px 0 0;
+    border-bottom: 1px solid {LINE2};
+    padding: 0 22px 0 0;
+    font-size: 9pt;
+    font-weight: 600;
 }}
 /* The scope chips are the tabs of the board: chosen is filled ink, the rest
    are quiet text. No colour, because the accent belongs to Open. */
-#scopeStrip QPushButton {{
+#scopeStrip QPushButton, #periodStrip QPushButton {{
     background: transparent; border: 1px solid transparent; color: {INK3};
-    padding: 4px 12px; font-weight: 700; font-size: 9.5pt; min-height: 20px;
+    padding: 6px 16px; font-weight: 600; font-size: 10pt; min-height: 20px;
+    border-radius: 999px;
 }}
-#scopeStrip QPushButton:hover {{ color: {INK}; background: {LINE2}; }}
-#scopeStrip QPushButton:checked {{
+#scopeStrip QPushButton:hover, #periodStrip QPushButton:hover {{ color: {INK}; background: {LINE2}; }}
+#scopeStrip QPushButton:checked, #periodStrip QPushButton:checked {{
     background: {ACCENT_INK}; border-color: {ACCENT_INK}; color: {ON_ACCENT};
+    border-radius: 999px;
 }}
-#scopeStrip QPushButton:focus {{ border: 2px solid {BRAND}; padding: 3px 11px; }}
+#scopeStrip QPushButton:focus, #periodStrip QPushButton:focus {{ border: 2px solid {BRAND}; padding: 3px 11px; }}
 
-QLabel[role="micro"] {{
-    color: {INK3}; font-size: 7.5pt; font-weight: 700; text-transform: uppercase;
+/* A field label. Sentence case at a readable size, not 7.5pt small caps:
+   the caps were half the reason the program looked a decade old, and the
+   same label style now runs from the sign-in card through every screen. */
+QLabel[role="micro"], QLabel[role="field"] {{
+    color: {INK2}; font-size: 10pt; font-weight: 600; letter-spacing: 0;
 }}
 /* The four numbers over the board. The label is small and quiet, the number
    is the largest thing on the screen after the patient's name, and the note
    under it says what the number means without needing a legend. */
 QLabel[role="statlabel"] {{
-    color: {INK3}; font-size: 7pt; font-weight: 800; text-transform: uppercase;
+    color: {INK3}; font-size: 9pt; font-weight: 600;
 }}
-QLabel[role="statvalue"] {{ font-size: 19.5pt; font-weight: 800; color: {INK}; }}
+QLabel[role="statvalue"] {{ font-size: 21pt; font-weight: 700; color: {INK}; }}
 /* A figure block on the day book: a 2px rule down its left side instead of a
    card, so eight of them read as one row rather than eight boxes. */
 #statBlock {{ border-left: 2px solid {RULE}; background: transparent; }}
 #statBlock QLabel {{ background: transparent; }}
 QLabel[role="statvalue"][alert="true"] {{ color: {ALERT}; }}
 QLabel[role="statnote"] {{ color: {INK3}; font-size: 8.5pt; }}
-QLabel[role="foot"] {{ color: {INK3}; font-size: 8.5pt; }}
+QLabel[role="foot"] {{ color: {INK3}; font-size: 9.5pt; }}
 QLabel[role="stat"] {{ font-size: 12.5pt; font-weight: 700; }}
 QLabel[role="money"] {{ font-size: 25pt; font-weight: 800; }}
 QLabel[role="railvalue"] {{ font-size: 12.5pt; font-weight: 800; }}
 QLabel[role="railname"] {{ font-size: 11pt; font-weight: 700; }}
 QLabel[role="group"] {{
-    font-size: 8pt; font-weight: 800; text-transform: uppercase; color: {INK};
+    font-size: 10.5pt; font-weight: 700; color: {INK};
 }}
 QLabel[role="method"] {{ color: {INK3}; font-size: 8pt; }}
 
 /* Buttons living on the ink money band. */
 #moneyBand QPushButton {{
     background: transparent; border: 1px solid {c["BAR_MUTED"]};
-    color: {ON_ACCENT}; font-weight: 700; padding: 7px 14px;
+    color: {c["ON_MONEY"]}; font-weight: 700; padding: 7px 14px;
 }}
-#moneyBand QPushButton:hover {{ background: {BRAND_DARK}; }}
+#moneyBand QPushButton:hover {{ background: rgba(255, 255, 255, 0.12); }}
 #moneyBand QPushButton[kind="primary"] {{
-    background: {ON_ACCENT}; border-color: {ON_ACCENT}; color: {ACCENT_INK};
+    background: {c["ON_MONEY"]}; border-color: {c["ON_MONEY"]};
+    color: {c["MONEY_BAND"]};
 }}
 #moneyBand QPushButton[kind="primary"]:hover {{ background: {LINE2}; }}
 
-QLabel[role="h1"] {{ font-size: 15pt; font-weight: 800; letter-spacing: -0.3px; }}
-QLabel[role="hint"] {{ color: {INK3}; font-size: 9pt; }}
-QLabel[role="field"] {{
-    color: {INK3}; font-size: 8pt; font-weight: 700; text-transform: uppercase;
-}}
+QLabel[role="h1"] {{ font-size: 17pt; font-weight: 700; letter-spacing: -0.4px; }}
+QLabel[role="hint"] {{ color: {INK3}; font-size: 9.5pt; }}
 QLabel[role="error"] {{ color: {RED}; font-weight: 700; }}
 QLabel[role="ok"] {{ color: {GREEN}; font-weight: 700; }}
+
+/* ── Settings ──────────────────────────────────────────────────────────
+   A rail of sections down the left, and one section at a time on the right.
+   The rail is furniture, so it is flat with a single edge rather than a
+   rounded list box floating inside the page. */
+#settingsRail {{
+    background: {PANEL};
+    border: 0;
+    border-right: 1px solid {LINE2};
+    border-radius: 0;
+    outline: 0;
+    padding: 10px 0;
+}}
+#settingsRail::item {{
+    padding: 11px 14px 11px 20px;
+    color: {INK2};
+    border-left: 3px solid transparent;
+}}
+#settingsRail::item:hover {{ background: {FILL}; color: {INK}; }}
+#settingsRail::item:selected {{
+    background: {FILL};
+    color: {INK};
+    border-left: 3px solid {ACCENT_INK};
+    font-weight: 700;
+}}
+/* A block on a settings page that is a thing rather than a field -- one
+   image, or the cloud copy. */
+#imageCard {{
+    background: {PANEL}; border: 1px solid {LINE2}; border-radius: 12px;
+}}
+#imageCard QLabel {{ background: transparent; }}
+#settingsScroll, #settingsHost {{ background: {BG}; border: 0; }}
+/* Said of an image the settings point at but the assets folder does not
+   have: a filename that resolves to nothing is worth saying in red. */
+QLabel[role="hint"][missing="true"] {{ color: {ALERT}; font-weight: 600; }}
+
+/* The mount a printed document is previewed on. A receipt is white paper in
+   both themes, so the paper stays white and the surface under it darkens --
+   the opposite of the old slip preview, which recoloured the paper and left
+   black ink on it. */
+#slipScroll {{ background: {c["PAPER_MOUNT"]}; border: 1px solid {LINE2};
+              border-radius: 10px; }}
+#slipMount {{ background: {c["PAPER_MOUNT"]}; border: 0; }}
+#slipMount QLabel {{ background: transparent; }}
+
+/* ── Signing in ────────────────────────────────────────────────────────
+   Two panels across the screen. The left is deep navy and carries the
+   laboratory's name; the right is the ordinary page ground with one white
+   card on it. Everything is named so the night theme repaints it too --
+   the old sign-in screen hardcoded its own greys and stayed daylight for
+   ever. */
+#signInWindow {{ background: {BG}; }}
+#hero {{ background: {HERO}; border: 0; }}
+#hero QLabel {{ background: transparent; color: {ON_HERO}; }}
+#heroRule {{ background: {HERO_MUTED}; border: 0; max-height: 1px; }}
+#hero QLabel[role="herowordmark"] {{
+    color: {HERO_MUTED}; font-size: 10pt; font-weight: 800; letter-spacing: 4px;
+}}
+/* The laboratory's name is the largest thing on the screen and the only
+   place a serif-weight size is warranted. Tight tracking keeps a long name
+   on two lines rather than three. */
+#hero QLabel[role="heroname"] {{
+    font-size: 38pt; font-weight: 800; letter-spacing: -1.4px; line-height: 108%;
+}}
+#hero QLabel[role="herosub"] {{
+    color: {HERO_MUTED}; font-size: 12pt; font-weight: 600; letter-spacing: 0.6px;
+}}
+#hero QLabel[role="heroblurb"] {{
+    color: {HERO_MUTED}; font-size: 11pt; font-weight: 400; line-height: 150%;
+}}
+#hero QLabel[role="herolabel"] {{
+    color: {HERO_MUTED}; font-size: 8pt; font-weight: 700; letter-spacing: 1.4px;
+}}
+#hero QLabel[role="herofact"] {{ font-size: 12pt; font-weight: 700; }}
+
+#signInSide {{ background: {BG}; border: 0; }}
+/* One card, floated on the ground. 16px of radius, a hairline instead of a
+   heavy border, and the drop shadow comes from elevate() in widgets.py --
+   Qt's stylesheets have no box-shadow. */
+#signInCard {{
+    background: {PANEL}; border: 1px solid {LINE2}; border-radius: 16px;
+}}
+#signInCard QLabel {{ background: transparent; }}
+#signInCard QLabel[role="cardtitle"] {{
+    font-size: 24pt; font-weight: 700; letter-spacing: -0.8px; color: {INK};
+}}
+#signInCard QLabel[role="hint"] {{ color: {INK3}; font-size: 9.5pt; }}
+#cardRule {{ background: {LINE2}; border: 0; max-height: 1px; }}
+/* The PIN box. Four characters, centred, widely spaced: the shape of the
+   field says how much to type without a label saying "4 digits". */
+#pinField {{
+    font-size: 20pt; font-weight: 700; letter-spacing: 10px;
+    padding: 0 8px 0 18px; border-radius: 10px;
+}}
+#signInCard QLineEdit, #signInCard QComboBox {{
+    border-radius: 10px; font-size: 11pt; padding: 0 12px;
+}}
+#signInCard QPushButton[kind="primary"] {{
+    border-radius: 10px; font-size: 11.5pt; font-weight: 700;
+}}
+#signInCard QPushButton[kind="quiet"] {{ font-size: 10pt; }}
 
 QStatusBar {{
     background: {PANEL}; border-top: 1px solid {RULE}; color: {INK3};
@@ -796,24 +1120,24 @@ QStatusBar::item {{ border: 0; }}
 
 QScrollBar:vertical {{ background: transparent; width: 12px; margin: 0; }}
 QScrollBar::handle:vertical {{
-    background: {c["SCROLL"]}; border-radius: 3px; min-height: 30px;
+    background: {c["SCROLL"]}; border-radius: 6px; min-height: 30px;
 }}
 QScrollBar::handle:vertical:hover {{ background: {c["SCROLL_HOVER"]}; }}
 QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; width: 0; }}
 QScrollBar:horizontal {{ background: transparent; height: 12px; }}
 QScrollBar::handle:horizontal {{
-    background: {c["SCROLL"]}; border-radius: 3px; min-width: 30px;
+    background: {c["SCROLL"]}; border-radius: 6px; min-width: 30px;
 }}
 
 QToolTip {{
     background: {c["TIP_BG"]}; color: {c["TIP_TEXT"]}; border: 0;
-    padding: 6px 9px; border-radius: 4px;
+    padding: 6px 9px; border-radius: 8px;
 }}
 QProgressBar {{
-    border: 0; background: {c["TRACK"]}; border-radius: 3px; height: 6px;
+    border: 0; background: {c["TRACK"]}; border-radius: 6px; height: 6px;
     text-align: center;
 }}
-QProgressBar::chunk {{ background: {ACCENT_INK}; border-radius: 3px; }}
+QProgressBar::chunk {{ background: {ACCENT_INK}; border-radius: 6px; }}
 """
 
 

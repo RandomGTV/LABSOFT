@@ -55,7 +55,10 @@ class BillPreviewDialog(QDialog):
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.scroll.setStyleSheet("background: #6E7781; border: 0;")
+        # Themed, so the mount darkens with the rest of the program
+        # instead of staying one fixed grey in both.
+        self.scroll.setStyleSheet(
+            f"background: {style.PAPER_MOUNT}; border: 0;")
         self.page_view = QLabel()
         self.page_view.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.page_view.setStyleSheet("background: transparent; padding: 18px;")

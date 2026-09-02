@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import QFont, QPainter
 from PyQt6.QtWidgets import (
     QDialog, QFrame, QHBoxLayout, QLabel,
@@ -55,8 +55,10 @@ class TubeLabelDialog(QDialog):
         tube_strip.setFixedHeight(28)
         # The cap colours are the vacutainer convention, not this palette: a
         # lavender tube is lavender on every bench in the world.
+        tube_strip.setObjectName("tubeStrip")
         tube_strip.setStyleSheet(
-            f"background: {self.tube_color}; border-radius: 0;")
+            f"#tubeStrip {{ background: {self.tube_color}; border-radius: 6px; }}"
+            f"#tubeStrip QLabel {{ background: transparent; border: 0; }}")
         tl = QHBoxLayout(tube_strip)
         tl.setContentsMargins(12, 0, 12, 0)
         tb_label = QLabel(self.tube_name)
@@ -67,10 +69,16 @@ class TubeLabelDialog(QDialog):
 
         # Label Preview Box
         preview_box = QFrame()
+        # Scoped to the frame itself. Without the selector, Qt applied the
+        # dashed border to every descendant too, so each line of the sticker
+        # preview sat in its own dashed box.
+        preview_box.setObjectName("stickerPaper")
         preview_box.setStyleSheet(
-            f"background: {style.PANEL}; border: 1px dashed {style.FIELD_BORDER}; "
-            f"border-radius: 0; padding: 14px;")
+            f"#stickerPaper {{ background: {style.PANEL}; "
+            f"border: 1px dashed {style.FIELD_BORDER}; border-radius: 8px; }}"
+            f"#stickerPaper QLabel {{ background: transparent; border: 0; }}")
         pl = QVBoxLayout(preview_box)
+        pl.setContentsMargins(16, 14, 16, 14)
         pl.setSpacing(4)
 
         report_no = self.job_data.get("report_no", "—")
@@ -98,7 +106,9 @@ class TubeLabelDialog(QDialog):
         number.setAlignment(Qt.AlignmentFlag.AlignCenter)
         pl.addWidget(number)
 
-        pl.addWidget(QLabel(f"<span style='font-size:8pt; color:#000;'><b>Tests:</b> {', '.join(self.test_names[:6])}</span>"))
+        pl.addWidget(QLabel(
+            f"<span style='font-size:8pt; color:{style.INK};'>"
+            f"<b>Tests:</b> {', '.join(self.test_names[:6])}</span>"))
         lay.addWidget(preview_box)
 
         # Buttons
@@ -107,14 +117,44 @@ class TubeLabelDialog(QDialog):
         lay.addWidget(row(None, close_btn, print_btn))
 
     def _print_sticker(self) -> None:
+        """Lay the sticker out in millimetres, on the label it is printed on.
+
+        This used to draw three lines of text at fixed pixel offsets, which on
+        a 300 dpi printer put everything in the top 6mm of the label and ran
+        the test list off the right edge. Everything below is measured against
+        the 50 x 25mm sticker itself.
+        """
         printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-        dialog = QPrintDialog(printer, self)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            painter = QPainter(printer)
-            painter.setFont(QFont("Arial", 10, QFont.Weight.Bold))
-            painter.drawText(20, 30, f"LAB #{self.job_data.get('report_no', '')} - {self.job_data.get('patient_name', '')}")
-            painter.setFont(QFont("Arial", 8))
-            painter.drawText(20, 50, f"Specimen: {self.tube_name}")
-            painter.drawText(20, 70, f"Tests: {', '.join(self.test_names)}")
+        if QPrintDialog(printer, self).exec() != QDialog.DialogCode.Accepted:
+            return
+
+        k = printer.resolution() / 25.4          # device units per millimetre
+        painter = QPainter()
+        if not painter.begin(printer):
+            return
+        try:
+            painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, True)
+
+            def line(x_mm, y_mm, w_mm, text, size, bold=False, align=None):
+                f = QFont("Arial", int(size), QFont.Weight.Bold if bold
+                          else QFont.Weight.Normal)
+                f.setPointSizeF(size)
+                painter.setFont(f)
+                box = QRectF(x_mm * k, y_mm * k, w_mm * k, 5.0 * k)
+                painter.drawText(
+                    box, int((align or Qt.AlignmentFlag.AlignLeft)
+                             | Qt.AlignmentFlag.AlignVCenter),
+                    painter.fontMetrics().elidedText(
+                        text, Qt.TextElideMode.ElideRight, int(w_mm * k)))
+
+            name = self.job_data.get("patient_name", "")
+            meta = f"{self.job_data.get('age', '')} / {self.job_data.get('sex', '')}"
+            line(3, 2.0, 44, name, 8.5, bold=True)
+            line(3, 6.4, 44, meta.strip(" /"), 6.5)
+            line(3, 10.4, 44, str(self.job_data.get("report_no", "")), 15, bold=True,
+                 align=Qt.AlignmentFlag.AlignHCenter)
+            line(3, 17.4, 44, self.tube_name, 6.0, bold=True)
+            line(3, 20.8, 44, ", ".join(self.test_names), 6.0)
+        finally:
             painter.end()
-            self.accept()
+        self.accept()

@@ -1522,11 +1522,17 @@ const PANELS = {
   "WHO Semen Analysis": ["SEMEN_VOL", "SEMEN_LIQ", "SEMEN_VISC", "SEMEN_COUNT", "SEMEN_MOT_ACT", "SEMEN_MOT_SLUG", "SEMEN_MOT_NON", "SEMEN_NORM", "SEMEN_PUS"]
 };
 
-// Staff accounts
+// Staff accounts.
+//
+// This page is a DEMONSTRATION of the LabSoft desktop program. It runs in a
+// browser with no server, so anything it calls a password is a password
+// written in public: the accounts below shipped with a PIN of "1598", the
+// sign-in accepted "1598" for any account, and the page printed the number on
+// its own sign-in screen. All of that is gone. There is no PIN here now,
+// because a page like this cannot keep one -- the real thing is the desktop
+// program, where a PIN is checked against a PBKDF2 hash in a local database.
 let STAFF_ACCOUNTS = JSON.parse(localStorage.getItem("labsoft_staff_v2") || "null") || [
-  { username: "admin", name: "Abdunnaser Mayyeri", role: "Admin", pin: "1598" },
-  { username: "saheed", name: "SAHEED MOHAMED. P.", role: "Technologist", pin: "1598" },
-  { username: "reception", name: "Front Desk Staff", role: "Reception", pin: "1598" }
+  { username: "demo", name: "Demonstration User", role: "Admin" }
 ];
 
 // Doctors catalog
@@ -1582,13 +1588,12 @@ let LAB_CONFIG = JSON.parse(localStorage.getItem("labsoft_config_v2") || "null")
   name: "MITHRA",
   subtitle: "MEDICAL LABORATORY",
   tagline: "ACCURACY • CARE • TRUST",
-  address_1: "Chettiyankinar Road, Kuttippala",
+  address_1: "Sample Road, Sample Town",
   address_2: "Opp. Govt. Ayurveda Dispensary, Malappuram Dt, Pin: 676501",
-  phone: "+91 81578 87311, 95266 77311",
-  email: "mithralab12020@gmail.com",
-  gstin: "32AABCN1234F1Z5",
+  phone: "+91 00000 00000",
+  email: "lab@example.com",
   license: "KL-MAL-2024-LAB-0981",
-  sig1_name: "SAHEED MOHAMED. P.",
+  sig1_name: "A. Technologist",
   sig1_qual: "BScMLT",
   sig1_role: "Technologist",
   sig2_name: "FATTIMATH SAKIRA. M.",
@@ -1702,15 +1707,12 @@ function handleSignInSubmit() {
     return;
   }
 
-  // Check pin against selected user or default admin PIN 1598
-  if (pin === "1598" || (user && user.pin === pin)) {
-    currentUser = user || STAFF_ACCOUNTS[0] || { username: "admin", name: "Administrator", role: "Admin", pin: "1598" };
-    sessionStorage.setItem("labsoft_user_v2", JSON.stringify(currentUser));
-    render();
-  } else {
-    alert("Incorrect PIN. Default PIN is 1598.");
-    if (pinInput) pinInput.value = "";
-  }
+  // No master PIN, and nothing checked against a stored one: this page is a
+  // demonstration and says so, rather than pretending to a security it has no
+  // way of providing.
+  currentUser = user || STAFF_ACCOUNTS[0];
+  sessionStorage.setItem("labsoft_user_v2", JSON.stringify(currentUser));
+  render();
 }
 
 function handleSignUpSubmit() {
@@ -1719,24 +1721,11 @@ function handleSignUpSubmit() {
   const role = document.getElementById("su-role")?.value || "Reception";
   const pin = document.getElementById("su-pin")?.value.trim();
   const pinConfirm = document.getElementById("su-pin-confirm")?.value.trim();
-  const adminPin = document.getElementById("su-admin-pin")?.value.trim();
 
   if (!name || !username || !pin) {
     alert("Please fill in Name, Username, and a 4-digit PIN.");
     return;
   }
-  if (!adminPin) {
-    alert("Admin authorization required: Please enter the Administrator / Owner Master PIN (1598).");
-    return;
-  }
-
-  // Verify Admin authorization
-  const isAdminValid = adminPin === "1598" || STAFF_ACCOUNTS.some(u => (u.role === "Admin" || u.role === "admin") && u.pin === adminPin);
-  if (!isAdminValid) {
-    alert("Admin authorization failed: Only the lab owner/admin (PIN 1598) can authorize new staff signups.");
-    return;
-  }
-
   if (pin.length < 4) {
     alert("PIN must be at least 4 digits.");
     return;
@@ -1750,13 +1739,14 @@ function handleSignUpSubmit() {
     return;
   }
 
-  const newUser = { username, name, role, pin };
+  // No pin field: nothing here can keep one safely.
+  const newUser = { username, name, role };
   STAFF_ACCOUNTS.push(newUser);
   saveState();
 
   currentUser = newUser;
   sessionStorage.setItem("labsoft_user_v2", JSON.stringify(newUser));
-  alert(`Staff account successfully created for ${name} (${role}) with Administrator Authorization!`);
+  alert(`Account created for ${name} (${role}).`);
   render();
 }
 
@@ -1929,7 +1919,7 @@ function renderLoginScreen(container) {
                 <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:6px;">4-Digit Security PIN</label>
                 <input type="password" id="auth-pin-input" placeholder="••••" maxlength="8" style="height:44px; border:2px solid #201e1d; padding:0 14px; font-size:22px; letter-spacing:.5em; text-align:center; font-weight:800; color:#201e1d; width:100%; outline:none; background:#faf9f8;" onkeydown="if(event.key==='Enter')handleSignInSubmit()" autofocus>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:11px; color:#7d7979;">
-                  <span>Default Master PIN: <b>1598</b></span>
+                  <span>Demonstration only — no PIN is needed, and none is stored</span>
                   <a onclick="toggleKeypad()" style="color:#0284C7; cursor:pointer; font-weight:700;">🔢 Toggle Keypad</a>
                 </div>
               </div>
@@ -1951,7 +1941,7 @@ function renderLoginScreen(container) {
               </div>
 
               <div style="font-size:11.5px; color:#7d7979; line-height:1.4;">
-                Forgotten your PIN? <span style="font-weight:700; color:#0284C7; cursor:pointer;" onclick="alert('Administrator (Default PIN: 1598) can reset PINs in the Staff tab.')">Admin can reset PIN.</span>
+                In the desktop program, an administrator sets a new PIN for you under Staff.
               </div>
             </div>
           ` : `
@@ -1993,15 +1983,12 @@ function renderLoginScreen(container) {
                 </div>
               </div>
 
-              <!-- ADMIN AUTHORIZATION PIN -->
-              <div style="background:#fff5f5; border:1px solid #ffdad4; padding:10px 12px; margin-top:2px;">
-                <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#0284C7; margin-bottom:4px;">Admin / Owner Master PIN</label>
-                <input type="password" id="su-admin-pin" placeholder="Enter Admin PIN (1598)" maxlength="8" style="height:36px; border:2px solid #0284C7; background:#ffffff; padding:0 12px; font-size:16px; letter-spacing:.3em; width:100%; outline:none;" onkeydown="if(event.key==='Enter')handleSignUpSubmit()">
-                <div style="font-size:10.5px; color:#0284C7; font-weight:600; margin-top:3px;">Only the lab owner or admin can authorize new staff.</div>
+              <div style="background:#F1F5F9; border:1px solid #CBD5E1; padding:10px 12px; margin-top:2px;">
+                <div style="font-size:10.5px; color:#334155; font-weight:600;">In the desktop program an administrator has to type their own PIN to approve a new account. This page is a demonstration and cannot check one.</div>
               </div>
 
               <button onclick="handleSignUpSubmit()" style="height:44px; display:flex; align-items:center; justify-content:center; background:#0A3668; color:#ffffff; font-size:14px; font-weight:800; letter-spacing:.05em; border:none; width:100%; cursor:pointer; margin-top:4px; transition:background .1s ease;">
-                Authorize & Create Account
+                Create the account
               </button>
 
               <div style="font-size:11.5px; color:#7d7979; text-align:center; border-top:1px solid #eae7e7; padding-top:10px;">
@@ -2052,7 +2039,7 @@ function createEmptyJob() {
     bill_paid: 450,
     bill_mode: "Cash",
     bill_disc: 0,
-    technologist: "SAHEED MOHAMED. P.",
+    technologist: "A. Technologist",
     pathologist: "Dr. K. V. RAMAN, MD (Path)"
   };
 }
@@ -2323,7 +2310,7 @@ function renderJobScreen(container) {
 
           <div class="money-band-actions">
             <button class="btn-m" onclick="openPOSReceiptModal(activeJob)" title="Open 80mm POS Thermal Slip" style="background:transparent; color:#FFFFFF; border:1px solid #64748B;">🧾 POS Receipt</button>
-            <button class="btn-m" onclick="openBillModal()" title="Print A4 Tax Invoice" style="background:transparent; color:#FFFFFF; border:1px solid #64748B;">Print bill…</button>
+            <button class="btn-m" onclick="openBillModal()" title="Print the A4 bill" style="background:transparent; color:#FFFFFF; border:1px solid #64748B;">Print bill…</button>
             <button class="btn-m" onclick="openBillModal()" style="background:#FFFFFF; color:#0F172A; font-weight:800; border:none;">Make the bill</button>
           </div>
         </div>
@@ -3200,9 +3187,9 @@ function renderStaffScreen(container) {
               <td style="padding:10px 14px; font-weight:800;">${s.username}</td>
               <td style="padding:10px 14px; font-weight:700;">${s.name}</td>
               <td style="padding:10px 14px;"><span class="status-pill sp-prog">${s.role}</span></td>
-              <td style="padding:10px 14px; font-weight:800; letter-spacing:2px;">${s.pin}</td>
+              <td style="padding:10px 14px; color:var(--text-muted);">no PIN in the demonstration</td>
               <td style="padding:10px 14px; text-align:right;">
-                ${s.username==='admin' ? '<span style="color:var(--text-muted); font-size:11px;">Default Admin</span>' : `<button class="btn-m" style="color:var(--accent-red);" onclick="if(confirm('Delete user?')){STAFF_ACCOUNTS.splice(${i},1); saveState(); render();}">Delete</button>`}
+                ${s.username==='demo' ? '<span style="color:var(--text-muted); font-size:11px;">Demonstration account</span>' : `<button class="btn-m" style="color:var(--accent-red);" onclick="if(confirm('Delete user?')){STAFF_ACCOUNTS.splice(${i},1); saveState(); render();}">Delete</button>`}
               </td>
             </tr>
           `).join("")}
@@ -3225,7 +3212,7 @@ function openAddStaffModal() {
           <option value="Admin">Admin</option>
         </select>
       </div>
-      <div><label class="stat-label">4-digit PIN</label><input type="password" class="field-input" id="ns-pin" placeholder="1234" maxlength="4"></div>
+      <div><label class="stat-label">PIN</label><div style="font-size:11px; color:var(--text-muted); padding-top:8px;">Set in the desktop program. This page stores no PIN.</div></div>
     </div>
   `;
   document.getElementById("modal-dialog-title").textContent = "Add Staff Account";
@@ -3241,13 +3228,11 @@ function openAddStaffModal() {
 function saveNewStaff() {
   const user = document.getElementById("ns-user").value.trim();
   const name = document.getElementById("ns-name").value.trim();
-  const pin = document.getElementById("ns-pin").value.trim();
-  if (!user || !name || pin.length !== 4) { alert("Please fill username, name, and a 4-digit PIN."); return; }
+  if (!user || !name) { alert("Please fill in the username and the name."); return; }
   STAFF_ACCOUNTS.push({
     username: user,
     name: name,
-    role: document.getElementById("ns-role").value,
-    pin: pin
+    role: document.getElementById("ns-role").value
   });
   saveState();
   closeModal();
@@ -3307,8 +3292,8 @@ function renderSettingsScreen(container) {
             <input type="text" class="field-input" value="${LAB_CONFIG.email}" oninput="LAB_CONFIG.email=this.value; saveState();">
           </div>
           <div>
-            <label class="stat-label">GSTIN / Tax ID</label>
-            <input type="text" class="field-input" value="${LAB_CONFIG.gstin}" oninput="LAB_CONFIG.gstin=this.value; saveState();">
+            <label class="stat-label">Registration number (optional)</label>
+            <input type="text" class="field-input" value="${LAB_CONFIG.reg_no || ''}" oninput="LAB_CONFIG.reg_no=this.value; saveState();">
           </div>
         </div>
       </div>
@@ -3580,7 +3565,7 @@ function openReportPreview(job) {
   const signaturesBlock = `
     <div class="sign-row" style="margin-top:auto; padding-top:14px; border-top:1.5px solid #0E4D92;">
       <div class="sign-person">
-        <div class="sign-name">${LAB_CONFIG.sig1_name || 'SAHEED MOHAMED. P.'}</div>
+        <div class="sign-name">${LAB_CONFIG.sig1_name || 'A. Technologist'}</div>
         <div class="sign-qual">${LAB_CONFIG.sig1_qual || 'BScMLT'}</div>
         <div class="sign-role">${LAB_CONFIG.sig1_role || 'Technologist'}</div>
       </div>
@@ -3741,7 +3726,7 @@ function openWhatsAppDispatchModal(job) {
     return `• *${t?.n || c}:* ${val} ${t?.u || ''}`;
   }).join("\n");
 
-  const msg = `🏥 *NEW MITHRA MEDICAL LABORATORY*\n*Diagnostic Investigation Report*\n━━━━━━━━━━━━━━━━━━━━\n👤 *Patient:* ${job.name} .${job.initial}.\n📋 *Report No:* #${job.report_no}\n📅 *Date:* ${job.date}\n🧪 *Sample Specimen:* ${job.specimen || 'Serum'}\n👨‍⚕️ *Ref by:* ${job.referrer || 'Self'}\n━━━━━━━━━━━━━━━━━━━━\n*INVESTIGATION RESULTS:*\n${resultSummary}\n━━━━━━━━━━━━━━━━━━━━\n🔒 _Official digital report generated & verified._\n📍 Chettiyankinar Road, Kuttippala\n📞 +91 81578 87311, 95266 77311`;
+  const msg = `🏥 *NEW MITHRA MEDICAL LABORATORY*\n*Diagnostic Investigation Report*\n━━━━━━━━━━━━━━━━━━━━\n👤 *Patient:* ${job.name} .${job.initial}.\n📋 *Report No:* #${job.report_no}\n📅 *Date:* ${job.date}\n🧪 *Sample Specimen:* ${job.specimen || 'Serum'}\n👨‍⚕️ *Ref by:* ${job.referrer || 'Self'}\n━━━━━━━━━━━━━━━━━━━━\n*INVESTIGATION RESULTS:*\n${resultSummary}\n━━━━━━━━━━━━━━━━━━━━\n🔒 _Official digital report generated & verified._\n📍 Sample Road, Sample Town\n📞 +91 00000 00000`;
 
   const cleanPhone = job.mobile.replace(/\D/g, "");
   const targetPhone = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
@@ -3840,7 +3825,7 @@ function openBillModal() {
   document.getElementById("modal-dialog-body").className = "modal-dialog-body plain";
   document.getElementById("modal-dialog-body").innerHTML = content;
   document.getElementById("modal-dialog-footer").innerHTML = `
-    <button class="btn-m primary" onclick="activeJob.bill_paid=${total}; saveJobLocal(); printA4Invoice();">🖨️ Print A4 Tax Invoice</button>
+    <button class="btn-m primary" onclick="activeJob.bill_paid=${total}; saveJobLocal(); printA4Invoice();">Print A4 bill</button>
     <button class="btn-m" style="background:#201e1d; color:#fff;" onclick="activeJob.bill_paid=${total}; saveJobLocal(); printPOSReceipt();">🧾 Print 80mm POS Receipt</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
@@ -3857,11 +3842,11 @@ function printA4Invoice() {
       <div style="display:flex; justify-content:space-between; border-bottom:2px solid #0A3668; padding-bottom:12px;">
         <div>
           <div style="font-size:20px; font-weight:800; color:#0A3668;">NEW MITHRA MEDICAL LABORATORY</div>
-          <div style="font-size:11px; color:#4a5568;">Chettiyankinar Road, Kuttippala, Opp. Govt. Ayurveda Dispensary</div>
-          <div style="font-size:11px; color:#4a5568;">Ph: +91 81578 87311, 95266 77311 · GSTIN: 32AABCN1234F1Z5</div>
+          <div style="font-size:11px; color:#4a5568;">Sample Road, Sample Town</div>
+          <div style="font-size:11px; color:#4a5568;">Ph: +91 00000 00000</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:18px; font-weight:800; color:#c1121f;">TAX INVOICE / RECEIPT</div>
+          <div style="font-size:18px; font-weight:800; color:#c1121f;">BILL / RECEIPT</div>
           <div style="font-size:12px; font-weight:700;">Bill No: INV-${activeJob.report_no}</div>
           <div style="font-size:11px; color:#4a5568;">Date: ${activeJob.date}</div>
         </div>
@@ -3914,7 +3899,7 @@ function printA4Invoice() {
     </div>
   `;
 
-  document.getElementById("modal-dialog-title").textContent = `A4 Medical Tax Invoice #${activeJob.report_no}`;
+  document.getElementById("modal-dialog-title").textContent = `A4 bill #${activeJob.report_no}`;
   document.getElementById("modal-dialog-body").className = "modal-dialog-body";
   document.getElementById("modal-dialog-body").innerHTML = invoiceHTML;
   document.getElementById("modal-dialog-footer").innerHTML = `
@@ -3994,7 +3979,7 @@ function showAbout() {
           <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Real-time clinical formula calculation & automatic delta check</span></div>
           <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Multi-style diagnostic letterheads & dual HbA1c layout sheets</span></div>
           <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Executive Day-Book analytics, revenue tracking & CSV export</span></div>
-          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Dual invoicing: Official A4 Tax Invoices + 80mm POS thermal slips</span></div>
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Two documents: an A4 bill and an 80mm counter slip</span></div>
           <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Automated WhatsApp PDF dispatch & medico-legal audit trails</span></div>
         </div>
       </div>
@@ -4133,7 +4118,7 @@ function openPOSReceiptModal(job) {
           <b style="font-size:13px;">${LAB_CONFIG.prefix || 'MITHRA'} ${LAB_CONFIG.name || 'DIAGNOSTIC LABORATORY'}</b><br>
           <span style="font-size:9.5px; color:#444;">${LAB_CONFIG.address || 'Medical Centre Road'}<br>Ph: ${LAB_CONFIG.phone || '9876543210'}</span><br>
           ------------------------------------<br>
-          <b style="font-size:10px;">TAX INVOICE / CASH RECEIPT</b><br>
+          <b style="font-size:10px;">CASH RECEIPT</b><br>
           ------------------------------------
         </div>
         <div style="margin:6px 0; font-size:10px;">

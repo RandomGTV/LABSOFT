@@ -71,12 +71,39 @@ def patients_dir() -> Path:
     return _ensure(base_dir() / "patients")
 
 
+#: Names Windows reserves for devices. A folder called CON or LPT1 cannot be
+#: created, so a patient called that would have had no folder at all.
+_RESERVED_NAMES = {
+    "CON", "PRN", "AUX", "NUL",
+    *(f"COM{n}" for n in range(1, 10)),
+    *(f"LPT{n}" for n in range(1, 10)),
+}
+
+
 def patient_name_part(name: str) -> str:
-    """The readable half of a patient folder's name."""
+    """The readable half of a patient folder's name.
+
+    This strips more than Windows forbids, on purpose. The folder name ends up
+    inside command lines -- the report is put on the clipboard by PowerShell,
+    and the folder is opened by Explorer -- and a patient's name is typed by
+    whoever is at the counter. Shell metacharacters have no business in a
+    folder name, and taking them out here means no caller has to remember to
+    quote. (The PowerShell call passes the path as an argument as well; this is
+    the second of the two locks, not the only one.)
+    """
     import re
 
-    safe = re.sub(r'[\\/:*?"<>|]+', '', (name or "Unknown")).strip()
-    return re.sub(r"\s+", " ", safe)[:80].rstrip(" .") or "Unknown"
+    safe = re.sub(r'[\\/:*?"<>|$`;&()\[\]{}%!^~\x00-\x1f]+', '',
+                  (name or "Unknown")).strip()
+    safe = re.sub(r"\s+", " ", safe)[:80].rstrip(" .")
+    if not safe:
+        return "Unknown"
+    # CON.pdf is as reserved as CON, so the stem is what has to be checked --
+    # and the fix has to be a PREFIX: "CON (name)" still begins with the
+    # reserved stem as far as Windows is concerned.
+    if safe.split(".")[0].upper() in _RESERVED_NAMES:
+        return f"Patient {safe}"
+    return safe
 
 
 def patient_dir(patient_id: int = 0, name: str = "", phone: str = "",
@@ -204,6 +231,10 @@ DEFAULT_SETTINGS = {
     "blank_header_mm": "36",   # top spacing (mm) when print_header is 0
     "print_flags": "0",        # abnormal marking on the printed report, off
     "watermark": "0",
+    # Its own image, rather than always reusing the logo: a logo is
+    # drawn to be read small and dark, and a watermark to disappear
+    # behind text. Left empty, the logo stands in as it always did.
+    "watermark_file": "",
     # Letterhead design: "classic" is the old plain heading, "modern" is the
     # teal medical band. Only affects pages LabSoft prints the header on.
     "header_style": "modern",
@@ -228,7 +259,10 @@ DEFAULT_SETTINGS = {
     "country_code": "91",
     # auto = use the desktop app when it is installed, otherwise WhatsApp Web.
     # Set to "web" to always use the browser, or "desktop" to always use the app.
-    "whatsapp_mode": "auto",
+    # The desktop app, not the browser: a report can only be attached
+    # to the application. "web" stays available for a lab that has no
+    # desktop WhatsApp and is content to send the message alone.
+    "whatsapp_mode": "desktop",
     # Bring WhatsApp to the front and paste the report in automatically.
     # Sending itself always stays manual.
     "auto_attach": "1",
@@ -236,7 +270,12 @@ DEFAULT_SETTINGS = {
     "preview_before_send": "1",
 
     # Cloud backup. Empty folder = auto-detect Google Drive.
-    "cloud_backup": "1",
+    # OFF until the lab turns it on. It defaulted to "1" with an empty folder
+    # meaning "find one automatically", and the finder takes the first of
+    # Google Drive / OneDrive / Dropbox it sees — so on a PC with any of those
+    # installed for personal use, the complete unencrypted patient database
+    # began uploading from first launch, with no prompt.
+    "cloud_backup": "0",
     "cloud_folder": "",
 
     # Behaviour
@@ -275,16 +314,17 @@ SETTINGS_GROUPS = [
         ("end_line_2", "End line 2"),
         ("footer_note", "Footer note"),
         ("disclaimer_text", "Bottom disclaimer note"),
-        ("logo_file", "Logo file (in assets)"),
-        ("header_photo_file", "Header photo file (in assets)"),
-        ("signature_file", "Signature image (optional)"),
+        # The four image settings used to be typed in here as filenames. They
+        # live on the Images page now, where they are chosen with a file
+        # picker and shown with whether the file is actually there -- a
+        # filename typed by hand is a filename that can be typed wrong.
     ]),
     ("Numbering", [
         ("next_report_no", "Next report number"),
     ]),
     ("WhatsApp", [
         ("country_code", "Country code"),
-        ("whatsapp_mode", "Open using (auto / desktop / web)"),
+        ("whatsapp_mode", "Open WhatsApp in"),
         ("whatsapp_template", "Message template"),
     ]),
 ]

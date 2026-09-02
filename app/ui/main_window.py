@@ -34,7 +34,7 @@ from .settings_screen import SettingsScreen
 from .staff_screen import StaffScreen
 from .summaries_screen import SummariesScreen
 from .tests_screen import TestsScreen
-from .widgets import TabDeck
+from .widgets import TabDeck, elevate, name_fields
 
 
 TAB_JOB = 0
@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
         central_lay.setContentsMargins(0, 0, 0, 0)
         central_lay.setSpacing(0)
 
-        central_lay.addWidget(self._build_app_bar(lab))
+        central_lay.addWidget(elevate(self._build_app_bar(lab), 2))
 
         self.tabs = TabDeck()
         self.tabs.setDocumentMode(True)
@@ -70,12 +70,26 @@ class MainWindow(QMainWindow):
         self.staff_screen = StaffScreen()
         self.settings_screen = SettingsScreen()
 
+        # Every field on every screen takes the name of the caption printed
+        # beside it, so a screen reader says "Mobile, edit" rather than
+        # "edit". Done here, once, rather than at fifty call sites.
+        for screen in (self.job_screen, self.queue_screen, self.patients_screen,
+                       self.doctors_screen, self.tests_screen,
+                       self.billing_screen, self.analytics_screen,
+                       self.summaries_screen, self.staff_screen,
+                       self.settings_screen):
+            name_fields(screen)
+
         # Numbered and iconed, the way the web application labels them, so
         # that "go to 05" means the same thing on either. Tabs a person
         # cannot use are not shown at all.
         self._add_tab(self.job_screen, "job", "01. Job")
         self._add_tab(self.queue_screen, "queue", "02. Work Queue")
         self._add_tab(self.patients_screen, "patients", "03. Patients")
+        # Doctors stays visible to everyone: reception has to see who referred
+        # a patient in order to pick them on a job. What is gated is CHANGING
+        # one -- a commission rate is money -- and that check lives on the
+        # buttons in doctors_screen, which is where it belongs.
         self._add_tab(self.doctors_screen, "doctors", "04. Doctors")
         if auth.can(auth.P_TESTS):
             self._add_tab(self.tests_screen, "tests", "05. Tests")
@@ -85,7 +99,11 @@ class MainWindow(QMainWindow):
             self._add_tab(self.summaries_screen, "summaries", "08. Summaries")
         if auth.can(auth.P_USERS):
             self._add_tab(self.staff_screen, "staff", "09. Staff")
-        if auth.can(auth.P_SETTINGS) or auth.can(auth.P_USERS):
+        # P_SETTINGS only. The "or P_USERS" that used to be here let whoever
+        # manages logins rewrite the letterhead, the signatories' names and
+        # qualifications, and the report-number sequence -- everything that
+        # makes a report attributable. The Staff tab above already covers them.
+        if auth.can(auth.P_SETTINGS):
             self._add_tab(self.settings_screen, "settings", "10. Settings")
         self.tabs.currentChanged.connect(self._tab_changed)
         
@@ -102,8 +120,10 @@ class MainWindow(QMainWindow):
         self.queue_screen.preview_job.connect(lambda j: self.preview(j))
         self.patients_screen.open_job.connect(self._open_job)
         self.patients_screen.preview_job.connect(lambda j: self.preview(j))
+        self.patients_screen.new_job_for.connect(self._new_job_for)
         self.job_screen.request_preview.connect(lambda j: self.preview(j))
         self.queue_screen.send_job.connect(self._send)
+        self.settings_screen.settings_saved.connect(self._relabel)
 
         self._build_status_bar()
         self._build_shortcuts()
@@ -113,6 +133,15 @@ class MainWindow(QMainWindow):
         self._ticker.setInterval(60_000)
         self._ticker.timeout.connect(self._refresh_status)
         self._ticker.start()
+
+    def _relabel(self) -> None:
+        """Re-read the laboratory's name after Settings has been saved."""
+        lab = (q.get_setting("lab_name_prefix") + " "
+               + q.get_setting("lab_name")).strip()
+        self.setWindowTitle(f"LabSoft — {lab}")
+        if getattr(self, "_where_label", None) is not None:
+            self._where_label.setText(
+                f"{lab.upper()} · {config.APP_NAME} {config.APP_VERSION}")
 
     # ------------------------------------------------------------ furniture
     def _add_tab(self, screen: QWidget, icon: str, text: str) -> None:
@@ -164,6 +193,7 @@ class MainWindow(QMainWindow):
 
         where = QLabel(f"{lab.upper()} · {config.APP_NAME} {config.APP_VERSION}")
         where.setProperty("role", "barmuted")
+        self._where_label = where
         lay.addWidget(where)
         lay.addStretch(1)
 
@@ -195,7 +225,10 @@ class MainWindow(QMainWindow):
         bar.addWidget(self.overdue_label, 1)
         bar.addPermanentWidget(self.backup_label)
 
-        about = QPushButton("About & credits · F1")
+        # "&&", or Qt eats the ampersand as a mnemonic -- which both dropped
+        # the word from the label and bound the button to Alt+Space, the
+        # Windows system-menu key.
+        about = QPushButton("About && credits · F1")
         about.setProperty("kind", "quiet")
         about.setCursor(Qt.CursorShape.PointingHandCursor)
         about.clicked.connect(self._show_about)
@@ -203,14 +236,23 @@ class MainWindow(QMainWindow):
         self.setStatusBar(bar)
 
     def _build_shortcuts(self) -> None:
+        """One owner per key.
+
+        Qt fires NEITHER handler when two live widgets claim the same
+        shortcut -- it reports the press as ambiguous and drops it. F8 and F9
+        were bound here AND on the Job screen's own buttons, so the two keys
+        the foot bar advertises did nothing at all; F9 worked only while
+        "Check & make report" was disabled and had stopped competing. F5 was
+        claimed here and again by the Work Queue. The buttons keep F8/F9,
+        because a key printed on a button is the one people find.
+        """
         QShortcut(QKeySequence("F1"), self, activated=self._show_about)
         QShortcut(QKeySequence("F2"), self, activated=self._new_job)
+        QShortcut(QKeySequence("F3"), self, activated=self._find_patient)
         QShortcut(QKeySequence("Ctrl+F"), self, activated=self._focus_search)
         QShortcut(QKeySequence("F5"), self, activated=self._refresh_all)
         QShortcut(QKeySequence("Ctrl+1"), self, activated=lambda: self.tabs.setCurrentIndex(0))
         QShortcut(QKeySequence("Ctrl+2"), self, activated=lambda: self.tabs.setCurrentIndex(1))
-        QShortcut(QKeySequence("F8"), self, activated=lambda: self.job_screen._open_whatsapp_dispatch())
-        QShortcut(QKeySequence("F9"), self, activated=lambda: self.preview(self.job_screen.job_id))
         QShortcut(QKeySequence("F10"), self, activated=lambda: self.tabs.setCurrentWidget(self.analytics_screen))
 
     def _show_about(self) -> None:
@@ -245,16 +287,28 @@ class MainWindow(QMainWindow):
             f"color: {style.INK3};" if last else f"color: {style.ALERT}; font-weight: 700;")
 
     def _tab_changed(self, index: int) -> None:
+        # One branch. There used to be a `hasattr(w, "load")` arm first, but
+        # no screen defines load(), so it never ran.
         w = self.tabs.widget(index)
-        if hasattr(w, "load"):
-            w.load()
-        elif hasattr(w, "refresh"):
+        if hasattr(w, "refresh"):
             w.refresh()
         self._refresh_status()
 
     def _new_job(self) -> None:
         self.tabs.setCurrentIndex(TAB_JOB)
         self.job_screen.new_job()
+
+    def _find_patient(self) -> None:
+        """F3, which the key strip has always advertised and nothing bound.
+
+        Go to the Patients register and put the cursor in its search box —
+        which is what "Find a patient" means.
+        """
+        self.tabs.setCurrentWidget(self.patients_screen)
+        box = getattr(self.patients_screen, "search", None)
+        if box is not None:
+            box.setFocus()
+            box.selectAll()
 
     def _focus_search(self) -> None:
         """Put the cursor in the search box of the screen already open.
@@ -272,16 +326,30 @@ class MainWindow(QMainWindow):
         box.setFocus()
         box.selectAll()
 
+    def _new_job_for(self, patient_id: int) -> None:
+        self.tabs.setCurrentIndex(TAB_JOB)
+        self.job_screen.new_job_for(patient_id)
+
     def _open_job(self, job_id: int) -> None:
         self.tabs.setCurrentIndex(TAB_JOB)
         self.job_screen.load_job(job_id)
+
+    def _after_send(self, job_id: int) -> None:
+        """The Job screen is the one in front when a report is sent from it.
+
+        Only the queue and the status bar were refreshed, so the job header
+        went on saying "Ready to send" after the report had gone out.
+        """
+        self.queue_screen.refresh()
+        if self.job_screen.job_id == job_id:
+            self.job_screen.load_job(job_id)
+        self._refresh_status()
 
     def _send(self, job_id: int) -> None:
         from .send_dialog import SendDialog
 
         SendDialog(job_id, self).exec()
-        self.queue_screen.refresh()
-        self._refresh_status()
+        self._after_send(job_id)
 
     def preview(self, job_id: int) -> None:
         from .preview_dialog import PreviewDialog

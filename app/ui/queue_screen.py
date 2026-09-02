@@ -28,7 +28,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from ..core import billing, turnaround
+from ..core import auth, billing, turnaround
 from ..db import queries as q
 from . import style
 from .widgets import SearchBox, Table, button, confirm, label, warn
@@ -43,8 +43,8 @@ HEADERS = ["", "Report no", "Patient", "Tests", "Received", "Progress",
 
 GAP = 12            # the gutter, taken out of the right of every cell
 EDGE = 18           # the page margin on the far right of the board
-ROW_H = 40
-HEAD_H = 32
+ROW_H = 52
+HEAD_H = 44
 
 COL_W = {
     STRIPE: 6 + GAP,
@@ -63,10 +63,10 @@ ROW_ROLE = Qt.ItemDataRole.UserRole + 1
 
 #: Database status -> the four chips defined in the design system.
 CHIP = {
-    turnaround.STATUS_DRAFT: ("draft", "REGISTERED"),
-    turnaround.STATUS_IN_PROGRESS: ("prog", "IN PROGRESS"),
-    turnaround.STATUS_READY: ("ready", "READY TO SEND"),
-    turnaround.STATUS_SENT: ("sent", "SENT ✓"),
+    turnaround.STATUS_DRAFT: ("draft", "Registered"),
+    turnaround.STATUS_IN_PROGRESS: ("prog", "In progress"),
+    turnaround.STATUS_READY: ("ready", "Ready to send"),
+    turnaround.STATUS_SENT: ("sent", "Sent"),
 }
 
 SCOPES = [("today", "Today"), ("pending", "Pending"), ("overdue", "Overdue"),
@@ -127,24 +127,24 @@ class BoardDelegate(QStyledItemDelegate):
             self._stripe(painter, r, job, chosen)
         elif col == C_NO:
             self._plain(painter, box, str(job["report_no"]),
-                        _font(13, 800), style.INK)
+                        _font(14, 700), style.INK)
         elif col == C_PATIENT:
             self._patient(painter, box, job)
         elif col == C_TESTS:
-            self._plain(painter, box, job["tests"], _font(12), style.INK3)
+            self._plain(painter, box, job["tests"], _font(13), style.INK3)
         elif col == C_RECEIVED:
-            self._plain(painter, box, job["received"], _font(12), style.INK3)
+            self._plain(painter, box, job["received"], _font(13), style.INK3)
         elif col == C_PROGRESS:
             self._progress(painter, box, job)
         elif col == C_STATUS:
             self._chip(painter, box, job)
         elif col == C_PAYMENT:
             self._plain(painter, box, job["payment"],
-                        _font(12, 700 if job["owing"] else 400),
+                        _font(13, 600 if job["owing"] else 400),
                         style.INK if job["owing"] else style.INK3,
                         right=True)
         elif col == C_DUE:
-            self._plain(painter, box, job["due"], _font(12, 700),
+            self._plain(painter, box, job["due"], _font(13, 600),
                         job["due_ink"], right=True)
         painter.restore()
 
@@ -179,10 +179,10 @@ class BoardDelegate(QStyledItemDelegate):
         The mobile is what the operator reads out to confirm they have the
         right Anil Sharma, so it belongs beside the name and nowhere else.
         """
-        name = QRect(box.left(), box.top() + 3, box.width(), 19)
-        phone = QRect(box.left(), box.top() + 20, box.width(), 16)
-        self._plain(painter, name, job["name"], _font(13, 700), style.INK)
-        self._plain(painter, phone, job["phone"], _font(11), style.INK3)
+        name = QRect(box.left(), box.top() + 7, box.width(), 20)
+        phone = QRect(box.left(), box.top() + 27, box.width(), 18)
+        self._plain(painter, name, job["name"], _font(14, 600), style.INK)
+        self._plain(painter, phone, job["phone"], _font(12), style.INK3)
 
     def _progress(self, painter, box, job) -> None:
         """A drawn bar and the count beside it.
@@ -193,33 +193,47 @@ class BoardDelegate(QStyledItemDelegate):
         count_w = 34
         track_w = max(20, box.width() - 9 - count_w)
         y = box.center().y() - 2
-        painter.fillRect(QRect(box.left(), y, track_w, 6), QColor(style.TRACK))
+        painter.setRenderHint(painter.RenderHint.Antialiasing, True)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(style.TRACK))
+        painter.drawRoundedRect(QRect(box.left(), y, track_w, 6), 3, 3)
         done = int(job["n_done"] or 0)
         total = int(job["n_tests"] or 0)
         if total > 0 and done > 0:
             width = max(2, int(round(track_w * min(1.0, done / total))))
-            painter.fillRect(QRect(box.left(), y, width, 6),
-                             QColor(style.ALERT if job.get("late")
+            painter.setBrush(QColor(style.ALERT if job.get("late")
                                     else style.ACCENT_INK))
+            painter.drawRoundedRect(QRect(box.left(), y, width, 6), 3, 3)
+        painter.setRenderHint(painter.RenderHint.Antialiasing, False)
         self._plain(painter,
                     QRect(box.right() - count_w, box.top(), count_w, box.height()),
-                    f"{done}/{total}", _font(12, 700), style.INK, right=True)
+                    f"{done}/{total}", _font(13, 600), style.INK, right=True)
 
     def _chip(self, painter, box, job) -> None:
+        """The job's state, as a soft tinted chip.
+
+        Set in words rather than shouted in capitals with a hard border --
+        the old chip carried the same information and read like a warning
+        label on a machine.
+        """
         kind, text = CHIP.get(job["status"],
-                              ("draft", turnaround.status_label(job["status"]).upper()))
-        fg, bg, edge = style.status_fill(kind)
-        font = _font(11, 800, 5)
+                              ("draft", turnaround.status_label(job["status"])))
+        fg, bg, _edge = style.status_fill(kind)
+        font = _font(12, 600)
         metrics = QFontMetrics(font)
-        width = min(box.width(), metrics.horizontalAdvance(text) + 8 + 7 + 7 + 9)
-        chip = QRect(box.left(), box.center().y() - 10, width, 21)
-        painter.fillRect(chip, QColor(bg))
-        painter.setPen(QColor(edge))
-        painter.drawRect(chip.adjusted(0, 0, -1, -1))
-        painter.fillRect(QRect(chip.left() + 8, chip.center().y() - 3, 7, 7),
-                         QColor(fg))
+        width = min(box.width(), metrics.horizontalAdvance(text) + 12 + 7 + 8 + 12)
+        chip = QRect(box.left(), box.center().y() - 13, width, 26)
+
+        painter.setRenderHint(painter.RenderHint.Antialiasing, True)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(bg))
+        painter.drawRoundedRect(chip, 13, 13)
+        painter.setBrush(QColor(fg))
+        painter.drawEllipse(QRect(chip.left() + 12, chip.center().y() - 3, 7, 7))
+        painter.setRenderHint(painter.RenderHint.Antialiasing, False)
+
         self._plain(painter,
-                    QRect(chip.left() + 22, chip.top(), chip.width() - 26, chip.height()),
+                    QRect(chip.left() + 27, chip.top(), chip.width() - 33, chip.height()),
                     text, font, fg)
 
 
@@ -239,7 +253,7 @@ class Board(Table):
 
         head = self.horizontalHeader()
         head.setFixedHeight(HEAD_H)
-        head.setFont(_font(10, 800, 14))
+        head.setFont(_font(12, 600))
         head.setDefaultAlignment(Qt.AlignmentFlag.AlignVCenter
                                  | Qt.AlignmentFlag.AlignLeft)
         for column, width in COL_W.items():
@@ -251,7 +265,7 @@ class Board(Table):
             if item is not None:
                 item.setTextAlignment(int(Qt.AlignmentFlag.AlignRight
                                           | Qt.AlignmentFlag.AlignVCenter))
-        self.setHorizontalHeaderLabels([h.upper() for h in HEADERS])
+        self.setHorizontalHeaderLabels(HEADERS)
 
     def set_jobs(self, jobs: List[dict]) -> None:
         """Hang one dict on every cell of its row; the delegate does the rest."""
@@ -264,6 +278,11 @@ class Board(Table):
                     item.setData(ROW_ROLE, job)
                     self.setItem(r, c, item)
                 self.setRowHeight(r, ROW_H)
+            # Open on the first row. A board that lists twelve jobs and has
+            # none of them chosen is a board where every button is a no-op
+            # until you happen to click a row.
+            if jobs:
+                self.selectRow(0)
             self._refresh_empty()
         finally:
             self.setUpdatesEnabled(True)
@@ -344,14 +363,16 @@ class QueueScreen(QWidget):
                   context=Qt.ShortcutContext.WidgetShortcut)
         # Ctrl+P is not bound here: the Preview button already carries it, and
         # two owners of one sequence make Qt fire neither.
-        QShortcut(QKeySequence(Qt.Key.Key_F5), self, activated=self.refresh,
-                  context=Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        # F5 is not bound here either, for the same reason: the window owns
+        # it and refreshes every screen. Claimed in both places, Qt called the
+        # press ambiguous and ran neither -- so the key the foot bar
+        # advertises ("F5 re-reads the file") did nothing at all.
 
     def _build_filter_bar(self) -> QWidget:
         bar = QWidget()
         bar.setObjectName("filterBar")
         lay = QHBoxLayout(bar)
-        lay.setContentsMargins(18, 14, 18, 14)
+        lay.setContentsMargins(24, 20, 24, 18)
         lay.setSpacing(20)
 
         self.search = SearchBox("Report no, name or mobile — filters as you type")
@@ -390,7 +411,7 @@ class QueueScreen(QWidget):
                                      shortcut="Ctrl+P")
         for b in (self.preview_button, self.revise_button, self.send_button,
                   self.open_button):
-            b.setFixedHeight(32)
+            b.setFixedHeight(38)
             lay.addWidget(b, 0, Qt.AlignmentFlag.AlignVCenter)
         lay.setSpacing(9)
         return bar
@@ -398,16 +419,16 @@ class QueueScreen(QWidget):
     def _build_scope_strip(self) -> QWidget:
         strip = QWidget()
         strip.setObjectName("scopeStrip")
-        strip.setFixedHeight(34)
+        strip.setFixedHeight(46)
         lay = QHBoxLayout(strip)
-        lay.setContentsMargins(18, 0, 18, 0)
+        lay.setContentsMargins(24, 0, 24, 0)
         lay.setSpacing(4)
 
         self.scope_buttons: Dict[str, object] = {}
         for key, text in SCOPES:
             b = button(text)
             b.setCheckable(True)
-            b.setFixedHeight(24)
+            b.setFixedHeight(30)
             b.clicked.connect(lambda _c=False, k=key: self._set_scope(k))
             self.scope_buttons[key] = b
             lay.addWidget(b)
@@ -420,9 +441,9 @@ class QueueScreen(QWidget):
     def _build_foot(self) -> QWidget:
         foot = QWidget()
         foot.setObjectName("footBar")
-        foot.setFixedHeight(40)
+        foot.setFixedHeight(52)
         lay = QHBoxLayout(foot)
-        lay.setContentsMargins(18, 0, 18, 0)
+        lay.setContentsMargins(24, 0, 24, 0)
         lay.setSpacing(20)
         # The day's counts are on the window's status line, which every screen
         # shares. Printing them here as well gave the operator two rows of the
@@ -559,9 +580,19 @@ class QueueScreen(QWidget):
         }.get(self.scope, "Nothing here yet.")
 
     # --------------------------------------------------------------- actions
-    def _selected(self) -> dict | None:
+    def _selected(self, complain: bool = True) -> dict | None:
+        """The chosen row, and a word when there isn't one.
+
+        The board opens with rows and no selection, so every button on it
+        returned in silence — no dialog, no message, nothing. Billing and
+        Doctors have always said "Nothing chosen"; this now does too.
+        """
         i = self.table.selected_row()
         if i < 0 or i >= len(self.rows):
+            if complain:
+                warn(self, "Nothing chosen",
+                     "Pick a row in the list first, then press the button "
+                     "again.")
             return None
         return self.rows[i]
 
@@ -569,6 +600,7 @@ class QueueScreen(QWidget):
         j = self._selected()
         if j:
             self.open_job.emit(j["id"])
+
 
     def _preview_selected(self) -> None:
         j = self._selected()
@@ -605,8 +637,18 @@ class QueueScreen(QWidget):
         self.open_job.emit(new_id)
 
     def _delete_selected(self) -> None:
+        # The Work Queue is shown to everybody, so the check has to be here:
+        # a hidden button is not a permission. Without this, a receptionist
+        # holding only "enter results" could delete an unsettled job and take
+        # its bill out of the ledger with it.
+        if not auth.can(auth.P_DELETE):
+            warn(self, "Not allowed",
+                 "Deleting a job needs the delete permission. An administrator "
+                 "can grant it under Staff.")
+            return
         j = self._selected()
         if not j:
+            warn(self, "Nothing chosen", "Pick a row in the list first.")
             return
         if j["status"] == turnaround.STATUS_SENT:
             warn(self, "Already sent",

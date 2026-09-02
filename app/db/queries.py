@@ -341,6 +341,18 @@ def get_user_by_name(username: str) -> Optional[auth.User]:
                          (auth.normalise_username(username),)))
 
 
+def user_pin_hash(user_id: int) -> str:
+    """The stored hash for one account.
+
+    Deliberately not on ``auth.User``: the hash has exactly one legitimate
+    use -- checking a PIN somebody just typed -- and a field that travels
+    round the program on every user object gets logged, printed and compared
+    by accident. The one other caller is the default-PIN check.
+    """
+    row = _row("SELECT pin_hash FROM users WHERE id = ?", (int(user_id),))
+    return (row or {}).get("pin_hash") or ""
+
+
 def create_user(username: str, display_name: str, pin: str, role: str,
                 permissions) -> int:
     """Create an account. Raises PinError / ValueError with a readable message."""
@@ -391,6 +403,19 @@ def set_user_pin(user_id: int, pin: str) -> None:
     with transaction() as c:
         c.execute("UPDATE users SET pin_hash = ? WHERE id = ?", (pin_hash, user_id))
     log_action("pin_changed", "user", user_id)
+
+
+def check_pin(username: str, pin: str) -> bool:
+    """Does this PIN belong to this active account?
+
+    Separate from ``sign_in`` because approving somebody else's new account is
+    not the same act as taking the counter: an administrator typing their PIN
+    to authorise an account must not end up signed in as a side effect of it.
+    Nothing here writes — no last_login, no current user, no audit entry.
+    """
+    row = _row("SELECT pin_hash FROM users WHERE username = ? AND active = 1",
+               (auth.normalise_username(username),))
+    return bool(row) and auth.verify_pin(pin, row["pin_hash"])
 
 
 def sign_in(username: str, pin: str) -> Optional[auth.User]:
@@ -499,6 +524,47 @@ def jobs_per_referrer() -> Dict[int, int]:
     return {int(r["referrer_id"]): int(r["n"]) for r in _rows(
         "SELECT referrer_id, COUNT(*) AS n FROM jobs "
         "WHERE referrer_id IS NOT NULL GROUP BY referrer_id")}
+
+
+def referrer_jobs(referrer_id: int, limit: int = 300) -> List[dict]:
+    """The work one doctor has sent, newest first, with what it billed."""
+    return _rows(
+        "SELECT j.id, j.report_no, j.received_at, j.status, p.name AS patient_name, "
+        "  COALESCE(b.net_paise,0) AS net_paise, "
+        "  COALESCE(cm.amount_paise,0) AS commission_paise "
+        "FROM jobs j JOIN patients p ON p.id = j.patient_id "
+        "LEFT JOIN bills b ON b.job_id = j.id "
+        "LEFT JOIN commissions cm ON cm.job_id = j.id "
+        "WHERE j.referrer_id = ? "
+        "ORDER BY j.received_at DESC, j.id DESC LIMIT ?",
+        (int(referrer_id), limit))
+
+
+def referrer_totals(referrer_id: int) -> dict:
+    """Everything this doctor has sent, billed and earned.
+
+    Commission is split into what is still owed and what has been paid, since
+    "you owe Dr Mehta 4,200" is the number that settles a month end.
+    """
+    r = _row(
+        "SELECT COUNT(*) AS jobs, COALESCE(SUM(b.net_paise),0) AS billed "
+        "FROM jobs j LEFT JOIN bills b ON b.job_id = j.id "
+        "WHERE j.referrer_id = ?", (int(referrer_id),)) or {}
+    c = _row(
+        "SELECT COALESCE(SUM(amount_paise),0) AS total, "
+        " COALESCE(SUM(CASE WHEN paid_at IS NULL THEN amount_paise ELSE 0 END),0) "
+        "   AS owed "
+        "FROM commissions WHERE referrer_id = ?", (int(referrer_id),)) or {}
+    last = _row(
+        "SELECT MAX(received_at) AS d FROM jobs WHERE referrer_id = ?",
+        (int(referrer_id),)) or {}
+    return {
+        "jobs": int(r.get("jobs") or 0),
+        "billed_paise": int(r.get("billed") or 0),
+        "commission_paise": int(c.get("total") or 0),
+        "owed_paise": int(c.get("owed") or 0),
+        "last_referral": last.get("d"),
+    }
 
 
 def commission_owed(referrer_id: int) -> int:
@@ -761,6 +827,11 @@ def _as_number(value) -> Optional[float]:
         return None
 
 
+def age_text(patient: dict) -> str:
+    """"10 Days", "3 Years" -- the age as it prints on a report."""
+    return _age_text(patient)
+
+
 def _age_text(patient: dict) -> str:
     v = _as_number(patient.get("age_value"))
     if v is None:
@@ -786,7 +857,14 @@ def update_job(job_id: int, **fields) -> None:
     # Anything not named here is silently ignored, so a column added later has
     # to be added here as well: extra_pdfs was being written and thrown away,
     # which left the detail sheets unfindable after the job was closed.
-    allowed = {"referrer_id", "referrer_name", "status", "remarks", "reported_at",
+    # age_*_at_test belong here for the same reason name_at_test does: the
+    # report prints the age the patient was ON THE DAY, and the reference
+    # range is chosen by it. Leaving them out meant a corrected age reached
+    # the screen and the patient record but never the report -- a 10-day-old
+    # whose age was mistyped as 30 years had their haemoglobin flagged HIGH
+    # against the adult range.
+    allowed = {"age_at_test", "age_value_at_test", "age_unit_at_test",
+               "referrer_id", "referrer_name", "status", "remarks", "reported_at",
                "sent_at", "sent_via", "pdf_path", "extra_pdfs", "due_at",
                "received_at", "name_at_test", "age_at_test", "sex_at_test"}
     sets = {k: v for k, v in fields.items() if k in allowed}
@@ -934,6 +1012,24 @@ def oldest_overdue_at() -> Optional[str]:
     return (r or {}).get("d")
 
 
+def patient_money(patient_id: int) -> dict:
+    """What this patient has been charged, has paid, and still owes.
+
+    Summed over every bill on every one of their jobs, so a person who has
+    been in nine times is one figure at the counter rather than nine.
+    """
+    r = _row(
+        "SELECT COALESCE(SUM(b.net_paise),0) AS billed, "
+        " COALESCE(SUM((SELECT COALESCE(SUM(pm.amount_paise),0) FROM payments pm "
+        "                WHERE pm.bill_id = b.id)),0) AS paid "
+        "FROM bills b JOIN jobs j ON j.id = b.job_id "
+        "WHERE j.patient_id = ?", (patient_id,)) or {}
+    billed = int(r.get("billed") or 0)
+    paid = int(r.get("paid") or 0)
+    return {"billed_paise": billed, "paid_paise": paid,
+            "outstanding_paise": max(0, billed - paid)}
+
+
 def patient_jobs(patient_id: int) -> List[dict]:
     return _rows(
         "SELECT j.*, (SELECT COUNT(*) FROM job_tests jt WHERE jt.job_id=j.id) AS n_tests "
@@ -1012,6 +1108,33 @@ def job_progress(job_id: int) -> Tuple[int, int]:
 
 def get_bill(job_id: int) -> Optional[dict]:
     return _row("SELECT * FROM bills WHERE job_id = ?", (job_id,))
+
+
+def job_money(job_id: int) -> dict:
+    """What one job is worth, counted exactly as the Billing ledger counts it.
+
+    The POS receipt used to read ``charged_paise`` and ``paid_paise`` off the
+    bill row. Neither column exists — the bill holds gross/discount/net, and
+    what has been paid is the sum of the payments table — so both reads fell
+    back to their defaults and every slip printed "fully paid, balance
+    ₹0.00" no matter what was actually owed. One query now, shared, so the
+    slip and the ledger cannot disagree again.
+    """
+    row = _row(
+        "SELECT COALESCE(b.id, 0) AS bill_id, "
+        "  COALESCE(b.gross_paise, 0) AS gross_paise, "
+        "  COALESCE(b.discount_paise, 0) AS discount_paise, "
+        "  COALESCE(b.net_paise, 0) AS net_paise, "
+        "  COALESCE(b.discount_type, '') AS discount_type, "
+        "  COALESCE((SELECT SUM(amount_paise) FROM payments pm "
+        "            WHERE pm.bill_id = b.id), 0) AS paid_paise "
+        "FROM jobs j LEFT JOIN bills b ON b.job_id = j.id WHERE j.id = ?",
+        (job_id,))
+    money = dict(row or {"bill_id": 0, "gross_paise": 0, "discount_paise": 0,
+                         "net_paise": 0, "discount_type": "", "paid_paise": 0})
+    money["balance_paise"] = int(money["net_paise"]) - int(money["paid_paise"])
+    money["billed"] = bool(money["bill_id"])
+    return money
 
 
 def bill_items(bill_id: int) -> List[dict]:

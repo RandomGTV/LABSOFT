@@ -7,8 +7,8 @@ from typing import List, Optional
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QFileDialog, QFormLayout,
-    QHBoxLayout, QHeaderView, QLineEdit, QPlainTextEdit, QSpinBox, QTableWidget,
-    QTableWidgetItem, QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QHeaderView, QLineEdit, QPlainTextEdit, QSpinBox,
+    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from ..core import billing, formula, ranges as rng
@@ -16,7 +16,8 @@ from ..db import queries as q
 from ..output import excel
 from . import style
 from .widgets import (
-    SearchBox, Table, button, confirm, error, field_label, info, label, row, warn,
+    SearchBox, Table, button, confirm, error, field_label, gutter, info,
+    label, row, warn,
 )
 
 
@@ -111,12 +112,20 @@ class TestEditor(QDialog):
         lay.addWidget(button("Show available codes", "quiet", self._show_codes))
 
         lay.addWidget(field_label("Normal values"))
-        self.ranges_table = QTableWidget(0, 7)
+        # "Age to" is a column, not a hidden field. It was neither shown nor
+        # read, and _save wrote age_max=None unconditionally -- so opening a
+        # test to change its RATE deleted the upper age bound on every one of
+        # its reference ranges, and there was no way to type it back. The
+        # shipped haemoglobin ranges have a paediatric band bounded at 15
+        # years; once it was gone, an adult of unrecorded sex was ranged
+        # against 11-14 g/dl and flagged HIGH at 16.
+        self.ranges_table = QTableWidget(0, 8)
         self.ranges_table.setHorizontalHeaderLabels(
-            ["Rule", "Low", "High", "Text", "Sex", "Age from", "Prints as"])
+            ["Rule", "Low", "High", "Text", "Sex", "Age from", "Age to",
+             "Prints as"])
         self.ranges_table.verticalHeader().setVisible(False)
         self.ranges_table.horizontalHeader().setSectionResizeMode(
-            6, QHeaderView.ResizeMode.Stretch)
+            7, QHeaderView.ResizeMode.Stretch)
         lay.addWidget(self.ranges_table, 1)
         lay.addWidget(row(button("Add row", "", self._add_range),
                           button("Remove row", "quiet", self._remove_range), None))
@@ -155,6 +164,12 @@ class TestEditor(QDialog):
     def _add_range(self, data: Optional[dict] = None) -> None:
         r = self.ranges_table.rowCount()
         self.ranges_table.insertRow(r)
+        # The note is not a column -- it is the free text a lab writes against
+        # a band -- so it is carried alongside rather than thrown away on
+        # every save.
+        if not hasattr(self, "_range_notes"):
+            self._range_notes = {}
+        self._range_notes[r] = (data or {}).get("note", "") or ""
 
         rule = QComboBox()
         rule.addItems([rng.RULE_RANGE, rng.RULE_MAX, rng.RULE_MIN, rng.RULE_TEXT])
@@ -174,7 +189,8 @@ class TestEditor(QDialog):
         put(2, (data or {}).get("high"))
         put(3, (data or {}).get("text_value"))
         put(5, (data or {}).get("age_min"))
-        put(6, (data or {}).get("display_text"))
+        put(6, (data or {}).get("age_max"))
+        put(7, (data or {}).get("display_text"))
 
     def _remove_range(self) -> None:
         r = self.ranges_table.currentRow()
@@ -216,7 +232,6 @@ class TestEditor(QDialog):
         self.formula_note.setStyleSheet(f"color: {style.GREEN};")
 
     def _show_codes(self) -> None:
-        lines = [f"{t['code']:<12} {t['name']}" for t in q.list_tests()]
         dlg = QDialog(self)
         dlg.setWindowTitle("Test codes")
         dlg.resize(420, 520)
@@ -288,8 +303,9 @@ class TestEditor(QDialog):
                 "rule_type": rule_widget.currentText() if rule_widget else rng.RULE_RANGE,
                 "low": num(1), "high": num(2), "text_value": cell(3),
                 "sex": sex_widget.currentText() if sex_widget else "any",
-                "age_min": num(5), "age_max": None,
-                "display_text": cell(6),
+                "age_min": num(5), "age_max": num(6),
+                "display_text": cell(7),
+                "note": getattr(self, "_range_notes", {}).get(r, ""),
             })
         q.replace_ranges(tid, rows)
         self.accept()
@@ -302,38 +318,89 @@ class TestsScreen(QWidget):
         self._build()
         self.refresh()
 
+    #: caption and key for the figures over the library
+    FIGURES = [("Tests", "tests"), ("Departments", "groups"),
+               ("Calculated", "formulas"), ("Detailed PDF", "detailed")]
+
     def _build(self) -> None:
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(14, 12, 14, 10)
-        lay.setSpacing(10)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        lay.addWidget(self._build_filter_bar())
 
-        self.search = SearchBox("Search tests…")
-        self.search.searched.connect(lambda _t: self.refresh())
-        lay.addWidget(row(self.search,
-                          button("New test", "primary", self._new),
-                          button("Edit", "", self._edit),
-                          button("Hide", "danger", self._deactivate)))
-
-        self.table = Table(["Code", "Name", "Group", "Specimen", "Unit",
-                            "Normal Value", "Formula", "Rate", "TAT"],
-                           stretch_column=1)
-        self.table.setColumnWidth(0, 90)   # Code
-        self.table.setColumnWidth(2, 140)  # Group
-        self.table.setColumnWidth(3, 130)  # Specimen
-        self.table.setColumnWidth(4, 70)   # Unit
-        self.table.setColumnWidth(5, 140)  # Normal Value
-        self.table.setColumnWidth(6, 110)  # Formula
-        self.table.setColumnWidth(7, 80)   # Rate
-        self.table.setColumnWidth(8, 60)   # TAT
+        self.table = Table(["Code", "Name", "Department", "Specimen", "Unit",
+                            "Normal value", "Formula", "Rate", "TAT"],
+                           stretch_column=1,
+                           empty_text="No test matches that.")
+        self.table.setObjectName("boardTable")
+        self.table.verticalHeader().setDefaultSectionSize(48)
+        for column, width in ((0, 108), (2, 220), (3, 158), (4, 88),
+                              (5, 190), (6, 136), (7, 104), (8, 82)):
+            self.table.setColumnWidth(column, width)
+        for column in (7, 8):
+            item = self.table.horizontalHeaderItem(column)
+            if item is not None:
+                item.setTextAlignment(int(Qt.AlignmentFlag.AlignRight
+                                          | Qt.AlignmentFlag.AlignVCenter))
         self.table.doubleClicked.connect(self._edit)
-        lay.addWidget(self.table, 1)
+        lay.addWidget(gutter(self.table), 1)
+        lay.addWidget(self._build_foot())
 
-        self.count_label = label("", "hint")
-        lay.addWidget(row(button("Import from Excel/CSV", "", self._import),
-                          button("Export list", "", self._export),
-                          button("Panels", "", self._panels),
-                          button("Referring doctors", "", self._referrers),
-                          None, self.count_label))
+    def _build_filter_bar(self) -> QWidget:
+        bar = QFrame()
+        bar.setObjectName("filterBar")
+        lay = QVBoxLayout(bar)
+        lay.setContentsMargins(24, 20, 24, 18)
+        lay.setSpacing(12)
+
+        self.search = SearchBox("Search by code, name or department…")
+        self.search.searched.connect(lambda _t: self.refresh())
+        self.search.setFixedWidth(320)
+        self.search.setFixedHeight(34)
+
+        top = QHBoxLayout()
+        top.setSpacing(9)
+        top.addWidget(self.search)
+        top.addStretch(1)
+        top.addWidget(button("Hide test", "danger", self._deactivate))
+        top.addWidget(button("Edit test", "", self._edit))
+        top.addWidget(button("New test", "primary", self._new))
+        lay.addLayout(top)
+
+        figures = QHBoxLayout()
+        figures.setContentsMargins(0, 0, 0, 0)
+        figures.setSpacing(28)
+        self.figures = {}
+        for caption, key in self.FIGURES:
+            block = QFrame()
+            block.setObjectName("statBlock")
+            bl = QVBoxLayout(block)
+            bl.setContentsMargins(12, 0, 0, 0)
+            bl.setSpacing(0)
+            bl.addWidget(label(caption, "statlabel"))
+            value = label("—", "statvalue")
+            self.figures[key] = value
+            bl.addWidget(value)
+            figures.addWidget(block)
+        figures.addStretch(1)
+        lay.addLayout(figures)
+        return bar
+
+    def _build_foot(self) -> QWidget:
+        foot = QFrame()
+        foot.setObjectName("footBar")
+        foot.setFixedHeight(60)
+        lay = QHBoxLayout(foot)
+        lay.setContentsMargins(24, 0, 24, 0)
+        lay.setSpacing(9)
+        self.count_label = label("", "foot")
+        lay.addWidget(self.count_label)
+        lay.addStretch(1)
+        lay.addWidget(button("Panels", "", self._panels))
+        lay.addWidget(button("Referring doctors", "", self._referrers))
+        lay.addWidget(button("Import from Excel/CSV", "", self._import))
+        lay.addWidget(button("Export list", "", self._export))
+        return foot
 
     def refresh(self) -> None:
         term = self.search.text().strip()
@@ -351,8 +418,32 @@ class TestsScreen(QWidget):
                             t["formula"] or "",
                             billing.format_rupees(t["rate_paise"], symbol=False),
                             f"{t['tat_hours']:g}h"])
-        self.table.set_rows(display)
-        self.count_label.setText(f"{len(self.tests)} tests")
+        self.table.set_rows(
+            display,
+            align={c: Qt.AlignmentFlag.AlignRight for c in (7, 8)})
+        self._refresh_figures()
+
+    def _refresh_figures(self) -> None:
+        """The shape of the library, not just its size.
+
+        Counted over the whole library rather than the filtered view: these
+        describe what the lab offers, and would be meaningless if they moved
+        every time somebody typed in the search box.
+        """
+        everything = q.list_tests()
+        shown = {
+            "tests": len(everything),
+            "groups": len({t["group_name"] for t in everything if t["group_name"]}),
+            "formulas": sum(1 for t in everything if t["formula"]),
+            "detailed": sum(1 for t in everything if t["separate_report"]),
+        }
+        for _caption, key in self.FIGURES:
+            self.figures[key].setText(str(shown[key]))
+
+        term = self.search.text().strip()
+        self.count_label.setText(
+            f"{len(self.tests)} of {len(everything)} shown"
+            if term else f"{len(self.tests)} tests in the library")
 
     def _selected(self) -> Optional[dict]:
         i = self.table.selected_row()
@@ -420,7 +511,7 @@ class TestsScreen(QWidget):
                 detail += f"\n   … and {n_upd - 6} more"
         if preview["skipped"]:
             lines = [f"   line {ln}: {why}" for ln, why in preview["skipped"][:8]]
-            detail = "\n\nSkipped:\n" + "\n".join(lines)
+            detail += "\n\nSkipped:\n" + "\n".join(lines)
             if n_skip > 8:
                 detail += f"\n   … and {n_skip - 8} more"
 

@@ -19,7 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Union
 
 from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import (
@@ -210,7 +210,9 @@ class _Renderer:
         if not self.with_header or not self.d.flag_on("watermark"):
             return
         cx, cy = PAGE_W / 2, PAGE_H / 2
-        logo = _load_image(self.d.setting("logo_file"))
+        # The watermark image if one has been chosen, else the logo.
+        logo = (_load_image(self.d.setting("watermark_file"))
+                or _load_image(self.d.setting("logo_file")))
         if logo is not None and not logo.isNull():
             size = 95.0
             self.p.save()
@@ -272,7 +274,9 @@ class _Renderer:
         pale = QColor("#D4E7FA")
         cyan = QColor("#48CAE4")
 
-        logo = _load_image(self.d.setting("logo_file"))
+        # The watermark image if one has been chosen, else the logo.
+        logo = (_load_image(self.d.setting("watermark_file"))
+                or _load_image(self.d.setting("logo_file")))
         emblem = 22.0
         lx = left + 4
         if logo is not None and not logo.isNull():
@@ -345,7 +349,9 @@ class _Renderer:
             right_edge -= pw
 
         # Emblem / Logo
-        logo = _load_image(self.d.setting("logo_file"))
+        # The watermark image if one has been chosen, else the logo.
+        logo = (_load_image(self.d.setting("watermark_file"))
+                or _load_image(self.d.setting("logo_file")))
         left = MARGIN_L - 2
         emblem = 24.0
         if logo is not None and not logo.isNull():

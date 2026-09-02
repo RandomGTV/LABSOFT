@@ -67,7 +67,13 @@ class PreviewDialog(QDialog):
         self.scroll.setObjectName("previewScroll")
         self.scroll.setWidgetResizable(True)
         self.scroll.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.scroll.setStyleSheet(f"background: #6E7781; border: 0;")
+        # The grey behind a page preview is the desk the paper lies on, not a
+        # theme colour: it stays the same in both themes so the white of
+        # the page reads as white.
+        # Themed, so the mount darkens with the rest of the program
+        # instead of staying one fixed grey in both.
+        self.scroll.setStyleSheet(
+            f"background: {style.PAPER_MOUNT}; border: 0;")
 
         self.page_view = QLabel()
         self.page_view.setAlignment(Qt.AlignmentFlag.AlignCenter)

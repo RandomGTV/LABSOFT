@@ -345,6 +345,10 @@ def test_the_cloud_copy_contains_the_data(env, tmp_path):
     drive = tmp_path / "Drive"
     drive.mkdir()
     env.set_setting("cloud_folder", str(drive))
+    # Explicitly on. The default is off: it used to be on with an empty
+    # folder meaning "find one", so a PC with Dropbox installed for personal
+    # use began uploading the patient database from first launch.
+    env.set_setting("cloud_backup", "1")
 
     finished_job(env)
     connection.backup_now()
