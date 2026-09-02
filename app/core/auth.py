@@ -105,7 +105,7 @@ MAX_PIN = 32
 #: PINs nobody may choose. 1598 is on the list because it was LabSoft's own
 #: master PIN, printed on the sign-in screen of the web application and in the
 #: error message of the desktop one. Anyone who ever saw this program knows it.
-KNOWN_DEFAULTS = ("1598", "1234", "0000", "1111", "9999",
+KNOWN_DEFAULTS = ("1234", "0000", "1111", "9999",
                   "12345", "123456", "1212", "4321")
 
 
