@@ -1,0 +1,11 @@
+# Vercel serves one file: the web app. Everything else in this repository is
+# the desktop program, its tests, its data and the design canvas, none of
+# which belongs on a public URL.
+#
+# Deployment is decided by "outputDirectory" in vercel.json, which is built
+# from index.html alone. This list keeps the rest out of the build as well,
+# so nothing can be served by accident.
+*
+
+!index.html
+!vercel.json
