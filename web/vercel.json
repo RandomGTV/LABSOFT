@@ -1,12 +1,12 @@
 {
   "version": 2,
   "builds": [
-    { "src": "web/index.html", "use": "@vercel/static" }
+    { "src": "index.html", "use": "@vercel/static" }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/web/index.html",
+      "dest": "/index.html",
       "headers": {
         "X-Robots-Tag": "noindex, nofollow",
         "Referrer-Policy": "no-referrer"
