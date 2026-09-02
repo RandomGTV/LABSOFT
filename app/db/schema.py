@@ -262,22 +262,20 @@ def _m003(conn: sqlite3.Connection) -> None:
     if "user_name" not in cols:
         conn.execute("ALTER TABLE audit_log ADD COLUMN user_name TEXT DEFAULT ''")
 
-        jcols = {r[1] for r in conn.execute("PRAGMA table_info(jobs)")}
+    # This read has to happen on every start, not only on the one where the
+    # audit column was missing. Indented one level deeper it ran on a fresh
+    # database and never again, so the second start -- and every start after
+    # it -- raised NameError on jcols and killed the program before a window
+    # could appear.
+    jcols = {r[1] for r in conn.execute("PRAGMA table_info(jobs)")}
     if "created_by" not in jcols:
         conn.execute("ALTER TABLE jobs ADD COLUMN created_by TEXT DEFAULT ''")
 
-    user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-    if user_count == 0:
-        import hashlib, os
-        salt = os.urandom(16)
-        h = hashlib.pbkdf2_hmac("sha256", b"1598", salt, 120_000)
-        pin_hash = f"pbkdf2:sha256:120000${salt.hex()}${h.hex()}"
-        perms = ",".join(["results", "send", "bill", "money", "tests", "settings", "delete", "users"])
-        conn.execute(
-            "INSERT OR IGNORE INTO users (username, display_name, role, pin_hash, permissions, active, created_at) "
-            "VALUES (?, ?, ?, ?, ?, 1, datetime('now', 'localtime'))",
-            ("admin", "Administrator", "admin", pin_hash, perms)
-        )
+    # No account is created here. A migration that seeds "admin" with a fixed
+    # PIN gives every installation of this program the same working password,
+    # holding every permission there is -- and it is invisible, so nobody
+    # thinks to change it. The administrator is created on first run instead,
+    # by the person who will use it, with a PIN only they have chosen.
 
 
 def _m004(conn: sqlite3.Connection) -> None:

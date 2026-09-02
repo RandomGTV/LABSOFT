@@ -306,3 +306,74 @@ def age_unit_combo() -> QComboBox:
     c = QComboBox()
     c.addItems(AGE_UNITS)
     return c
+
+
+class TabDeck(QWidget):
+    """A tab bar and its pages, with room between them for another strip.
+
+    QTabWidget welds its bar to its pane, and the web application puts the
+    function-key strip in exactly that gap. This keeps the small part of
+    QTabWidget's interface the rest of the program uses, and lets the shell
+    decide what goes between.
+    """
+
+    def __init__(self, parent=None):
+        from PyQt6.QtWidgets import QStackedWidget, QTabBar
+
+        super().__init__(parent)
+        self.bar = QTabBar()
+        self.bar.setDrawBase(False)
+        self.bar.setExpanding(False)
+        self.bar.setUsesScrollButtons(True)
+        self.bar.setElideMode(Qt.TextElideMode.ElideNone)
+        self.stack = QStackedWidget()
+
+        self._between = QVBoxLayout()
+        self._between.setContentsMargins(0, 0, 0, 0)
+        self._between.setSpacing(0)
+
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        lay.addWidget(self.bar)
+        lay.addLayout(self._between)
+        lay.addWidget(self.stack, 1)
+
+        self.bar.currentChanged.connect(self.stack.setCurrentIndex)
+        self.currentChanged = self.bar.currentChanged
+
+    # -- the slice of QTabWidget the rest of the program calls ---------------
+    def addTab(self, widget, *args) -> int:            # noqa: N802 - Qt naming
+        """addTab(widget, text) or addTab(widget, icon, text)."""
+        self.stack.addWidget(widget)
+        return self.bar.addTab(*args)
+
+    def insertBetween(self, widget) -> None:           # noqa: N802
+        """Put a widget in the gap between the tabs and the page."""
+        self._between.addWidget(widget)
+
+    def count(self) -> int:
+        return self.bar.count()
+
+    def tabText(self, index: int) -> str:              # noqa: N802
+        return self.bar.tabText(index)
+
+    def setCurrentIndex(self, index: int) -> None:     # noqa: N802
+        self.bar.setCurrentIndex(index)
+
+    def currentIndex(self) -> int:                     # noqa: N802
+        return self.bar.currentIndex()
+
+    def widget(self, index: int):
+        return self.stack.widget(index)
+
+    def currentWidget(self):                           # noqa: N802
+        return self.stack.currentWidget()
+
+    def setCurrentWidget(self, widget) -> None:        # noqa: N802
+        index = self.stack.indexOf(widget)
+        if index >= 0:
+            self.setCurrentIndex(index)
+
+    def setDocumentMode(self, on: bool) -> None:       # noqa: N802
+        self.bar.setDocumentMode(on)

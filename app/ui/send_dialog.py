@@ -67,7 +67,7 @@ class SendDialog(QDialog):
         self.file_hint = label("", "hint")
         card = QFrame()
         card.setStyleSheet(
-            f"background: #FAFBFC; border: 1px solid {style.LINE}; border-radius: 6px;")
+            f"background: {style.PANEL}; border: 1px solid {style.LINE}; border-radius: 0;")
         card_lay = QHBoxLayout(card)
         card_lay.setContentsMargins(14, 12, 14, 12)
         tag = QLabel("PDF")

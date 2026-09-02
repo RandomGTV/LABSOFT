@@ -901,15 +901,37 @@ def list_jobs(scope: str = "today", term: str = "", limit: int = 500) -> List[di
 
 
 def queue_counts() -> Dict[str, int]:
+    """The numbers along the top of the work queue.
+
+    ``waiting`` and ``in_progress`` split ``pending`` in two, because "nothing
+    typed yet" and "half typed" are different problems at the bench: the first
+    is waiting for a sample, the second is waiting for a person.
+    """
     q = _row(
         "SELECT "
         " (SELECT COUNT(*) FROM jobs WHERE date(received_at)=date('now','localtime')) AS today, "
         " (SELECT COUNT(*) FROM jobs WHERE status IN ('draft','in_progress')) AS pending, "
+        " (SELECT COUNT(*) FROM jobs WHERE status='draft') AS waiting, "
+        " (SELECT COUNT(*) FROM jobs WHERE status='in_progress') AS in_progress, "
         " (SELECT COUNT(*) FROM jobs WHERE status IN ('draft','in_progress') "
         "   AND due_at < datetime('now','localtime')) AS overdue, "
-        " (SELECT COUNT(*) FROM jobs WHERE status='ready') AS ready"
+        " (SELECT COUNT(*) FROM jobs WHERE status='ready') AS ready, "
+        " (SELECT COUNT(*) FROM jobs) AS total"
     )
     return {k: int(v or 0) for k, v in (q or {}).items()}
+
+
+def oldest_overdue_at() -> Optional[str]:
+    """When the longest-waiting late job was due, or None if nothing is late.
+
+    "2 overdue" tells the operator there is a problem; "oldest 1h 12m" tells
+    them how big it is, which is what decides whether it can wait.
+    """
+    r = _row(
+        "SELECT MIN(due_at) AS d FROM jobs "
+        "WHERE status IN ('draft','in_progress') "
+        "  AND due_at < datetime('now','localtime')")
+    return (r or {}).get("d")
 
 
 def patient_jobs(patient_id: int) -> List[dict]:
@@ -1121,6 +1143,67 @@ def ledger(date_from: Optional[datetime] = None, date_to: Optional[datetime] = N
 # ===========================================================================
 # Summaries
 # ===========================================================================
+
+def day_book(day: datetime) -> dict:
+    """One day's money, counted from the ledger rather than estimated.
+
+    Every figure here is a sum over rows that exist: what was charged, what
+    was taken off, what was collected, what is still owed, and what the
+    referring doctors have earned. Nothing is a percentage of something else
+    -- a commission the lab has not actually accrued must never appear on a
+    screen headed with the day's takings.
+    """
+    d = day.strftime("%Y-%m-%d")
+    money = _row(
+        "SELECT COUNT(*) AS jobs, "
+        " COALESCE(SUM(b.gross_paise),0) AS gross, "
+        " COALESCE(SUM(b.discount_paise),0) AS discount, "
+        " COALESCE(SUM(b.net_paise),0) AS net, "
+        " COALESCE(SUM((SELECT COALESCE(SUM(pm.amount_paise),0) FROM payments pm "
+        "                WHERE pm.bill_id = b.id)),0) AS paid_on_these "
+        "FROM jobs j LEFT JOIN bills b ON b.job_id = j.id "
+        "WHERE date(j.received_at) = ?", (d,)) or {}
+    # Money that came over the counter today, whichever day the bill is from.
+    # It answers "what is in the drawer", which is a different question from
+    # "what did today's work earn", and both belong on the day book.
+    taken = _row(
+        "SELECT COALESCE(SUM(amount_paise),0) AS c FROM payments "
+        "WHERE date(paid_at) = ?", (d,)) or {}
+    owed = _row(
+        "SELECT COALESCE(SUM(cm.amount_paise),0) AS c FROM commissions cm "
+        "JOIN jobs j ON j.id = cm.job_id WHERE date(j.received_at) = ?", (d,)) or {}
+    unbilled = _row(
+        "SELECT COUNT(*) AS n FROM jobs j "
+        "WHERE date(j.received_at) = ? "
+        "  AND NOT EXISTS (SELECT 1 FROM bills b WHERE b.job_id = j.id)", (d,)) or {}
+    tests = _rows(
+        "SELECT t.group_name AS name, COUNT(*) AS n FROM job_tests jt "
+        "JOIN tests t ON t.id = jt.test_id JOIN jobs j ON j.id = jt.job_id "
+        "WHERE date(j.received_at) = ? GROUP BY t.group_name "
+        "ORDER BY n DESC, t.group_name LIMIT 8", (d,))
+    doctors = _rows(
+        "SELECT r.name AS name, COUNT(*) AS jobs, "
+        " COALESCE(SUM(cm.amount_paise),0) AS commission "
+        "FROM commissions cm JOIN referrers r ON r.id = cm.referrer_id "
+        "JOIN jobs j ON j.id = cm.job_id WHERE date(j.received_at) = ? "
+        "GROUP BY r.id ORDER BY commission DESC, r.name LIMIT 8", (d,))
+
+    net = int(money.get("net") or 0)
+    paid_on_these = int(money.get("paid_on_these") or 0)
+    return {
+        "date": day,
+        "jobs": int(money.get("jobs") or 0),
+        "unbilled": int(unbilled.get("n") or 0),
+        "gross_paise": int(money.get("gross") or 0),
+        "discount_paise": int(money.get("discount") or 0),
+        "net_paise": net,
+        "collected_paise": int(taken.get("c") or 0),
+        "outstanding_paise": max(0, net - paid_on_these),
+        "commission_paise": int(owed.get("c") or 0),
+        "tests": tests,
+        "doctors": doctors,
+    }
+
 
 def day_summary(day: datetime) -> dict:
     d = day.strftime("%Y-%m-%d")

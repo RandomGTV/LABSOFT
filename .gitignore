@@ -15,3 +15,7 @@ reports/
 exports/
 backups/
 LabSoft.zip
+
+# Patient reports uploaded to the design canvas. Kept on this PC,
+# never sent to GitHub.
+labsoft-design-system/project/uploads/

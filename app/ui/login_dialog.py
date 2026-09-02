@@ -39,10 +39,13 @@ class ModernLoginDialog(QDialog):
         root_lay.setSpacing(0)
 
         # -----------------------------------------------------------------
-        # LEFT PANEL: Solid Modernist Red Poster (#0A3668) - 50% width
+        # LEFT PANEL: the accent run as a full field -- the one screen in the
+        # program where it covers more than an edge, because there is nothing
+        # else on it to compete with.
         # -----------------------------------------------------------------
         left_panel = QFrame()
-        left_panel.setStyleSheet("background-color: #0A3668; color: #ffffff; border: none;")
+        left_panel.setStyleSheet(
+            f"background-color: {style.ACCENT_INK}; color: #ffffff; border: none;")
         left_lay = QVBoxLayout(left_panel)
         left_lay.setContentsMargins(64, 56, 64, 52)
         left_lay.setSpacing(0)
@@ -63,7 +66,9 @@ class ModernLoginDialog(QDialog):
 
         badge = QLabel("2026.1")
         badge.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
-        badge.setStyleSheet("background-color: #ffffff; color: #0A3668; padding: 1px 6px; border-radius: 0px; border: none;")
+        badge.setStyleSheet(
+            f"background-color: #ffffff; color: {style.ACCENT_INK}; padding: 1px 6px; "
+            f"border-radius: 0px; border: none;")
 
         k_inner.addWidget(kicker)
         k_inner.addWidget(badge)
@@ -297,7 +302,7 @@ class ModernLoginDialog(QDialog):
         # Error text
         self.signin_error = QLabel("")
         self.signin_error.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
-        self.signin_error.setStyleSheet("color: #0A3668;")
+        self.signin_error.setStyleSheet(f"color: {style.ACCENT_INK}; font-weight: 700;")
         self.signin_error.setWordWrap(True)
         self.signin_error.hide()
         lay.addWidget(self.signin_error)
@@ -307,17 +312,17 @@ class ModernLoginDialog(QDialog):
         btn_signin.setFixedHeight(44)
         btn_signin.setFont(QFont("Archivo", 10, QFont.Weight.ExtraBold))
         btn_signin.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_signin.setStyleSheet("""
-            QPushButton {
-                background-color: #0A3668;
+        btn_signin.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {style.ACCENT_INK};
                 color: #ffffff;
                 border: none;
                 border-radius: 0px;
                 letter-spacing: 0.5px;
-            }
-            QPushButton:hover {
-                background-color: #0284C7;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {style.BRAND_DARK};
+            }}
         """)
         btn_signin.clicked.connect(self._do_sign_in)
         lay.addWidget(btn_signin)
@@ -369,7 +374,7 @@ class ModernLoginDialog(QDialog):
 
         sub = QLabel("Owner / Admin permission is required to create accounts")
         sub.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
-        sub.setStyleSheet("color: #0A3668; margin-top: -6px;")
+        sub.setStyleSheet(f"color: {style.INK3}; margin-top: -6px;")
         lay.addWidget(sub)
 
         # Full Name
@@ -439,21 +444,23 @@ class ModernLoginDialog(QDialog):
         # ADMIN AUTHORIZATION PIN (Mandatory requirement for owner/admin verification)
         lbl_admin_auth = QLabel("ADMIN / OWNER AUTHORIZATION PIN")
         lbl_admin_auth.setFont(QFont("Archivo", 7, QFont.Weight.Bold))
-        lbl_admin_auth.setStyleSheet("color: #0A3668; letter-spacing: 1px;")
+        lbl_admin_auth.setStyleSheet(
+            f"color: {style.ACCENT_INK}; letter-spacing: 1px;")
         lay.addWidget(lbl_admin_auth)
 
         self.su_admin_pin = QLineEdit()
         self.su_admin_pin.setFixedHeight(34)
         self.su_admin_pin.setEchoMode(QLineEdit.EchoMode.Password)
         self.su_admin_pin.setPlaceholderText("Admin Master PIN (1598) required")
-        self.su_admin_pin.setStyleSheet("border: 2px solid #0A3668; background: #fff5f5;")
+        self.su_admin_pin.setStyleSheet(
+            f"border: 2px solid {style.ACCENT_INK}; background: {style.BRAND_SOFT};")
         self.su_admin_pin.returnPressed.connect(self._do_sign_up)
         lay.addWidget(self.su_admin_pin)
 
         # Sign Up Error
         self.signup_error = QLabel("")
         self.signup_error.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
-        self.signup_error.setStyleSheet("color: #0A3668;")
+        self.signup_error.setStyleSheet(f"color: {style.ACCENT_INK}; font-weight: 700;")
         self.signup_error.setWordWrap(True)
         self.signup_error.hide()
         lay.addWidget(self.signup_error)
@@ -463,18 +470,18 @@ class ModernLoginDialog(QDialog):
         btn_create.setFixedHeight(40)
         btn_create.setFont(QFont("Archivo", 10, QFont.Weight.ExtraBold))
         btn_create.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_create.setStyleSheet("""
-            QPushButton {
-                background-color: #0A3668;
+        btn_create.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {style.ACCENT_INK};
                 color: #ffffff;
                 border: none;
                 border-radius: 0px;
                 letter-spacing: 0.5px;
                 margin-top: 4px;
-            }
-            QPushButton:hover {
-                background-color: #0284C7;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {style.BRAND_DARK};
+            }}
         """)
         btn_create.clicked.connect(self._do_sign_up)
         lay.addWidget(btn_create)

@@ -40,7 +40,8 @@ class POSReceiptDialog(QDialog):
         # Thermal Receipt Card
         receipt_frame = QFrame()
         receipt_frame.setStyleSheet(
-            "background: #ffffff; border: 1.5px solid #94a3b8; border-radius: 4px; padding: 12px;"
+            f"background: {style.PANEL}; border: 1px solid {style.FIELD_BORDER}; "
+            f"border-radius: 0; padding: 12px;"
         )
         rl = QVBoxLayout(receipt_frame)
         rl.setSpacing(2)

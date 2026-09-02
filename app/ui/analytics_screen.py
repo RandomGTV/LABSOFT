@@ -1,149 +1,187 @@
-"""Executive Day-Book & Financial Analytics Screen."""
+"""The day book: what the laboratory took in today, counted not estimated.
+
+Drawn in the canvas idiom -- a filter bar of figures over two plain lists,
+square corners, one accent spent on the only number that is a problem. Every
+value comes from ``queries.day_book``; nothing on this screen is a
+percentage of another number on it.
+"""
 
 from __future__ import annotations
 
 import csv
-from datetime import date
+from datetime import date, datetime
+
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QFileDialog, QFrame, QGridLayout, QHBoxLayout,
-    QLabel, QVBoxLayout, QWidget
+    QFileDialog, QFrame, QGridLayout, QHBoxLayout, QVBoxLayout, QWidget,
 )
 
 from ..core import billing
 from ..db import queries as q
-from . import style
-from .widgets import button, label, row, info
+from .widgets import Table, button, info, label
+
+#: caption, key, note, and whether a non-zero value is bad news.
+CARDS = [
+    ("Patients", "jobs", "registered today", False),
+    ("Charged", "gross_paise", "before discount", False),
+    ("Discount", "discount_paise", "given today", False),
+    ("Net billed", "net_paise", "after discount", False),
+    ("Collected", "collected_paise", "over the counter", False),
+    ("Outstanding", "outstanding_paise", "still owed", True),
+    ("Doctor commission", "commission_paise", "accrued today", False),
+    ("Not billed", "unbilled", "jobs with no bill", True),
+]
 
 
 class AnalyticsScreen(QWidget):
-    """Executive financial dashboard & Day-Book analytics."""
+    """The day book."""
 
     def __init__(self):
         super().__init__()
-        self._build_ui()
+        self.data: dict = {}
+        self._build()
+        self.refresh()
 
-    def _build_ui(self) -> None:
+    # ----------------------------------------------------------------- layout
+    def _build(self) -> None:
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(24, 20, 24, 20)
-        lay.setSpacing(18)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        lay.addWidget(self._build_bar())
 
-        # Header Bar
-        top = QHBoxLayout()
-        t_label = label("Executive Day-Book & Financial Analytics", "strong")
-        t_label.setStyleSheet(f"font-size: 14pt; color: {style.INK}; font-weight: 800;")
-        top.addWidget(t_label)
-        top.addStretch(1)
+        body = QWidget()
+        body_lay = QHBoxLayout(body)
+        body_lay.setContentsMargins(18, 16, 18, 16)
+        body_lay.setSpacing(18)
 
-        export_btn = button("📥 Export Day Sheet (CSV)", "primary", self._export_csv)
-        refresh_btn = button("🔄 Refresh", "", self.refresh)
-        top.addWidget(export_btn)
-        top.addWidget(refresh_btn)
-        lay.addLayout(top)
+        self.tests_table = Table(["Department", "Tests"], stretch_column=0,
+                                 empty_text="Nothing registered today.")
+        self.doctors_table = Table(["Referring doctor", "Jobs", "Commission"],
+                                   stretch_column=0,
+                                   empty_text="No referred work today.")
+        body_lay.addWidget(self._titled("Busiest departments", self.tests_table), 1)
+        body_lay.addWidget(self._titled("Referring doctors", self.doctors_table), 1)
+        lay.addWidget(body, 1)
 
-        # KPI Metric Cards Grid
+        foot = QWidget()
+        foot.setObjectName("footBar")
+        foot.setFixedHeight(40)
+        fl = QHBoxLayout(foot)
+        fl.setContentsMargins(18, 0, 18, 0)
+        self.as_of = label("", "foot")
+        fl.addWidget(self.as_of)
+        fl.addStretch(1)
+        fl.addWidget(label("Collected counts money taken today, whichever day "
+                           "the bill is from", "foot"))
+        lay.addWidget(foot)
+
+    def _build_bar(self) -> QWidget:
+        bar = QWidget()
+        bar.setObjectName("filterBar")
+        lay = QVBoxLayout(bar)
+        lay.setContentsMargins(18, 14, 18, 14)
+        lay.setSpacing(12)
+
+        head = QHBoxLayout()
+        head.setSpacing(9)
+        title = label("Day book", "h1")
+        head.addWidget(title)
+        head.addStretch(1)
+        head.addWidget(button("Refresh", "", self.refresh))
+        head.addWidget(button("Export day sheet", "primary", self._export_csv))
+        lay.addLayout(head)
+
         grid = QGridLayout()
-        grid.setHorizontalSpacing(14)
-        grid.setVerticalSpacing(14)
-
-        self.card_patients = self._create_card("TOTAL PATIENTS", "0", "Daily registration count", "#0A3668")
-        self.card_gross = self._create_card("GROSS CHARGED", "₹0.00", "Total investigation rate", "#0284C7")
-        self.card_discount = self._create_card("TOTAL CONCESSIONS", "₹0.00", "Authorized patient discounts", "#D97706")
-        self.card_net = self._create_card("NET CASH REALIZED", "₹0.00", "Cash collected today", "#059669")
-        self.card_due = self._create_card("OUTSTANDING DUES", "₹0.00", "Pending collection", "#DC2626")
-        self.card_docs = self._create_card("DOCTOR COMMISSIONS", "₹0.00", "Accrued incentives", "#9333EA")
-
-        grid.addWidget(self.card_patients[0], 0, 0)
-        grid.addWidget(self.card_gross[0], 0, 1)
-        grid.addWidget(self.card_discount[0], 0, 2)
-        grid.addWidget(self.card_net[0], 1, 0)
-        grid.addWidget(self.card_due[0], 1, 1)
-        grid.addWidget(self.card_docs[0], 1, 2)
-
+        grid.setHorizontalSpacing(28)
+        grid.setVerticalSpacing(12)
+        self.values: dict = {}
+        for i, (caption, key, note, _bad) in enumerate(CARDS):
+            block = QFrame()
+            block.setObjectName("statBlock")
+            bl = QVBoxLayout(block)
+            bl.setContentsMargins(12, 0, 0, 0)
+            bl.setSpacing(0)
+            bl.addWidget(label(caption, "statlabel"))
+            line = QHBoxLayout()
+            line.setContentsMargins(0, 0, 0, 0)
+            line.setSpacing(7)
+            value = label("—", "statvalue")
+            line.addWidget(value)
+            line.addWidget(label(note, "statnote"), 0, Qt.AlignmentFlag.AlignBottom)
+            line.addStretch(1)
+            bl.addLayout(line)
+            self.values[key] = value
+            grid.addWidget(block, i // 4, i % 4)
         lay.addLayout(grid)
+        return bar
 
-        # Investigation Volume & Doctor Breakdown Section
-        breakdown_frame = QFrame()
-        breakdown_frame.setStyleSheet("background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 18px;")
-        bl = QVBoxLayout(breakdown_frame)
-        bl.setSpacing(10)
+    @staticmethod
+    def _titled(text: str, table) -> QWidget:
+        holder = QWidget()
+        lay = QVBoxLayout(holder)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(8)
+        lay.addWidget(label(text, "field"))
+        lay.addWidget(table, 1)
+        return holder
 
-        bl.addWidget(label("High-Volume Diagnostic Department Breakdown", "micro"))
-        self.breakdown_text = QLabel("Loading analytics data...")
-        self.breakdown_text.setStyleSheet("font-size: 10.5pt; color: #334155; line-height: 1.6;")
-        bl.addWidget(self.breakdown_text)
-
-        lay.addWidget(breakdown_frame, 1)
-
-    def _create_card(self, title: str, val: str, subtitle: str, color: str):
-        box = QFrame()
-        box.setStyleSheet(
-            f"background: #ffffff; border: 1.5px solid #e2e8f0; border-top: 4px solid {color}; border-radius: 6px; padding: 14px;"
-        )
-        l = QVBoxLayout(box)
-        l.setSpacing(4)
-        t = QLabel(title)
-        t.setStyleSheet("font-size: 8.5pt; font-weight: 800; color: #64748b; letter-spacing: 0.5px;")
-        v = QLabel(val)
-        v.setStyleSheet(f"font-size: 16pt; font-weight: 900; color: {color};")
-        s = QLabel(subtitle)
-        s.setStyleSheet("font-size: 8pt; color: #94a3b8;")
-        l.addWidget(t)
-        l.addWidget(v)
-        l.addWidget(s)
-        return box, v
-
+    # ------------------------------------------------------------------- data
     def refresh(self) -> None:
-        today_jobs = q.list_jobs(scope="today")
-        total_patients = len(today_jobs)
-        total_charged = 0
-        total_discount = 0
-        total_paid = 0
+        self.data = q.day_book(datetime.now())
+        for caption, key, note, bad in CARDS:
+            value = self.data.get(key, 0)
+            text = (str(value) if key in ("jobs", "unbilled")
+                    else billing.format_rupees(int(value)))
+            widget = self.values[key]
+            widget.setText(text)
+            alert = bool(bad and value)
+            widget.setProperty("alert", "true" if alert else "false")
+            widget.style().unpolish(widget)
+            widget.style().polish(widget)
 
-        for j in today_jobs:
-            b = q.get_bill(j["id"])
-            if b:
-                total_charged += b.get("charged_paise", 0)
-                total_discount += b.get("discount_paise", 0)
-                total_paid += b.get("paid_paise", 0)
+        self.tests_table.set_rows(
+            [[t["name"] or "—", t["n"]] for t in self.data["tests"]])
+        self.doctors_table.set_rows(
+            [[d["name"], d["jobs"], billing.format_rupees(int(d["commission"]))]
+             for d in self.data["doctors"]])
+        self.as_of.setText(
+            f"{self.data['date'].strftime('%d-%m-%Y')} · read at "
+            f"{datetime.now().strftime('%H:%M')}")
 
-        net_realized = total_paid
-        outstanding = max(0, total_charged - total_discount - total_paid)
-        doc_comm = int(total_charged * 0.15)  # estimated 15% aggregate incentive
-
-        self.card_patients[1].setText(str(total_patients))
-        self.card_gross[1].setText(billing.format_rupees(total_charged))
-        self.card_discount[1].setText(billing.format_rupees(total_discount))
-        self.card_net[1].setText(billing.format_rupees(net_realized))
-        self.card_due[1].setText(billing.format_rupees(outstanding))
-        self.card_docs[1].setText(billing.format_rupees(doc_comm))
-
-        # Build department summary
-        self.breakdown_text.setText(
-            "• <b>Complete Blood Count & Hematology:</b> Active volume processing across EDTA specimens.<br>"
-            "• <b>Clinical Biochemistry (Sugar, Urea, Creatinine, Lipids):</b> Serum chemistry throughput.<br>"
-            "• <b>Referring Doctor Inflows:</b> Active referral networks mapped with automated commission auditing.<br>"
-            "• <b>Collection Reconciliation:</b> 100% verified counter transactions."
-        )
-
+    # ---------------------------------------------------------------- export
     def _export_csv(self) -> None:
-        today_jobs = q.list_jobs(scope="today")
-        path, _ = QFileDialog.getSaveFileName(self, "Export Day-Book CSV", f"LabSoft_DayBook_{date.today()}.csv", "CSV Files (*.csv)")
+        """One row per job, with the bill as it actually stands.
+
+        Written from the same fields the screen shows, so the sheet handed to
+        the accountant and the screen the operator read cannot disagree.
+        """
+        jobs = q.list_jobs(scope="today")
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export day sheet", f"LabSoft day book {date.today()}.csv",
+            "CSV files (*.csv)")
         if not path:
             return
 
-        with open(path, "w", newline="", encoding="utf-8") as f:
+        with open(path, "w", newline="", encoding="utf-8-sig") as f:
             writer = csv.writer(f)
-            writer.writerow(["Report No", "Patient Name", "Mobile", "Doctor", "Charged (Rs)", "Discount (Rs)", "Paid (Rs)", "Status"])
-            for j in today_jobs:
-                b = q.get_bill(j["id"]) or {}
+            writer.writerow(["Report no", "Patient", "Mobile", "Doctor",
+                             "Charged", "Discount", "Net", "Paid", "Outstanding",
+                             "Status"])
+            for j in jobs:
+                bill = q.get_bill(j["id"]) or {}
+                net = int(bill.get("net_paise") or 0)
+                paid = sum(int(p["amount_paise"])
+                           for p in q.bill_payments(int(bill["id"]))) if bill else 0
                 writer.writerow([
                     j.get("report_no", ""),
                     j.get("patient_name", ""),
                     j.get("patient_phone", ""),
                     j.get("referrer_name", ""),
-                    f"{b.get('charged_paise', 0)/100:.2f}",
-                    f"{b.get('discount_paise', 0)/100:.2f}",
-                    f"{b.get('paid_paise', 0)/100:.2f}",
-                    j.get("status", "")
+                    f"{int(bill.get('gross_paise') or 0) / 100:.2f}",
+                    f"{int(bill.get('discount_paise') or 0) / 100:.2f}",
+                    f"{net / 100:.2f}",
+                    f"{paid / 100:.2f}",
+                    f"{max(0, net - paid) / 100:.2f}",
+                    j.get("status", ""),
                 ])
-        info(self, "Export Complete", f"Day-Book exported successfully to:\n{path}")
+        info(self, "Day sheet saved", f"Written to:\n{path}")

@@ -58,13 +58,18 @@ class WhatsAppDialog(QDialog):
         self.preview_box = QTextEdit()
         self.preview_box.setPlainText(self.msg_text)
         self.preview_box.setStyleSheet(
-            "font-family: monospace; font-size: 9.5pt; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 4px;"
+            f"font-family: monospace; font-size: 9.5pt; padding: 10px; "
+            f"border: 1px solid {style.LINE}; border-radius: 0;"
         )
         lay.addWidget(self.preview_box, 1)
 
         copy_btn = button("📋 Copy Message", "", self._copy_text)
         send_btn = button("📱 Open WhatsApp Web / Desktop", "primary", self._open_whatsapp)
-        send_btn.setStyleSheet("background: #25D366; color: #FFFFFF; font-weight: 700;")
+        # WhatsApp's own green, because the button opens WhatsApp -- it is a
+        # logo colour, not a colour from this palette.
+        send_btn.setStyleSheet(
+            "background: #128C4A; color: #FFFFFF; font-weight: 800; "
+            "border: 1px solid #128C4A; border-radius: 0;")
         close_btn = button("Close", "", self.accept)
 
         lay.addWidget(row(copy_btn, None, close_btn, send_btn))

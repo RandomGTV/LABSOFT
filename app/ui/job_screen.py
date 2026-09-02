@@ -204,8 +204,13 @@ class ResultRow:
 
         # Delta check label for historical comparison
         self.delta_label = QLabel("")
+        # Drawn as a square edged block, the same shape as a result flag, so
+        # the two read as one family rather than two unrelated badges.
+        _delta_bg, _delta_edge = style.flag_fill("L")
         self.delta_label.setStyleSheet(
-            "color: #1d4ed8; background: #eff6ff; border-radius: 2px; padding: 1px 4px; font-size: 8pt; font-weight: 700;")
+            f"color: {style.BLUE}; background: {_delta_bg}; "
+            f"border: 1px solid {_delta_edge}; border-radius: 0; "
+            f"padding: 1px 5px; font-size: 8pt; font-weight: 700;")
         self.delta_label.setVisible(False)
 
         self.not_done = bool(test.get("not_done"))
@@ -351,10 +356,10 @@ class JobScreen(QWidget):
         self.message.setMaximumWidth(260)
         lay.addWidget(self.message)
 
-        self.clear_button = button("New job", "", self.new_job, "Start a fresh job (F2)"); self.clear_button.setIcon(icons.get_icon("new_job", "#0A3668", 16))
-        self.whatsapp_button = button("WhatsApp", "", self._open_whatsapp_dispatch, "Send structured WhatsApp report", "F8"); self.whatsapp_button.setIcon(icons.get_icon("whatsapp", "#25D366", 16))
-        self.preview_button = button("Preview", "", self.preview, "Look at the report before sending it"); self.preview_button.setIcon(icons.get_icon("preview", "#0A3668", 16))
-        self.verify_button = button("Check && make report", "go", self.verify, "Check every test is filled in, then make the report", "F9"); self.verify_button.setIcon(icons.get_icon("check_report", "#FFFFFF", 16))
+        self.clear_button = button("New job", "", self.new_job, "Start a fresh job (F2)"); self.clear_button.setIcon(icons.get_icon("new_job", style.INK2, 16))
+        self.whatsapp_button = button("WhatsApp", "", self._open_whatsapp_dispatch, "Send structured WhatsApp report", "F8"); self.whatsapp_button.setIcon(icons.get_icon("whatsapp", style.GREEN, 16))
+        self.preview_button = button("Preview", "", self.preview, "Look at the report before sending it"); self.preview_button.setIcon(icons.get_icon("preview", style.INK2, 16))
+        self.verify_button = button("Check && make report", "go", self.verify, "Check every test is filled in, then make the report", "F9"); self.verify_button.setIcon(icons.get_icon("check_report", style.ON_ACCENT, 16))
         for b in (self.clear_button, self.whatsapp_button, self.preview_button, self.verify_button):
             lay.addWidget(b)
         return rail
@@ -571,9 +576,9 @@ class JobScreen(QWidget):
         self.bill_hint.setMaximumWidth(230)
         lay.addWidget(self.bill_hint)
 
-        self.bill_print_button = button("Print bill…", "", self._print_bill, "Show the receipt, then print, save or send it"); self.bill_print_button.setIcon(icons.get_icon("print", "#F8FAFC", 16))
-        self.bill_button2 = button("Make the bill", "primary", self._open_bill, "Record what is being charged", "F4"); self.bill_button2.setIcon(icons.get_icon("bill", "#0F172A", 16))
-        self.pos_receipt_btn = button("POS Receipt", "", self._open_pos_receipt, "Print 80mm thermal receipt slip"); self.pos_receipt_btn.setIcon(icons.get_icon("pos", "#F8FAFC", 16))
+        self.bill_print_button = button("Print bill…", "", self._print_bill, "Show the receipt, then print, save or send it"); self.bill_print_button.setIcon(icons.get_icon("print", style.ON_INK, 16))
+        self.bill_button2 = button("Make the bill", "primary", self._open_bill, "Record what is being charged", "F4"); self.bill_button2.setIcon(icons.get_icon("bill", style.INK, 16))
+        self.pos_receipt_btn = button("POS Receipt", "", self._open_pos_receipt, "Print 80mm thermal receipt slip"); self.pos_receipt_btn.setIcon(icons.get_icon("pos", style.ON_INK, 16))
         lay.addWidget(self.pos_receipt_btn)
         lay.addWidget(self.bill_print_button)
         lay.addWidget(self.bill_button2)
@@ -693,17 +698,20 @@ class JobScreen(QWidget):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
 
+        # A critical value is the one thing on this screen that earns the
+        # accent outright, so the banner is named in the sheet and takes the
+        # accent from whichever theme is in force.
         self.panic_banner = QFrame()
-        self.panic_banner.setStyleSheet(
-            "background-color: #fee2e2; border-bottom: 2px solid #ef4444; border-top: 1px solid #ef4444;")
+        self.panic_banner.setObjectName("panicBanner")
         self.panic_banner.setFixedHeight(40)
         panic_lay = QHBoxLayout(self.panic_banner)
         panic_lay.setContentsMargins(18, 2, 18, 2)
-        panic_icon = QLabel("🚨")
-        panic_icon.setStyleSheet("font-size: 13pt; background: transparent;")
+        panic_icon = QLabel("!")
+        panic_icon.setStyleSheet(
+            f"color: {style.ACCENT_INK}; font-size: 15pt; font-weight: 800; "
+            f"background: transparent;")
         self.panic_text = QLabel("")
-        self.panic_text.setStyleSheet(
-            "color: #991b1b; font-weight: 800; font-size: 8.5pt; background: transparent;")
+        self.panic_text.setProperty("role", "panic")
         panic_lay.addWidget(panic_icon)
         panic_lay.addWidget(self.panic_text, 1)
         self.panic_banner.hide()
@@ -1224,7 +1232,7 @@ class JobScreen(QWidget):
                 sl.addWidget(label(group, "group"))
                 sl.addStretch(1)
                 rem_btn = button("✕ Remove group", "quiet", lambda _c=False, g=group: self._remove_group(g))
-                rem_btn.setStyleSheet("font-size: 8pt; color: #b91c1c;")
+                rem_btn.setStyleSheet(f"font-size: 8pt; color: {style.ACCENT_INK};")
                 sl.addWidget(rem_btn)
                 self.grid.addWidget(strip, r, 0, 1, 6)
                 last_group = group
@@ -1691,6 +1699,8 @@ class JobScreen(QWidget):
             "sex": self.sex_combo.currentText(),
             "received_at": job.get("received_at", ""),
         }
+        from .tube_label_dialog import TubeLabelDialog
+
         TubeLabelDialog(self, data, test_names).exec()
 
     def _open_whatsapp_dispatch(self) -> None:

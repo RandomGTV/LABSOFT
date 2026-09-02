@@ -1,9 +1,14 @@
-"""The application shell with modern web-style UI/UX header and tabs."""
+"""The application shell: the ink bar, the tab strip, and the status line.
+
+Drawn to artboard 01 of the LabSoft 2026 canvas. Nothing here carries a
+colour of its own -- every surface is named in ``style.stylesheet_for`` so a
+theme change repaints the shell along with everything inside it.
+"""
 
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QAction, QFont, QKeySequence, QShortcut
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -11,7 +16,6 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QPushButton,
     QStatusBar,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -30,7 +34,8 @@ from .settings_screen import SettingsScreen
 from .staff_screen import StaffScreen
 from .summaries_screen import SummariesScreen
 from .tests_screen import TestsScreen
-from .widgets import error, info
+from .widgets import TabDeck
+
 
 TAB_JOB = 0
 TAB_QUEUE = 1
@@ -50,89 +55,10 @@ class MainWindow(QMainWindow):
         central_lay.setContentsMargins(0, 0, 0, 0)
         central_lay.setSpacing(0)
 
-        # 1. Top Brand Header Bar
-        header = QFrame()
-        header.setObjectName("topHeaderBar")
-        header.setFixedHeight(46)
-        header.setStyleSheet("""
-            QFrame#topHeaderBar {
-                background-color: #FFFFFF;
-                border-bottom: 1.5px solid #CBD5E1;
-                padding: 0 16px;
-            }
-        """)
-        h_lay = QHBoxLayout(header)
-        h_lay.setContentsMargins(16, 0, 16, 0)
-        h_lay.setSpacing(12)
+        central_lay.addWidget(self._build_app_bar(lab))
 
-        # Brand Title
-        brand_lbl = QLabel("LabSoft")
-        brand_lbl.setFont(QFont("Archivo", 13, QFont.Weight.ExtraBold))
-        brand_lbl.setStyleSheet("color: #0A3668; border: none; background: transparent;")
-        h_lay.addWidget(brand_lbl)
-
-        # Version Badge
-        badge = QLabel("2026.08")
-        badge.setFont(QFont("Archivo", 8, QFont.Weight.Bold))
-        badge.setStyleSheet("background-color: #0284C7; color: #FFFFFF; padding: 2px 6px; border-radius: 3px; border: none;")
-        h_lay.addWidget(badge)
-
-        # Facility Name Subtitle
-        lab_name_sub = QLabel("·   MITHRA MEDICAL LABORATORY")
-        lab_name_sub.setFont(QFont("Archivo", 9, QFont.Weight.DemiBold))
-        lab_name_sub.setStyleSheet("color: #64748B; border: none; background: transparent;")
-        h_lay.addWidget(lab_name_sub)
-
-        h_lay.addStretch(1)
-
-        # Right side: User pill
-        user = auth.current()
-        if user:
-            user_pill = QFrame()
-            user_pill.setStyleSheet("""
-                QFrame {
-                    background-color: #F1F5F9;
-                    border: 1px solid #CBD5E1;
-                    border-radius: 14px;
-                    padding: 2px 10px;
-                }
-            """)
-            u_lay = QHBoxLayout(user_pill)
-            u_lay.setContentsMargins(8, 2, 8, 2)
-            u_lay.setSpacing(6)
-
-            dot = QFrame()
-            dot.setFixedSize(7, 7)
-            dot.setStyleSheet("background-color: #059669; border-radius: 3px;")
-            u_lay.addWidget(dot)
-
-            u_lbl = QLabel(user.label)
-            u_lbl.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
-            u_lbl.setStyleSheet("color: #0A3668; border: none; background: transparent;")
-            u_lay.addWidget(u_lbl)
-            h_lay.addWidget(user_pill)
-
-            btn_signout = QPushButton("Sign Out")
-            btn_signout.setFont(QFont("Archivo", 9, QFont.Weight.DemiBold))
-            btn_signout.setStyleSheet("""
-                QPushButton {
-                    background: transparent;
-                    border: none;
-                    color: #64748B;
-                    text-decoration: underline;
-                    padding: 4px 8px;
-                }
-                QPushButton:hover {
-                    color: #DC2626;
-                }
-            """)
-            btn_signout.clicked.connect(self._sign_out)
-            h_lay.addWidget(btn_signout)
-
-        central_lay.addWidget(header)
-
-        # 2. Modern Navigation Tabs
-        self.tabs = QTabWidget()
+        self.tabs = TabDeck()
+        self.tabs.setDocumentMode(True)
         self.job_screen = JobScreen()
         self.queue_screen = QueueScreen()
         self.patients_screen = PatientsScreen()
@@ -144,23 +70,28 @@ class MainWindow(QMainWindow):
         self.staff_screen = StaffScreen()
         self.settings_screen = SettingsScreen()
 
-        # Tabs a person cannot use are not shown at all
-        self.tabs.addTab(self.job_screen, icons.get_icon("job", "#0A3668", 16), "Job")
-        self.tabs.addTab(self.queue_screen, icons.get_icon("queue", "#0A3668", 16), "Work Queue")
-        self.tabs.addTab(self.patients_screen, icons.get_icon("patients", "#0A3668", 16), "Patients")
-        self.tabs.addTab(self.doctors_screen, icons.get_icon("doctors", "#0A3668", 16), "Doctors")
+        # Numbered and iconed, the way the web application labels them, so
+        # that "go to 05" means the same thing on either. Tabs a person
+        # cannot use are not shown at all.
+        self._add_tab(self.job_screen, "job", "01. Job")
+        self._add_tab(self.queue_screen, "queue", "02. Work Queue")
+        self._add_tab(self.patients_screen, "patients", "03. Patients")
+        self._add_tab(self.doctors_screen, "doctors", "04. Doctors")
         if auth.can(auth.P_TESTS):
-            self.tabs.addTab(self.tests_screen, icons.get_icon("tests", "#0A3668", 16), "Tests")
+            self._add_tab(self.tests_screen, "tests", "05. Tests")
         if auth.can(auth.P_MONEY):
-            self.tabs.addTab(self.billing_screen, icons.get_icon("billing", "#0A3668", 16), "Billing")
-            self.tabs.addTab(self.analytics_screen, icons.get_icon("analytics", "#0A3668", 16), "Analytics")
-            self.tabs.addTab(self.summaries_screen, icons.get_icon("summaries", "#0A3668", 16), "Summaries")
+            self._add_tab(self.billing_screen, "billing", "06. Billing")
+            self._add_tab(self.analytics_screen, "analytics", "07. Day Book")
+            self._add_tab(self.summaries_screen, "summaries", "08. Summaries")
         if auth.can(auth.P_USERS):
-            self.tabs.addTab(self.staff_screen, icons.get_icon("staff", "#0A3668", 16), "Staff")
+            self._add_tab(self.staff_screen, "staff", "09. Staff")
         if auth.can(auth.P_SETTINGS) or auth.can(auth.P_USERS):
-            self.tabs.addTab(self.settings_screen, icons.get_icon("settings", "#0A3668", 16), "Settings")
+            self._add_tab(self.settings_screen, "settings", "10. Settings")
         self.tabs.currentChanged.connect(self._tab_changed)
         
+        # The key strip sits between the tabs and the page, where the web
+        # application puts it.
+        self.tabs.insertBetween(self._build_key_strip())
         central_lay.addWidget(self.tabs, 1)
         self.setCentralWidget(central)
 
@@ -184,28 +115,91 @@ class MainWindow(QMainWindow):
         self._ticker.start()
 
     # ------------------------------------------------------------ furniture
+    def _add_tab(self, screen: QWidget, icon: str, text: str) -> None:
+        self.tabs.addTab(screen, icons.get_icon(icon, style.INK2, 15), text)
+
+    def _build_key_strip(self) -> QWidget:
+        """The dark strip of function keys, as the web application shows it.
+
+        The keys exist either way; printing them means nobody has to be told
+        twice, and it is the fastest thing on this screen for an operator who
+        works here every day.
+        """
+        strip = QFrame()
+        strip.setObjectName("keyStrip")
+        strip.setFixedHeight(28)
+        lay = QHBoxLayout(strip)
+        lay.setContentsMargins(16, 0, 16, 0)
+        lay.setSpacing(18)
+        for key, what in (("F2", "New job"), ("F3", "Find a patient"),
+                          ("F4", "Settle bill"), ("F8", "WhatsApp"),
+                          ("F9", "Report print"), ("F10", "Day book"),
+                          ("Ctrl+F", "Search this screen")):
+            cap = QLabel(key)
+            cap.setProperty("role", "keycap")
+            lay.addWidget(cap)
+            name = QLabel(what)
+            name.setProperty("role", "keyname")
+            lay.addWidget(name)
+        lay.addStretch(1)
+        return strip
+
+    def _build_app_bar(self, lab: str) -> QWidget:
+        """The 44px ink bar from artboard 01: program, laboratory, operator.
+
+        Every colour comes from the stylesheet rather than from here, so the
+        bar follows a theme change instead of staying whatever it was painted
+        on the day it was written.
+        """
+        bar = QFrame()
+        bar.setObjectName("appBar")
+        bar.setFixedHeight(44)
+        lay = QHBoxLayout(bar)
+        lay.setContentsMargins(18, 0, 18, 0)
+        lay.setSpacing(16)
+
+        wordmark = QLabel("LABSOFT")
+        wordmark.setProperty("role", "wordmark")
+        lay.addWidget(wordmark)
+
+        where = QLabel(f"{lab.upper()} · {config.APP_NAME} {config.APP_VERSION}")
+        where.setProperty("role", "barmuted")
+        lay.addWidget(where)
+        lay.addStretch(1)
+
+        user = auth.current()
+        if user:
+            dot = QFrame()
+            dot.setObjectName("signedInDot")
+            dot.setFixedSize(9, 9)
+            lay.addWidget(dot)
+
+            who = QLabel(user.label)
+            who.setProperty("role", "baruser")
+            lay.addWidget(who)
+
+            out = QPushButton("Sign out")
+            out.setProperty("kind", "danger")
+            out.setCursor(Qt.CursorShape.PointingHandCursor)
+            out.clicked.connect(self._sign_out)
+            lay.addWidget(out)
+        return bar
+
     def _build_status_bar(self) -> None:
         bar = QStatusBar()
-        bar.setStyleSheet("""
-            QStatusBar {
-                background-color: #FFFFFF;
-                border-top: 1.5px solid #CBD5E1;
-                color: #475569;
-                padding: 3px 12px;
-            }
-        """)
         self.count_label = QLabel("")
-        self.count_label.setFont(QFont("Archivo", 9, QFont.Weight.DemiBold))
+        self.overdue_label = QLabel("")
         self.backup_label = QLabel("")
-        self.backup_label.setFont(QFont("Archivo", 9, QFont.Weight.Medium))
-        bar.addWidget(self.count_label, 1)
+        self.backup_label.setProperty("role", "hint")
+        bar.addWidget(self.count_label)
+        bar.addWidget(self.overdue_label, 1)
         bar.addPermanentWidget(self.backup_label)
-        
-        about_link = QLabel('<a href="#" style="color:#0284C7; text-decoration:none; font-weight:700;">ⓘ About & Credits (F1)</a>')
-        about_link.setFont(QFont("Archivo", 9, QFont.Weight.Bold))
-        about_link.setOpenExternalLinks(False)
-        about_link.linkActivated.connect(self._show_about)
-        bar.addPermanentWidget(about_link)
+
+        about = QPushButton("About & credits · F1")
+        about.setProperty("kind", "quiet")
+        about.setCursor(Qt.CursorShape.PointingHandCursor)
+        about.clicked.connect(self._show_about)
+        bar.addPermanentWidget(about)
         self.setStatusBar(bar)
 
     def _build_shortcuts(self) -> None:
@@ -225,19 +219,30 @@ class MainWindow(QMainWindow):
         AboutDialog(self).exec()
 
     def _refresh_status(self) -> None:
-        c = q.queue_counts()
-        parts = [f"Today: {c['today']}", f"Pending results: {c['pending']}",
-                 f"Ready to send: {c['ready']}"]
-        if c["overdue"]:
-            parts.append(f"Overdue: {c['overdue']}")
-        self.count_label.setText("      ".join(parts))
-        self.count_label.setStyleSheet(
-            f"color: {style.RED}; font-weight: 700;" if c["overdue"] else "color: #334155; font-weight: 600;")
+        """The day in one line, with only the bad number in the accent.
 
-        from datetime import datetime
-        now = datetime.now()
-        self.backup_label.setText(f"Backup: {now.strftime('%d-%m %H:%M')} ✓  ")
-        self.backup_label.setStyleSheet("color: #059669; font-weight: 700;")
+        Colouring the whole line when something was overdue made three
+        healthy figures look like three problems.
+        """
+        c = q.queue_counts()
+        line = (f"Today {c['today']}      Pending results {c['pending']}"
+                f"      Ready to send {c['ready']}")
+        self.count_label.setText(line)
+        self.count_label.setStyleSheet(f"color: {style.INK2}; font-weight: 600;")
+
+        late = c.get("overdue", 0)
+        self.overdue_label.setText(f"Overdue {late}" if late else "")
+        self.overdue_label.setStyleSheet(
+            f"color: {style.ALERT}; font-weight: 800;")
+
+        # The last backup that actually happened, not the clock. Printing the
+        # current time made the bar say "backed up" even when the copy had
+        # failed, which is the one moment the operator needs the truth.
+        last = connection.last_backup_time()
+        self.backup_label.setText(
+            f"Backup {last.strftime('%d-%m %H:%M')}" if last else "No backup yet")
+        self.backup_label.setStyleSheet(
+            f"color: {style.INK3};" if last else f"color: {style.ALERT}; font-weight: 700;")
 
     def _tab_changed(self, index: int) -> None:
         w = self.tabs.widget(index)
@@ -252,9 +257,20 @@ class MainWindow(QMainWindow):
         self.job_screen.new_job()
 
     def _focus_search(self) -> None:
-        self.tabs.setCurrentIndex(TAB_JOB)
-        self.job_screen.test_search.setFocus()
-        self.job_screen.test_search.selectAll()
+        """Put the cursor in the search box of the screen already open.
+
+        It used to jump to the Job screen wherever you were, which meant
+        Ctrl+F halfway through the patients list threw away what you were
+        doing. Only fall back to Job when the current screen has nothing to
+        search with.
+        """
+        current = self.tabs.currentWidget()
+        box = getattr(current, "search", None) or getattr(current, "test_search", None)
+        if box is None:
+            self.tabs.setCurrentIndex(TAB_JOB)
+            box = self.job_screen.test_search
+        box.setFocus()
+        box.selectAll()
 
     def _open_job(self, job_id: int) -> None:
         self.tabs.setCurrentIndex(TAB_JOB)

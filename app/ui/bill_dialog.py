@@ -14,7 +14,9 @@ from .. import services
 from ..core import billing
 from ..db import queries as q
 from . import style
-from .widgets import Table, button, confirm, field_label, info, label, row, warn
+from .widgets import (
+    Table, button, confirm, error, field_label, info, label, row, warn,
+)
 
 
 class BillDialog(QDialog):

@@ -117,8 +117,15 @@ SVG_ICONS = {
 }
 
 
-def get_icon(name: str, color: str = "#0A3668", size: int = 18) -> QIcon:
-    """Generate a high-DPI QIcon from embedded vector SVG."""
+def get_icon(name: str, color: str = "", size: int = 18) -> QIcon:
+    """An icon in the colour asked for, or in the theme's ink if none is.
+
+    The default used to be a fixed navy, which meant every caller that
+    forgot to pass one drew in a colour belonging to no theme.
+    """
+    from . import style
+
+    color = color or style.INK2
     template = SVG_ICONS.get(name)
     if not template:
         return QIcon()
