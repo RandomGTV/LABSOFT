@@ -1,0 +1,33 @@
+========================================================================
+  LabSoft v1.0.0 — Medical Diagnostic Laboratory System (Portable)
+========================================================================
+Author / Developer : RANDOM_GTV
+Laboratory Name    : MITHRA MEDICAL LABORATORY
+Master Admin PIN   : 1598
+Platform           : Desktop (PyQt6 / Python) & Web (Offline HTML5)
+========================================================================
+
+QUICK START (DESKTOP APPLICATION):
+----------------------------------
+1. First Time Setup:
+   Double-click "INSTALL_DEPENDENCIES.bat" to install PyQt6 and openpyxl.
+
+2. Launch Desktop App:
+   Double-click "START_LABSOFT_DESKTOP.bat" to launch LabSoft.
+
+3. Sign In:
+   Select "Administrator (admin)" and enter Default PIN: 1598
+
+------------------------------------------------------------------------
+QUICK START (WEB BROWSER APPLICATION):
+--------------------------------------
+1. Double-click "START_LABSOFT_WEB.bat" or open "index.html" in any browser.
+2. Select "Demonstration User" and sign in.
+3. To host online, simply upload this folder to GitHub and enable GitHub Pages!
+
+------------------------------------------------------------------------
+FACTORY RESET / DATA CLEANUP:
+-----------------------------
+To reset all data back to factory defaults at any time:
+Run: python reset_data.py --yes
+========================================================================
