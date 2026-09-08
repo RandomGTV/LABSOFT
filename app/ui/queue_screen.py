@@ -351,6 +351,12 @@ class QueueScreen(QWidget):
         self.table = Board()
         self.table.doubleClicked.connect(self._open_selected)
         lay.addWidget(self.table, 1)
+        self.quick_summary = label("Select a job to see its results, payment and next action.", "hint")
+        self.quick_summary.setWordWrap(True)
+        self.quick_summary.setContentsMargins(24, 12, 24, 12)
+        self.quick_summary.setTextFormat(Qt.TextFormat.PlainText)
+        lay.addWidget(self.quick_summary)
+        self.table.itemSelectionChanged.connect(self._update_summary)
         lay.addWidget(self._build_foot())
 
         # The keys the foot bar promises. Bound to the board rather than the
@@ -474,6 +480,20 @@ class QueueScreen(QWidget):
         self.table.set_jobs([self._painted(j) for j in self.rows])
         self.table.set_empty_text(self._empty_message(term))
         self._refresh_stats(term)
+        self._update_summary()
+
+    def _update_summary(self) -> None:
+        job = self._selected(complain=False)
+        if not job:
+            self.quick_summary.setText("Select a job to see its results, payment and next action.")
+            return
+        painted = self._painted(job)
+        missing = max(0, int(job["n_tests"]) - int(job["n_done"]))
+        action = "Choose tests" if not job["n_tests"] else f"Enter {missing} remaining results" if missing else "Review report / delivery"
+        self.quick_summary.setText(
+            f"{painted['report_no']} · {painted['name']} · {painted['phone']}\n"
+            f"{painted['n_done']}/{painted['n_tests']} results · {painted['payment']} · {painted['due']}\n"
+            f"Next: {action}")
 
     def _painted(self, job: dict) -> dict:
         """Everything one row needs, worked out once, before any painting."""

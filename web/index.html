@@ -1929,6 +1929,16 @@ function saveState() {
   localStorage.setItem("labsoft_staff_v2", JSON.stringify(STAFF_ACCOUNTS));
 
   localStorage.setItem("labsoft_config_v2", JSON.stringify(LAB_CONFIG));
+  const checklist = document.getElementById("readiness-checklist");
+  if (checklist && activeJob) {
+    checklist.innerHTML = readinessHTML();
+    document.querySelectorAll('[data-job-step]').forEach(btn => {
+      const current = btn.dataset.jobStep === jobReadiness(activeJob).step;
+      btn.classList.toggle('primary', current);
+      if (current) btn.setAttribute('aria-current', 'step');
+      else btn.removeAttribute('aria-current');
+    });
+  }
 }
 
 function applyTheme() {
@@ -2342,6 +2352,39 @@ const DESKTOP_PANELS = [
   "Senior Citizen Comprehensive"
 ];
 
+function jobReadiness(job) {
+  const fields = ['name', 'mobile', 'sex'].filter(k => !String(job[k] || '').trim());
+  const missing = (job.tests || []).filter(c => !String((job.results || {})[c] ?? '').trim());
+  return {fields, missing, step: fields.length ? 'patient' : !job.tests.length ? 'tests' : missing.length ? 'results' : 'review'};
+}
+function jobStep(step) {
+  if (step === 'review' || step === 'deliver') {
+    const r = jobReadiness(activeJob);
+    if (r.step !== 'review') { jobStep(r.step); return; }
+    if (step === 'deliver') openWhatsAppDispatchModal(activeJob);
+    else openReportPreview(activeJob);
+    return;
+  }
+  let target;
+  if (step === 'patient') {
+    const field = jobReadiness(activeJob).fields[0] || 'name';
+    target = document.getElementById('patient-' + field);
+  } else if (step === 'tests') target = document.getElementById('test-search-inp');
+  else target = [...document.querySelectorAll('.desktop-result-row input, .desktop-result-row select')].find(el => !el.disabled && !el.readOnly && !el.value.trim());
+  if (target) { target.scrollIntoView({block:'center', behavior:'smooth'}); target.focus(); }
+}
+function readinessHTML() {
+  const r = jobReadiness(activeJob);
+  return `<div style="display:grid;gap:8px; margin-top:10px;">
+    <button class="btn-m" onclick="jobStep('patient')">${r.fields.length ? 'Needed: ' + r.fields.join(', ') : 'Patient details complete'}</button>
+    <button class="btn-m" onclick="jobStep('tests')">${activeJob.tests.length ? activeJob.tests.length + ' tests selected' : 'Choose tests'}</button>
+    <button class="btn-m" onclick="jobStep('results')">${r.missing.length ? r.missing.length + ' results still empty' : activeJob.tests.length ? 'Results entered' : 'Results waiting for tests'}</button>
+    <button class="btn-m primary" onclick="jobStep('${r.step}')">${{patient:'Complete patient details',tests:'Choose tests',results:'Go to first empty result',review:'Review report'}[r.step]}</button>
+    <span style="color:var(--ink-3);font-size:12px;">Review the report before delivery. Billing can be checked below.</span>
+    <button class="btn-m" onclick="openBillModal()">Review billing</button>
+  </div>`;
+}
+
 function renderJobScreen(container) {
   const total = activeJob.tests.length;
   const done = activeJob.tests.filter(c => activeJob.results[c] && activeJob.results[c].trim() !== "").length;
@@ -2437,6 +2480,9 @@ function renderJobScreen(container) {
   });
 
   container.innerHTML = `
+    <nav aria-label="Job workflow" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);">
+      ${['patient','tests','results','review','deliver'].map((step,i) => `<button class="btn-m ${jobReadiness(activeJob).step === step ? 'primary' : ''}" data-job-step="${step}" ${jobReadiness(activeJob).step === step ? 'aria-current="step"' : ''} onclick="jobStep('${step}')">${i+1}. ${titleCase(step)}</button>`).join('')}
+    </nav>
     <!-- Top Status Rail -->
     <div class="desktop-status-rail">
       <div class="rail-left-box">
@@ -2478,7 +2524,7 @@ function renderJobScreen(container) {
           <div class="patient-grid-ui">
             <div>
               <label class="counsel-title" style="font-size:7pt;">Name</label>
-              <input type="text" class="field-input" value="${activeJob.name}" oninput="activeJob.name=this.value; saveState();" placeholder="Patient name" style="height:32px; font-size:12px;">
+              <input type="text" id="patient-name" class="field-input" value="${activeJob.name}" oninput="activeJob.name=this.value; saveState();" placeholder="Patient name" style="height:32px; font-size:12px;">
             </div>
             <div>
               <label class="counsel-title" style="font-size:7pt;">Initial</label>
@@ -2486,11 +2532,11 @@ function renderJobScreen(container) {
             </div>
             <div>
               <label class="counsel-title" style="font-size:7pt;">Mobile</label>
-              <input type="text" class="field-input" value="${activeJob.mobile}" oninput="activeJob.mobile=this.value; saveState();" placeholder="Mobile number" style="height:32px; font-size:12px;">
+              <input type="text" id="patient-mobile" class="field-input" value="${activeJob.mobile}" oninput="activeJob.mobile=this.value; saveState();" placeholder="Mobile number" style="height:32px; font-size:12px;">
             </div>
             <div>
               <label class="counsel-title" style="font-size:7pt;">Sex</label>
-              <select class="field-input" onchange="activeJob.sex=this.value; saveState();" style="height:32px; font-size:12px;">
+              <select id="patient-sex" class="field-input" onchange="activeJob.sex=this.value; saveState();" style="height:32px; font-size:12px;">
                 <option value="Male" ${activeJob.sex==='Male'?'selected':''}>Male</option>
                 <option value="Female" ${activeJob.sex==='Female'?'selected':''}>Female</option>
                 <option value="Other" ${activeJob.sex==='Other'?'selected':''}>Other</option>
@@ -2591,10 +2637,8 @@ function renderJobScreen(container) {
       <!-- 3. Right Counsel Column (280px) -->
       <div class="desktop-counsel-rail">
         <div class="counsel-section">
-          <span class="counsel-title">Before it can go</span>
-          <div style="font-size:11.5px; color:#64748B; line-height:1.5;"> ${!isNameSet ? "• The patient's name is needed before this job can be finished.<br>" : ""}
-            Everything typed so far is already saved. Leaving now loses nothing.
-          </div>
+          <span class="counsel-title">Report readiness</span>
+          <div id="readiness-checklist" aria-live="polite">${readinessHTML()}</div>
         </div>
 
         <div class="counsel-section">
@@ -2946,6 +2990,8 @@ function verifyAndCompleteJob() {
    02. Work Queue Screen
    -------------------------------------------------------------------------- */
 
+let queueScope = 'all';
+let queueSearch = '';
 function renderQueueScreen(container) {
   const pending = jobs.filter(j => j.status !== 'ready' && j.status !== 'sent').length;
   const ready = jobs.filter(j => j.status === 'ready').length;
@@ -2961,7 +3007,7 @@ function renderQueueScreen(container) {
 
       <div style="display:flex; gap:32px; margin-left:12px;">
         <div class="stat-block">
-          <span class="stat-label">Total Today</span>
+          <span class="stat-label">All jobs</span>
           <span style="font-size:22px; font-weight:800;">${jobs.length}</span>
         </div>
         <div class="stat-block">
@@ -2979,10 +3025,14 @@ function renderQueueScreen(container) {
       </div>
 
       <div style="margin-left:auto; display:flex; gap:9px;">
-        <button class="btn-m" onclick="setTab('job')">+ Register New Patient</button>
+        <button class="btn-m" onclick="newJob(); setTab('job');">+ Register New Patient</button>
       </div>
     </div>
 
+    <div style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;" role="group" aria-label="Queue status filters">
+      ${['all','pending','ready','sent'].map(scope => `<button class="btn-m" data-queue-scope="${scope}" onclick="queueScope='${scope}'; filterQueueLive(queueSearch)">${titleCase(scope)}</button>`).join('')}
+      <span id="queue-count" role="status" style="align-self:center;color:var(--ink-3);"></span>
+    </div>
     <!-- Queue Table -->
     <div style="flex:1; background:var(--surface); overflow:auto;">
       <table style="width:100%; border-collapse:collapse;" id="queue-table">
@@ -2997,14 +3047,14 @@ function renderQueueScreen(container) {
           </tr>
         </thead>
         <tbody> ${jobs.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:60px; color:var(--text-muted);">Queue is empty. Register patients in the Job tab.</td></tr>' :
-            jobs.map(j => `
-              <tr style="border-bottom:1px solid var(--border-subtle);">
+            jobs.map((j, index) => `
+              <tr data-job-index="${index}" style="border-bottom:1px solid var(--border-subtle);">
                 <td style="padding:10px 14px; font-weight:800; font-size:13.5px;">${j.report_no}</td>
                 <td style="padding:10px 14px;">
                   <div style="font-weight:700; font-size:13.5px;">${j.name} .${j.initial}.</div>
                   <div style="font-size:11px; color:var(--text-muted);">${j.mobile} · ${j.sex}</div>
                 </td>
-                <td style="padding:10px 14px; font-size:12px; color:var(--text-muted);">${j.tests.join(", ")}</td>
+                <td style="padding:10px 14px; font-size:12px; color:var(--text-muted);">${j.tests.join(", ")}<br><small>${j.tests.length - jobReadiness(j).missing.length}/${j.tests.length} results entered</small></td>
                 <td style="padding:10px 14px; font-size:12px;">${j.date}</td>
                 <td style="padding:10px 14px;">
                   <span class="status-pill sp-${j.status}">${j.status}</span>
@@ -3020,13 +3070,28 @@ function renderQueueScreen(container) {
       </table>
     </div>
   `;
+  const search = container.querySelector('input');
+  search.value = queueSearch;
+  search.setAttribute('aria-label', 'Search queue by report number, patient or mobile');
+  filterQueueLive(queueSearch);
 }
 
 function filterQueueLive(query) {
-  query = query.toLowerCase();
-  const rows = document.querySelectorAll("#queue-table tbody tr");
-  rows.forEach(r => {
-    r.style.display = r.textContent.toLowerCase().includes(query) ? "" : "none";
+  queueSearch = query;
+  let visible = 0;
+  document.querySelectorAll('#queue-table tbody tr[data-job-index]').forEach(row => {
+    const job = jobs[Number(row.dataset.jobIndex)];
+    const matches = queueScope === 'all' || (queueScope === 'pending' ? !['ready','sent'].includes(job.status) : job.status === queueScope);
+    const show = matches && [job.report_no,job.name,job.mobile,...job.tests].join(' ').toLowerCase().includes(query.toLowerCase());
+    row.hidden = !show;
+    if (show) visible++;
+  });
+  const count = document.getElementById('queue-count');
+  if (count) count.textContent = visible ? `${visible} of ${jobs.length} jobs` : 'No matching jobs. Try another filter or search.';
+  document.querySelectorAll('[data-queue-scope]').forEach(btn => {
+    const selected = btn.dataset.queueScope === queueScope;
+    btn.classList.toggle('primary', selected);
+    btn.setAttribute('aria-pressed', String(selected));
   });
 }
 

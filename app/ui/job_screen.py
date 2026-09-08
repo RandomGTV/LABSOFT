@@ -277,6 +277,13 @@ class JobScreen(QWidget):
         outer.setSpacing(0)
 
         outer.addWidget(self._build_status_rail())
+        steps = QHBoxLayout()
+        steps.setContentsMargins(18, 8, 18, 8)
+        for title, action in (("1. Patient", "patient"), ("2. Tests", "tests"),
+                              ("3. Results", "results"), ("4. Review", "review"),
+                              ("5. Deliver", "deliver")):
+            steps.addWidget(button(title, "quiet", lambda checked=False, a=action: self._go_step(a)))
+        outer.addLayout(steps)
 
         body = QWidget()
         body_lay = QHBoxLayout(body)
@@ -647,30 +654,38 @@ class JobScreen(QWidget):
         for -- and the reason a wide monitor no longer ends in half a screen
         of nothing.
         """
-        blockers: List[str] = []
         problem = self.patient_problem()
+        pending = [rr for rr in self.rows.values()
+                   if not rr.value() and not rr.not_done]
+        lines = []
         if problem:
-            blockers.append(f"·  {problem[0][0].upper()}{problem[0][1:]} is "
-                            f"needed before this job can be finished.")
-        if self.job_id:
-            _complete, missing = q.job_is_complete(self.job_id)
-            for name in missing[:3]:
-                blockers.append(f"·  {name} has no value yet.")
-            if len(missing) > 3:
-                blockers.append(f"·  … and {len(missing) - 3} more still empty.")
-            if not q.get_bill(self.job_id):
-                blockers.append("·  No bill has been made for this job.")
-        if not blockers:
-            blockers.append("Nothing — this job is ready to go.")
-        else:
-            blockers.append("")
-            blockers.append("Everything typed so far is already saved. "
-                            "Leaving now loses nothing.")
-        self.blockers.setText("\n".join(blockers))
-        self.blockers.setStyleSheet(
-            f"color: {style.AMBER if problem else style.INK2};")
+            lines.append("Needed: " + problem[0])
+        lines.append(f"{len(self.test_ids)} tests selected" if self.test_ids else "Needed: choose tests")
+        lines.append(f"{len(pending)} results still empty" if pending else
+                     ("Results entered — review before delivery" if self.test_ids else "Results: waiting for tests"))
+        has_bill = bool(self.job_id and q.get_bill(self.job_id))
+        lines.append("Bill recorded" if has_bill else "Billing: no bill recorded (advisory)")
+        self.blockers.setText("\n".join(lines))
+        self.blockers.setStyleSheet(f"color: {style.INK2};")
+        action = "patient" if problem else "tests" if not self.test_ids else "results" if pending else "review"
+        self.next_step = action
+        self.next_button.setText({"patient": "Complete patient details", "tests": "Choose tests",
+                                  "results": "Go to first empty result", "review": "Review report"}[action])
 
         self.last_visit.setText(self._last_visit_text())
+
+    def _go_step(self, step: str) -> None:
+        if step == "patient":
+            problem = self.patient_problem()
+            (problem[1] if problem else self.name_edit).setFocus()
+        elif step == "tests":
+            self.test_search.setFocus()
+        elif step == "results":
+            self._focus_first_empty()
+        elif step == "review":
+            self.preview()
+        elif step == "deliver":
+            self.verify()
 
     def _last_visit_text(self) -> str:
         if not self.patient_id:
@@ -795,10 +810,14 @@ class JobScreen(QWidget):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
 
-        block, inner = self._counsel_block("Before it can go")
+        block, inner = self._counsel_block("Report readiness")
         self.blockers = label("", "hint")
         self.blockers.setWordWrap(True)
         inner.addWidget(self.blockers)
+        self.next_step = "patient"
+        self.next_button = button("Complete patient details", "go", lambda: self._go_step(self.next_step))
+        inner.addWidget(self.next_button)
+        inner.addWidget(button("Review billing", "quiet", self._open_bill))
         lay.addWidget(block)
 
         block, inner = self._counsel_block("Clinical Remarks & Smear Impression")
@@ -1349,7 +1368,7 @@ class JobScreen(QWidget):
 
     def _focus_first_empty(self) -> None:
         for rr in self.rows.values():
-            if not rr.is_derived and not getattr(rr, "is_heading", False) and not rr.value():
+            if not rr.is_derived and not getattr(rr, "is_heading", False) and not rr.not_done and not rr.value():
                 rr.editor.setFocus()
                 return
 
