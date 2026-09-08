@@ -1,33 +1,87 @@
 ========================================================================
-  LabSoft v1.0.0 — Medical Diagnostic Laboratory System (Portable)
+  LabSoft v1.0.0 - Medical Diagnostic Laboratory System (Portable)
 ========================================================================
 Author / Developer : RANDOM_GTV
 Laboratory Name    : MITHRA MEDICAL LABORATORY
-Master Admin PIN   : 1598
-Platform           : Desktop (PyQt6 / Python) & Web (Offline HTML5)
+Platform           : Desktop (PyQt6 / Python) & Web (offline HTML5)
 ========================================================================
 
-QUICK START (DESKTOP APPLICATION):
-----------------------------------
-1. First Time Setup:
-   Double-click "INSTALL_DEPENDENCIES.bat" to install PyQt6 and openpyxl.
+There is no default PIN, and there is no master PIN.
 
-2. Launch Desktop App:
-   Double-click "START_LABSOFT_DESKTOP.bat" to launch LabSoft.
-
-3. Sign In:
-   Select "Administrator (admin)" and enter Default PIN: 1598
+  This copy of the instructions used to print "Master Admin PIN: 1598".
+  A PIN written in the file that ships beside the program is a PIN
+  everybody has, including everybody who is handed the folder, and it
+  cannot be changed once it is in circulation. LabSoft asks you to make
+  your own on the first run instead. It takes about twenty seconds.
 
 ------------------------------------------------------------------------
-QUICK START (WEB BROWSER APPLICATION):
---------------------------------------
-1. Double-click "START_LABSOFT_WEB.bat" or open "index.html" in any browser.
-2. Select "Demonstration User" and sign in.
-3. To host online, simply upload this folder to GitHub and enable GitHub Pages!
+QUICK START (DESKTOP APPLICATION)
+------------------------------------------------------------------------
+
+1. First time on this PC
+   Double-click  INSTALL_DEPENDENCIES.bat
+   This installs PyQt6 and openpyxl. Python 3.10 or newer must already
+   be installed and on the PATH.
+
+2. Start it
+   Double-click  START_LABSOFT_DESKTOP.bat
+
+3. Make the first account
+   The sign-in screen opens and says "Nobody can sign in yet".
+   Press  "Create the first account".
+
+   Fill in the name, a username, and a PIN only you know. This first
+   account is the administrator - LabSoft sets that itself, so the lab
+   can never end up with staff accounts and nobody who can reach
+   Settings.
+
+   Every account after this one has to be approved with an
+   administrator's own PIN, typed at the time.
+
+4. Add the rest of the staff
+   Settings > Staff > "Manage staff and permissions".
+   Tick exactly what each person may do. Everything they then do -
+   every report, bill and change - is recorded against their name.
+
+   If somebody forgets their PIN, an administrator sets them a new one
+   there. Nobody can read an existing PIN back, including you: they are
+   stored as PBKDF2 hashes, not as text.
 
 ------------------------------------------------------------------------
-FACTORY RESET / DATA CLEANUP:
------------------------------
-To reset all data back to factory defaults at any time:
-Run: python reset_data.py --yes
+QUICK START (WEB BROWSER)
+------------------------------------------------------------------------
+
+1. Double-click  START_LABSOFT_WEB.bat, or open  index.html  in any
+   browser.
+2. Sign in as "Demonstration User".
+
+   The browser version is a DEMONSTRATION. It keeps its data in the
+   browser's own storage, it has no PIN, and it cannot check one - a
+   page served as plain files has nowhere safe to keep a password. Do
+   not put real patients in it. The desktop program is the real one.
+
+------------------------------------------------------------------------
+FACTORY RESET
+------------------------------------------------------------------------
+
+To clear everything - patients, jobs, results, bills and staff accounts
+- and start again:
+
+    python reset_data.py --yes
+
+The next start will ask you to create the first account again.
+
+------------------------------------------------------------------------
+WHERE THINGS ARE KEPT
+------------------------------------------------------------------------
+
+  data\lab.db            the database. This is the file to protect.
+  data\backups\          a copy, taken every time LabSoft starts
+  patients\              each patient's folder of reports
+  exports\               anything you export to Excel
+  logs\                  what to send if something goes wrong
+
+None of these are in git: .gitignore keeps every one of them out, so
+pushing the code never pushes a patient.
+
 ========================================================================

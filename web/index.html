@@ -9,58 +9,169 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
 <style>
   
+  /* ------------------------------------------------------------------
+     The desktop program's palette, token for token.
+
+     app/ui/style.py is the original; every value below is copied from it
+     so the two halves of LabSoft cannot drift apart. Three of them are
+     corrections this page needed as much as the desktop did:
+
+       --line-2 in the night theme was #1E293B, the same value as
+       --surface, so every hairline -- between table rows, round a card,
+       under a section -- was drawn in exactly the colour behind it.
+       1.00:1. The dark tables had no row separation at all.
+
+       --green was #059669, which is 3.77:1 on white and fails AA as
+       text. The nearest darker step of the same hue is used instead.
+
+       --field-border was #CBD5E1, which is 1.48:1 against paper: a box
+       whose edge you cannot find.
+     ------------------------------------------------------------------ */
   :root {
+    /* the marker: the live tab, the focus ring, the fill behind Sign out */
+    --brand: #DC2626;
+    --brand-dark: #062344;
+    --brand-soft: #FEF2F2;
+    /* the primary action. White on it is 12:1 */
+    --accent-ink: #0A3668;
+    --red: #B91C1C;
+    --green: #047857;
+    --amber: #B45309;
+    --blue: #0369A1;
+
+    --ink: #0F172A;
+    --ink-2: #334155;
+    --ink-3: #64748B;
+    --line: #CBD5E1;
+    --line-2: #E2E8F0;
     --bg: #F8FAFC;
-    --surface: #FFFFFF;
-    --surface-alt: #F1F5F9;
-    --border: #CBD5E1;
-    --border-light: #E2E8F0;
-    --border-subtle: #F1F5F9;
-    --text: #0F172A;
-    --text-muted: #64748B;
+    --panel: #FFFFFF;
+    --fill: #F1F5F9;
+
+    --field-border: #8494A8;
+    --readonly-bg: #F1F5F9;
+    --primary-off: #E2E8F0;
+    --primary-off-text: #5C6B7F;
+    --on-ink: #FFFFFF;
+    --on-accent: #FFFFFF;
+
+    /* the bar across the top. Its own pair: --ink inverts between the
+       themes, and a bar that turned white at night would be the
+       brightest thing in a dark room */
+    --bar: #0A1929;
+    --on-bar: #FFFFFF;
+    --bar-muted: #94A3B8;
+
+    /* trouble. Separate from --brand, which is red by day and cyan by
+       night: a late row tinted with --brand would come out the same
+       colour as "in progress" the moment the lights went off */
+    --alert: #B91C1C;
+    --alert-soft: #FEF2F2;
+
+    /* the sign-in panel, and the money band. Own pairs for the same
+       reason: the accent is navy by day and cyan by night, and a full
+       field of cyan at 3 a.m. is a torch */
+    --hero: #0A3668;
+    --on-hero: #FFFFFF;
+    --hero-muted: #A9C2DE;
+    --money-band: #0A3668;
+    --on-money: #FFFFFF;
+    --money-alert: #FCA5A5;
+
+    /* the surface a printed page is previewed against */
+    --paper-mount: #6E7781;
+
     --text-dim: #94A3B8;
-    --brand-navy: #0A3668;
-    --brand-blue: #0284C7;
-    --brand-cyan: #38BDF8;
-    --accent-red: #DC2626;
     --accent-red-bg: #FEE2E2;
-    --accent-green: #059669;
     --accent-green-bg: #ECFDF5;
-    --accent-amber: #D97706;
     --accent-amber-bg: #FEF3C7;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    --font-sans: "Plus Jakarta Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+
+    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, .06);
+    --shadow-md: 0 4px 10px -2px rgba(15, 23, 42, .10);
+    --shadow-lg: 0 10px 24px -6px rgba(15, 23, 42, .14);
+    --shadow-xl: 0 20px 40px -10px rgba(15, 23, 42, .18);
+
+    /* the desktop's metrics: 8px on a control, 12-16 on a card,
+       999 on a chip */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 999px;
+
+    --font-sans: "Archivo", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   }
 
   body.dark {
+    --brand: #38BDF8;
+    --brand-dark: #7DD3FC;
+    --brand-soft: #0C2D48;
+    --accent-ink: #38BDF8;
+    --red: #F87171;
+    --green: #34D399;
+    --amber: #FBBF24;
+    --blue: #38BDF8;
+
+    --ink: #F8FAFC;
+    --ink-2: #CBD5E1;
+    --ink-3: #94A3B8;
+    --line: #334155;
+    /* a step ABOVE --panel, never equal to it -- see the note above */
+    --line-2: #2C3B52;
     --bg: #0B1120;
-    --surface: #1E293B;
-    --surface-alt: #0F172A;
-    --border: #334155;
-    --border-light: #1E293B;
-    --border-subtle: #1E293B;
-    --text: #F8FAFC;
-    --text-muted: #94A3B8;
+    --panel: #1E293B;
+    --fill: #0F172A;
+
+    --field-border: #7C8CA3;
+    --readonly-bg: #0F172A;
+    --primary-off: #1E293B;
+    --primary-off-text: #8A9AAF;
+    --on-ink: #0B1120;
+    --on-accent: #0B1120;
+
+    --bar: #060C16;
+    --on-bar: #F8FAFC;
+    --bar-muted: #94A3B8;
+
+    --alert: #F87171;
+    --alert-soft: #3B0A0A;
+
+    --hero: #102A43;
+    --on-hero: #F8FAFC;
+    --hero-muted: #93AFC9;
+    --money-band: #102A43;
+    --on-money: #F8FAFC;
+    --money-alert: #FCA5A5;
+
+    --paper-mount: #111A28;
+
     --text-dim: #64748B;
-    --brand-navy: #38BDF8;
-    --brand-blue: #38BDF8;
     --brand-cyan: #0284C7;
-    --accent-red: #F87171;
     --accent-red-bg: #450A0A;
-    --accent-green: #34D399;
     --accent-green-bg: #064E3B;
-    --accent-amber: #FBBF24;
     --accent-amber-bg: #451A03;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, .35);
+    --shadow-md: 0 4px 10px -2px rgba(0, 0, 0, .45);
+    --shadow-lg: 0 10px 24px -6px rgba(0, 0, 0, .55);
+    --shadow-xl: 0 20px 40px -10px rgba(0, 0, 0, .65);
+  }
+
+
+  /* ---- the older names, resolved on the same element the theme lands on --- */
+  body {
+    --surface: var(--panel);
+    --surface-alt: var(--fill);
+    --border: var(--line);
+    --border-light: var(--line-2);
+    --border-subtle: var(--line-2);
+    --text: var(--ink);
+    --text-muted: var(--ink-3);
+    --brand-navy: var(--accent-ink);
+    --brand-blue: var(--blue);
+    --brand-cyan: var(--brand);
+    --accent-red: var(--red);
+    --accent-green: var(--green);
+    --accent-amber: var(--amber);
   }
 
   * { box-sizing: border-box; }
@@ -111,28 +222,45 @@
     transform: scale(0.97);
   }
   .btn-m.primary {
-    background: #0A3668;
-    color: #FFFFFF;
-    border-color: #0A3668;
+    background: var(--accent-ink);
+    color: var(--on-accent);
+    border-color: var(--accent-ink);
   }
-  .btn-m.primary:hover {
-    background: #082d57;
-    border-color: #082d57;
-  }
-  body.dark .btn-m.primary {
-    background: #0284C7;
-    border-color: #0284C7;
-    color: #FFFFFF;
-  }
-  body.dark .btn-m.primary:hover {
-    background: #0369a1;
+  .btn-m.primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+  .btn-m.primary:disabled {
+    background: var(--primary-off);
+    border-color: var(--primary-off);
+    color: var(--primary-off-text);
+    cursor: default;
   }
   .btn-m.success {
-    background: #059669;
-    color: #FFFFFF;
-    border-color: #059669;
+    background: var(--green);
+    color: var(--on-accent);
+    border-color: var(--green);
   }
-  .btn-m.success:hover { background: #047857; }
+  .btn-m.success:hover { filter: brightness(1.08); }
+  /* The one destructive button. --alert, never --brand: --brand is red by
+     day and cyan by night, which painted Sign out the same colour as the
+     primary action the moment the lights went off. */
+  .btn-m.danger {
+    background: var(--alert);
+    color: var(--on-accent);
+    border-color: var(--alert);
+  }
+  .btn-m.danger:hover { filter: brightness(1.08); }
+  .btn-m.quiet {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    color: var(--ink-2);
+    text-decoration: underline;
+  }
+  .btn-m.quiet:hover { color: var(--accent-ink); background: transparent; }
+  /* An obvious focus ring, on the marker colour, in both themes. */
+  .btn-m:focus-visible, .field-input:focus-visible, .nav-tab:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
   .btn-m.whatsapp {
     background: #25D366;
     color: #FFFFFF;
@@ -172,65 +300,67 @@
     background: var(--surface-alt);
   }
   .nav-tab.active {
-    color: #0A3668;
-    border-bottom-color: #DC2626;
-    background: var(--surface-alt);
-  }
-  body.dark .nav-tab.active {
-    color: #38BDF8;
-    border-bottom-color: #38BDF8;
+    color: var(--accent-ink);
+    border-bottom-color: var(--brand);
+    background: var(--fill);
   }
 
   /* Status Badges */
+  /* A rounded chip with a dot, sentence case, no border -- the shape the
+     desktop work queue draws. It was a square uppercase badge. */
   .status-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 24px;
-    padding: 0 10px;
-    font-size: 10.5px;
-    font-weight: 800;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    border-radius: var(--radius-sm);
+    gap: 7px;
+    height: 26px;
+    padding: 0 12px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+    border: 0;
+    border-radius: var(--radius-pill);
   }
-  .status-pill.sp-ready {
-    background: var(--accent-green-bg);
-    color: var(--accent-green);
-    border: 1px solid var(--accent-green);
+  .status-pill::before {
+    content: "";
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
   }
-  .status-pill.sp-prog {
-    background: #E0F2FE;
-    color: #0369A1;
-    border: 1px solid #7DD3FC;
-  }
-  .status-pill.sp-draft {
-    background: var(--surface-alt);
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-  }
+  .status-pill.sp-ready { background: #FEF3C7; color: #B45309; }
+  .status-pill.sp-prog  { background: #E0F2FE; color: #0369A1; }
+  .status-pill.sp-draft { background: #F1F5F9; color: #475569; }
+  .status-pill.sp-sent  { background: #ECFDF5; color: #047857; }
+  body.dark .status-pill.sp-ready { background: #451A03; color: #FBBF24; }
+  body.dark .status-pill.sp-prog  { background: #082F49; color: #38BDF8; }
+  body.dark .status-pill.sp-draft { background: #0F172A; color: #94A3B8; }
+  body.dark .status-pill.sp-sent  { background: #064E3B; color: #34D399; }
 
   /* Results Input Styling */
   .field-input {
     width: 100%;
-    height: 36px;
-    padding: 0 10px;
-    font-size: 12.5px;
+    height: 40px;
+    padding: 0 13px;
+    font-size: 13.5px;
     font-family: inherit;
-    border: 1.5px solid var(--border);
+    /* --field-border, not --border: the old #CBD5E1 was 1.48:1 against
+       paper, which is a box whose edge you cannot find. */
+    border: 1px solid var(--field-border);
     border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--text);
+    background: var(--panel);
+    color: var(--ink);
     outline: none;
     transition: border-color .15s ease, box-shadow .15s ease;
   }
-  .field-input:focus {
-    border-color: #0A3668;
-    box-shadow: 0 0 0 3px rgba(10, 54, 104, 0.15);
+  .field-input:hover { border-color: var(--ink-2); }
+  .field-input::placeholder, input::placeholder, textarea::placeholder {
+    color: var(--ink-3);
+    opacity: 1;
   }
-  body.dark .field-input:focus {
-    border-color: #38BDF8;
-    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+  .field-input:focus {
+    border: 2px solid var(--brand);
+    padding: 0 12px;
   }
 
   /* Results Row Grid */
@@ -240,12 +370,12 @@
     gap: 12px;
     padding: 8px 16px;
     background: var(--surface-alt);
-    border-bottom: 2px solid var(--border);
-    font-size: 10.5px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: var(--text-muted);
+    border-bottom: 1px solid var(--line-2);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--ink-3);
     align-items: center;
   }
   .results-data-row {
@@ -289,7 +419,7 @@
   }
 
   body.auth-mode {
-    background: #f4f3f2;
+    background: var(--bg);
     overflow: hidden;
     margin: 0;
     padding: 0;
@@ -306,7 +436,7 @@
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
-    background: #f4f3f2 !important;
+    background: var(--bg) !important;
     overflow: hidden;
     z-index: 1000;
   }
@@ -314,8 +444,10 @@
   /* 01. Header Bar */
   .top-header {
     height: 44px;
-    background: #201e1d;
-    color: #f3f2f2;
+    /* --bar, not the old #201e1d. The bar is the one surface that keeps
+       its own pair across the themes, so it never turns white at night. */
+    background: var(--bar);
+    color: var(--on-bar);
     display: flex;
     align-items: center;
     padding: 0 18px;
@@ -830,11 +962,15 @@
   }
 
   /* Login Card */
+  /* The card the desktop sign-in floats on its ground: one hairline, a
+     real radius, and a shadow instead of a 2px box. */
   .login-box {
     max-width: 420px;
     margin: 60px auto;
-    background: var(--surface);
-    border: 2px solid var(--border);
+    background: var(--panel);
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
     padding: 32px;
     text-align: center;
   }
@@ -849,10 +985,12 @@
     height: 48px;
     font-size: 20px;
     font-weight: 800;
-    background: var(--surface-alt);
-    border: 1px solid var(--border-light);
+    background: var(--fill);
+    color: var(--ink);
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius-sm);
   }
-  .pin-key-btn:hover { background: var(--border-light); }
+  .pin-key-btn:hover { background: var(--line-2); }
 
   @media print {
     body { background: #FFF !important; color: #000 !important; }
@@ -866,8 +1004,8 @@
   /* Speed-Keyboard HUD */
   .keyboard-hud-bar {
     height: 30px;
-    background: #181615;
-    color: #e5e5e5;
+    background: var(--bar);
+    color: var(--bar-muted);
     border-top: 1px solid #333;
     display: flex;
     align-items: center;
@@ -887,7 +1025,7 @@
     border-radius: 3px;
     transition: background .1s ease;
   }
-  .hud-item:hover { background: #333; }
+  .hud-item:hover { background: rgba(255,255,255,.10); }
   .hud-item kbd {
     background: #0A3668;
     color: #fff;
@@ -1139,32 +1277,29 @@
 
   .desktop-body-grid {
     display: grid;
-    grid-template-columns: 320px 1fr 280px;
+    /* 320 was not enough for the "before it can go" prose, which ran off
+       the right edge of the page. */
+    grid-template-columns: 300px minmax(0, 1fr) 300px;
     min-height: calc(100vh - 150px);
     background: var(--bg);
   }
 
   /* Left Intake Rail */
   .desktop-left-rail {
-    background: #F0F6FB;
-    border-right: 1.5px solid #CBD5E1;
+    background: var(--fill);
+    border-right: 1px solid var(--line-2);
     display: flex;
     flex-direction: column;
   }
-  body.dark .desktop-left-rail {
-    background: #0A1929;
-    border-right: 1.5px solid #1E3A5F;
-  }
+
   .patient-block-ui {
     padding: 14px 16px;
-    border-bottom: 1px solid #D1E3F0;
+    border-bottom: 1px solid var(--line-2);
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
-  body.dark .patient-block-ui {
-    border-bottom: 1px solid #1E3A5F;
-  }
+
   .tests-block-ui {
     padding: 14px 16px;
     display: flex;
@@ -1179,15 +1314,20 @@
   }
 
   /* Money Band */
+  /* Its own token pair. Filled with the accent, this band became a
+     full-width slab of bright cyan in the night theme -- the brightest
+     thing on a screen meant for a bench with the lights off -- and the
+     figures painted on it disappeared into it. */
   .desktop-money-band {
-    background: #0F172A;
-    color: #F8FAFC;
-    height: 96px;
-    padding: 12px 20px;
+    background: var(--money-band);
+    color: var(--on-money);
+    min-height: 96px;
+    padding: 12px 18px;
     display: flex;
     align-items: center;
-    gap: 28px;
-    border-bottom: 2px solid #0A3668;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    border-bottom: 1px solid var(--line-2);
   }
   .money-stat {
     display: flex;
@@ -1195,45 +1335,46 @@
     gap: 2px;
   }
   .money-stat .m-lbl {
-    font-size: 7.5pt;
-    font-weight: 800;
-    text-transform: uppercase;
-    color: #94A3B8;
-    letter-spacing: .5px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: none;
+    color: var(--on-money);
+    opacity: .78;
+    letter-spacing: 0;
   }
   .money-stat .m-val {
-    font-size: 13pt;
+    font-size: 17px;
     font-weight: 700;
-    color: #F8FAFC;
+    color: var(--on-money);
   }
-  .money-stat .m-val.large {
-    font-size: 22pt;
-    font-weight: 800;
-    color: #FFFFFF;
-  }
+  .money-stat .m-val.large { font-size: 29px; font-weight: 800; }
+  /* The two figures that say money is owed. */
+  .money-stat .m-val.owed { color: var(--money-alert); font-weight: 800; }
   .money-band-actions {
     margin-left: auto;
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
   }
 
   /* Results Table */
-  .desktop-results-head {
+  .desktop-results-head, .desktop-result-row {
     display: grid;
     grid-template-columns: 1fr 140px 90px 140px 80px 32px;
     gap: 12px;
     padding: 9px 16px;
-    background: var(--surface);
-    border-bottom: 2px solid #0A3668;
-    font-size: 7.5pt;
-    font-weight: 800;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line-2);
+    font-size: 12px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .08em;
     color: #64748B;
   }
 
   .desktop-results-body {
+    flex: 1;
     padding-bottom: 60px;
     background: var(--surface);
     min-height: 400px;
@@ -1289,6 +1430,147 @@
     color: #94A3B8;
   }
 
+
+  /* ====================================================================
+     THE DESIGN SYSTEM, SETTLED
+     --------------------------------------------------------------------
+     Everything above this point grew over time, and several rules are
+     defined twice -- .counsel-title, .desktop-results-head and
+     .patient-block-ui each appear in both style blocks, so whichever
+     came last quietly won. Rather than chase the duplicates, the house
+     rules are stated once here, at the end, where they are the ones that
+     apply.
+
+     Two of them matter more than the rest:
+
+       A LABEL IS A ROLE, NOT A COLOUR. The micro-labels were painted
+       with the brand navy, and the brand is CYAN in the night theme --
+       so "Patient", "Name", "Tests", "Keyboard" and the rest turned
+       bright cyan the moment the lights went off, while the values
+       beside them went invisible. They are --ink-2 in both themes now.
+
+       SENTENCE CASE. 7pt uppercase small-caps at .14em tracking is the
+       single thing that made this look a decade old. The desktop
+       dropped it; so does this.
+     ==================================================================== */
+
+  .counsel-title,
+  .stat-label,
+  .micro-lbl,
+  .desktop-results-head,
+  .results-table-head,
+  .results-header-cell,
+  .kpi-title,
+  .rail-item .r-lbl {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    color: var(--ink-2) !important;
+    font-weight: 600 !important;
+  }
+  .counsel-title, .micro-lbl { font-size: 12.5px !important; }
+  .stat-label, .kpi-title    { font-size: 12px !important; }
+  .desktop-results-head,
+  .results-table-head,
+  .results-header-cell       { font-size: 12px !important; color: var(--ink-3) !important; }
+
+  /* Values, so they never go the colour of the ground. */
+  .stat-value-lg, .kpi-val, .val-lbl, .rail-item .r-val { color: var(--ink); }
+
+  /* Section headings on a page. */
+  .dept-header-strip {
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  /* ---- controls ------------------------------------------------------ */
+  .btn-m           { border-radius: var(--radius-sm); height: 36px; font-size: 12.5px; }
+  .field-input,
+  input[type="text"], input[type="password"], input[type="number"],
+  input[type="date"], select, textarea {
+    border-radius: var(--radius-sm);
+  }
+  .panel-tag-btn {
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .panel-tag-btn:hover { background: var(--fill); border-color: var(--ink-3); }
+
+  /* A checkbox is a rounded square with a tick, not a circle: at this size
+     a radius of half the box is a circle, which says "one of these" when
+     it means "on or off". */
+  input[type="checkbox"] {
+    appearance: none;
+    width: 17px; height: 17px;
+    border: 1px solid var(--field-border);
+    border-radius: 5px;
+    background: var(--panel);
+    display: inline-grid;
+    place-content: center;
+    cursor: pointer;
+    vertical-align: -3px;
+  }
+  input[type="checkbox"]:hover { border-color: var(--ink-2); }
+  input[type="checkbox"]:checked {
+    background: var(--accent-ink);
+    border-color: var(--accent-ink);
+  }
+  input[type="checkbox"]:checked::after {
+    content: "";
+    width: 10px; height: 6px;
+    border: 2px solid var(--on-accent);
+    border-top: 0; border-right: 0;
+    transform: rotate(-45deg) translate(1px, -1px);
+  }
+  input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  /* ---- cards and rails ----------------------------------------------- */
+  .patient-block-ui, .tests-block-ui, .counsel-section, .kpi-card, .login-box {
+    border-color: var(--line-2);
+  }
+  .kpi-card, .modal-dialog-box { border-radius: var(--radius-md); }
+
+  /* ---- the key strip -------------------------------------------------- */
+  /* It sits on the ink bar, so it takes the bar's own pair. Its captions
+     were invisible in the night theme. */
+  .keyboard-hud-bar, .hud-item { color: var(--bar-muted); }
+  .hud-item b, .hud-item .k {
+    color: var(--on-bar);
+    background: rgba(255, 255, 255, .12);
+    border-radius: 6px;
+    padding: 1px 6px;
+  }
+
+  /* ---- the money band ------------------------------------------------- */
+  .desktop-money-band .m-lbl,
+  .desktop-money-band .m-val { color: var(--on-money) !important; }
+  .desktop-money-band .m-val.owed,
+  .desktop-money-band .m-val[data-owed="1"] { color: var(--money-alert) !important; }
+
+  /* ---- tables --------------------------------------------------------- */
+  /* No focus rectangle over a read-only cell: it reads as an editable box. */
+  table, .results-data-row, .desktop-results-body { outline: 0; }
+  .results-data-row, .desktop-results-body > * { border-bottom-color: var(--line-2); }
+
+  /* ---- the printed page ----------------------------------------------- */
+  /* Paper is white in both themes. The report, the bill and the counter
+     slip keep their own ink and are deliberately NOT themed -- a receipt
+     that turns dark on screen is a receipt that prints wrong. */
+  .report-page, .pos-receipt, .tube-label-sticker {
+    background: #FFFFFF;
+    color: #141719;
+  }
+  .modal-dialog-body:has(.report-page),
+  .modal-dialog-body:has(.pos-receipt) { background: var(--paper-mount); }
+
 </style>
 </head>
 <body>
@@ -1302,7 +1584,7 @@
   <div class="modal-dialog-box">
     <div class="modal-dialog-header">
       <h2 id="modal-dialog-title" style="font-size:15px; font-weight:800; letter-spacing:-.01em;">Dialog</h2>
-      <button class="btn-m" style="margin-left:auto; border:none; background:none; font-size:16px;" onclick="closeModal()">✕</button>
+      <button class="btn-m" style="margin-left:auto; border:none; background:none; font-size:16px;" onclick="closeModal()" aria-label="Close">&times;</button>
     </div>
     <div class="modal-dialog-body" id="modal-dialog-body"></div>
     <div class="modal-dialog-footer" id="modal-dialog-footer"></div>
@@ -1596,10 +1878,10 @@ let LAB_CONFIG = JSON.parse(localStorage.getItem("labsoft_config_v2") || "null")
   sig1_name: "A. Technologist",
   sig1_qual: "BScMLT",
   sig1_role: "Technologist",
-  sig2_name: "FATTIMATH SAKIRA. M.",
+  sig2_name: "B. Microbiologist",
   sig2_qual: "MScMicrobiology",
   sig2_role: "Microbiologist",
-  sig3_name: "ABDUNNASER MAYYERI",
+  sig3_name: "C. Pathologist",
   sig3_qual: "DMLT BScMLT",
   sig3_role: "Lab Incharge"
 };
@@ -1772,10 +2054,9 @@ function render() {
   root.innerHTML = `
     <!-- Top Header Bar -->
     <header class="top-header">
-      <div style="font-weight:900; letter-spacing:2px; font-size:14px; color:#FFFFFF; display:flex; align-items:center; gap:8px;">
-        ${getIcon('tests', 16, '#38BDF8')} LABSOFT
+      <div style="font-weight:900; letter-spacing:2px; font-size:14px; color:#FFFFFF; display:flex; align-items:center; gap:8px;"> ${getIcon('tests', 16, '#38BDF8')} LABSOFT
       </div>
-      <div style="font-size:11.5px; color:#94A3B8;">${LAB_CONFIG.name || 'MITHRA'} Diagnostic Pathology System · Workstation PC-01</div>
+      <div style="font-size:11.5px; color:#94A3B8;">${LAB_CONFIG.name || 'MITHRA'} · demonstration in your browser</div>
       <div class="user-chip" style="margin-left:auto; display:flex; align-items:center; gap:10px;">
         <span style="font-weight:700; color:#FFFFFF; font-size:12px; display:flex; align-items:center; gap:6px;">${getIcon('user', 14, '#38BDF8')} ${currentUser.name} (${currentUser.role})</span>
         <button onclick="signOut()" class="btn-m" style="background:#DC2626; color:#fff; border:none; height:26px; padding:0 10px; font-size:11px;">${getIcon('logout', 13)} Sign Out</button>
@@ -1790,9 +2071,9 @@ function render() {
       <button class="nav-tab ${currentTab==='queue'?'active':''}" onclick="setTab('queue')">${getIcon('queue', 15)} 02. Queue</button>
       <button class="nav-tab ${currentTab==='patients'?'active':''}" onclick="setTab('patients')">${getIcon('patients', 15)} 03. Patients</button>
       <button class="nav-tab ${currentTab==='doctors'?'active':''}" onclick="setTab('doctors')">${getIcon('doctors', 15)} 04. Doctors</button>
-      <button class="nav-tab ${currentTab==='tests'?'active':''}" onclick="setTab('tests')">${getIcon('tests', 15)} 05. Catalog</button>
+      <button class="nav-tab ${currentTab==='tests'?'active':''}" onclick="setTab('tests')">${getIcon('tests', 15)} 05. Tests</button>
       <button class="nav-tab ${currentTab==='billing'?'active':''}" onclick="setTab('billing')">${getIcon('billing', 15)} 06. Billing (F4)</button>
-      <button class="nav-tab ${currentTab==='analytics'?'active':''}" onclick="setTab('analytics')">${getIcon('analytics', 15)} 07. Analytics (F10)</button>
+      <button class="nav-tab ${currentTab==='analytics'?'active':''}" onclick="setTab('analytics')">${getIcon('analytics', 15)} 07. Day Book (F10)</button>
       <button class="nav-tab ${currentTab==='summaries'?'active':''}" onclick="setTab('summaries')">${getIcon('summaries', 15)} 08. Summaries</button>
       <button class="nav-tab ${currentTab==='staff'?'active':''}" onclick="setTab('staff')">${getIcon('staff', 15)} 09. Staff</button>
       <button class="nav-tab ${currentTab==='settings'?'active':''}" onclick="setTab('settings')">${getIcon('settings', 15)} 10. Settings</button>
@@ -1842,165 +2123,142 @@ function getCurrentSignDateStr() {
    Render Login & Sign-Up Screen (100% Fullscreen Edge-to-Edge Borderless)
    -------------------------------------------------------------------------- */
 
+function titleCase(s) {
+  return String(s || "").toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function renderLoginScreen(container) {
-  const totalPatientsCount = 4812 + jobs.length;
+  // Drawn to the desktop sign-in screen: a flat hero panel carrying the
+  // laboratory's name, and one card on the ordinary page ground.
+  //
+  // What this replaces used a palette of its own -- a navy gradient beside
+  // a warm grey #f4f3f2, with #201e1d text and #bab6b6 field borders --
+  // none of which is in the design system, and none of which followed the
+  // night theme. Every colour below is a token.
   const dateSub = getCurrentSignDateStr();
+  const lab = ((LAB_CONFIG.prefix || "") + " " + (LAB_CONFIG.name || "Laboratory")).trim();
+
+  // Facts that are read, not invented. The panel used to claim "PATIENTS ON
+  // FILE 4,812" on a page holding none, and "PC-01 - Reception" on whatever
+  // machine happened to open it.
+  const facts = [
+    ["Jobs on this browser", String(jobs.length)],
+    ["Doctors on file", String(DOCTORS.length)],
+    ["Where this runs", "Your browser, offline"],
+  ];
+
+  const L = (t) => `<label style="display:block; font-size:13px; font-weight:600; color:var(--ink-2); margin-bottom:6px;">${t}</label>`;
+  const FIELD = "height:44px; width:100%; border:1px solid var(--field-border); border-radius:8px; padding:0 13px; font-size:14px; background:var(--panel); color:var(--ink); outline:none; font-family:inherit;";
 
   container.innerHTML = `
-    <div style="position:fixed; inset:0; width:100vw; height:100vh; display:flex; background:#f4f3f2; margin:0; padding:0; overflow:hidden; z-index:9999;">
-      
-      <!-- Left Red Hero Poster (100% Fullscreen Left Half) -->
-      <div style="width:50vw; height:100vh; background:linear-gradient(145deg, #062344 0%, #0A3668 50%, #0369A1 100%); padding:64px 56px; display:flex; flex-direction:column; justify-content:space-between; color:#ffffff; box-sizing:border-box; border:none; flex-shrink:0;">
-        
-        <div>
-          <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(0,0,0,0.15); padding:6px 14px; border:1px solid rgba(255,255,255,0.25);">
-            <span style="font-size:13px; font-weight:800; letter-spacing:.22em; text-transform:uppercase; color:#ffffff;">LABSOFT</span>
-            <span style="font-size:10px; font-weight:700; background:#ffffff; color:#0284C7; padding:1px 6px; letter-spacing:.05em;">2026.1</span>
+    <div style="position:fixed; inset:0; width:100vw; height:100vh; display:flex; background:var(--bg); margin:0; padding:0; overflow:hidden; z-index:9999;">
+
+      <!-- The laboratory's own panel -->
+      <div style="width:55vw; height:100vh; background:var(--hero); padding:48px 56px 44px; display:flex; flex-direction:column; color:var(--on-hero); box-sizing:border-box; flex-shrink:0;">
+
+        <div style="font-size:14px; font-weight:800; letter-spacing:.28em; color:var(--hero-muted);">LABSOFT</div>
+
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+          <div style="font-size:52px; font-weight:800; letter-spacing:-.028em; line-height:1.06;">${lab}</div> ${LAB_CONFIG.subtitle ? `<div style="font-size:17px; font-weight:600; letter-spacing:.02em; color:var(--hero-muted); margin-top:6px;">${titleCase(LAB_CONFIG.subtitle)}</div>` : ""}
+          <div style="font-size:15px; font-weight:400; line-height:1.55; margin-top:22px; max-width:460px; color:var(--hero-muted);"> Everything runs in this browser. Signing in needs no internet, and
+            neither does anything you do after it.
           </div>
         </div>
 
-        <div style="margin:40px 0;">
-          <div style="font-size:74px; font-weight:800; letter-spacing:-.035em; line-height:.96; font-family:'Archivo', sans-serif; text-shadow:0 2px 10px rgba(0,0,0,0.08);">
-            MITHRA<br>MEDICAL<br>LABORATORY
-          </div>
-          <div style="font-size:16px; font-weight:500; line-height:1.55; margin-top:24px; max-width:440px; color:#ffffff; opacity:0.95;">
-            Offline-first pathology operating workstation. Fast, accurate reports without relying on the internet.
-          </div>
+        <div style="height:1px; background:var(--hero-muted); opacity:.55;"></div>
+        <div style="display:flex; gap:40px; padding-top:18px;"> ${facts.map(([k, v]) => `
+            <div>
+              <div style="font-size:11px; font-weight:700; letter-spacing:.11em; color:var(--hero-muted);">${k.toUpperCase()}</div>
+              <div style="font-size:16px; font-weight:700; margin-top:4px;">${v}</div>
+            </div>`).join("")}
         </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; border-top:2px solid rgba(255,255,255,0.35); padding-top:20px;">
-          <div style="background:rgba(0,0,0,0.12); padding:12px 14px; border:1px solid rgba(255,255,255,0.15);">
-            <div style="font-size:8.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; opacity:.8;">THIS PC</div>
-            <div style="font-size:14px; font-weight:700; margin-top:4px;">PC-01 · Reception</div>
-          </div>
-          <div style="background:rgba(0,0,0,0.12); padding:12px 14px; border:1px solid rgba(255,255,255,0.15);">
-            <div style="font-size:8.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; opacity:.8;">PATIENTS ON FILE</div>
-            <div style="font-size:14px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums;">${totalPatientsCount.toLocaleString()}</div>
-          </div>
-          <div style="background:rgba(0,0,0,0.12); padding:12px 14px; border:1px solid rgba(255,255,255,0.15);">
-            <div style="font-size:8.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; opacity:.8;">LOCAL DB</div>
-            <div style="font-size:14px; font-weight:700; margin-top:4px;">Verified Healthy</div>
-          </div>
-        </div>
-
       </div>
 
-      <!-- Right Interaction Panel (100% Fullscreen Right Half) -->
-      <div style="width:50vw; height:100vh; background:#f4f3f2; display:flex; align-items:center; justify-content:center; padding:40px 32px; box-sizing:border-box; border:none; flex-shrink:0;">
-        
-        <div style="width:100%; max-width:440px; background:#ffffff; box-shadow:0 14px 40px rgba(0,0,0,0.06); border:1px solid #eae7e7; padding:32px 32px 28px;">
-          
-          <!-- Segmented Tab Switcher -->
-          <div style="display:flex; background:#eae7e7; padding:3px; margin-bottom:24px; border:1px solid #d7d3d3;">
-            <button onclick="setAuthMode('signin')" style="flex:1; height:34px; border:none; background:${authMode==='signin'?'#ffffff':'transparent'}; font-size:12.5px; font-weight:${authMode==='signin'?'800':'600'}; color:${authMode==='signin'?'#201e1d':'#7d7979'}; box-shadow:${authMode==='signin'?'0 1px 4px rgba(0,0,0,0.1)':'none'}; cursor:pointer; transition:all .15s ease;">
-              🔐 Sign In
-            </button>
-            <button onclick="setAuthMode('signup')" style="flex:1; height:34px; border:none; background:${authMode==='signup'?'#ffffff':'transparent'}; font-size:12.5px; font-weight:${authMode==='signup'?'800':'600'}; color:${authMode==='signup'?'#201e1d':'#7d7979'}; box-shadow:${authMode==='signup'?'0 1px 4px rgba(0,0,0,0.1)':'none'}; cursor:pointer; transition:all .15s ease;">
-              ➕ Sign Up (Requires Admin)
-            </button>
-          </div>
+      <!-- The card -->
+      <div style="width:45vw; height:100vh; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:40px 32px; box-sizing:border-box; flex-shrink:0;">
+        <div style="width:100%; max-width:420px; background:var(--panel); box-shadow:var(--shadow-lg); border:1px solid var(--line-2); border-radius:16px; padding:30px 32px 28px;"> ${authMode === "signin" ? `
+            <div style="font-size:32px; font-weight:700; letter-spacing:-.025em; color:var(--ink);">Sign in</div>
+            <div style="font-size:13px; color:var(--ink-3); margin-top:2px;">${dateSub} &middot; demonstration</div>
 
-          ${authMode === "signin" ? `
-            <!-- SIGN IN FORM -->
-            <div style="margin-bottom:20px;">
-              <h1 style="font-size:26px; font-weight:800; letter-spacing:-.02em; margin:0 0 4px; color:#201e1d;">Welcome back</h1>
-              <div style="font-size:12px; color:#7d7979;">${dateSub} · Station Online</div>
+            <div style="margin-top:22px;"> ${L("Who is at the counter")}
+              <select id="auth-user-select" style="${FIELD} font-weight:600;" onchange="onSelectUser(this.value)"> ${STAFF_ACCOUNTS.map(a => `<option value="${a.username}" ${a.username === selectedStaffUsername ? "selected" : ""}>${a.name} &middot; ${a.role}</option>`).join("")}
+              </select>
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:16px;">
-              <div>
-                <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:6px;">Staff Counter User</label>
-                <select id="auth-user-select" style="height:40px; border:1px solid #bab6b6; padding:0 12px; font-size:13.5px; font-weight:700; width:100%; background:#ffffff; color:#201e1d;" onchange="onSelectUser(this.value)">
-                  ${STAFF_ACCOUNTS.map(s => `<option value="${s.username}" ${s.username===selectedStaffUsername?'selected':''}>${s.name} (${s.role})</option>`).join("")}
-                </select>
+            <div style="margin-top:16px;"> ${L("PIN")}
+              <input type="password" id="auth-pin-input" placeholder="&bull;&bull;&bull;&bull;" maxlength="8"
+                     style="${FIELD} height:44px; font-size:20px; font-weight:700; letter-spacing:.55em; text-align:center; padding:0 0 0 .55em;"
+                     onkeydown="if(event.key==='Enter')handleSignInSubmit()" autofocus>
+              <div style="font-size:12.5px; color:var(--ink-3); margin-top:7px;"> No PIN is needed here, and none is stored. A page served as
+                plain files has nowhere safe to keep one.
               </div>
+            </div>
 
-              <div>
-                <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:6px;">4-Digit Security PIN</label>
-                <input type="password" id="auth-pin-input" placeholder="••••" maxlength="8" style="height:44px; border:2px solid #201e1d; padding:0 14px; font-size:22px; letter-spacing:.5em; text-align:center; font-weight:800; color:#201e1d; width:100%; outline:none; background:#faf9f8;" onkeydown="if(event.key==='Enter')handleSignInSubmit()" autofocus>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:11px; color:#7d7979;">
-                  <span>Demonstration only — no PIN is needed, and none is stored</span>
-                  <a onclick="toggleKeypad()" style="color:#0284C7; cursor:pointer; font-weight:700;">🔢 Toggle Keypad</a>
-                </div>
-              </div>
+            <button onclick="handleSignInSubmit()"
+                    style="margin-top:20px; height:46px; width:100%; display:flex; align-items:center; justify-content:center; background:var(--accent-ink); color:var(--on-accent); font-size:15px; font-weight:700; border:none; border-radius:10px; cursor:pointer;"> Sign in
+            </button>
 
-              <!-- Optional On-Screen Keypad for Reception Touchscreens -->
-              <div id="onscreen-keypad" style="display:none; grid-template-columns:repeat(3,1fr); gap:6px; background:#eae7e7; padding:10px; border:1px solid #d7d3d3;">
-                ${['1','2','3','4','5','6','7','8','9','C','0','↵'].map(k => `
-                  <button type="button" onclick="handleKeypadClick('${k}')" style="height:36px; font-size:16px; font-weight:800; border:1px solid #d7d3d3; background:${k==='↵'?'#201e1d':k==='C'?'#ffdad4':'#ffffff'}; color:${k==='↵'?'#ffffff':k==='C'?'#c1121f':'#201e1d'}; cursor:pointer;">${k}</button>
-                `).join("")}
-              </div>
+            <div style="height:1px; background:var(--line-2); margin:20px 0 14px;"></div>
 
-              <button onclick="handleSignInSubmit()" style="height:44px; display:flex; align-items:center; justify-content:center; background:#0A3668; color:#ffffff; font-size:14px; font-weight:800; letter-spacing:.05em; border:none; width:100%; cursor:pointer; transition:background .1s ease; margin-top:4px;">
-                Sign In to Station ↵
-              </button>
+            <div style="display:flex; align-items:center; gap:9px;">
+              <span style="width:8px; height:8px; border-radius:50%; background:var(--green); flex:none;"></span>
+              <span style="font-size:12.5px; color:var(--ink-3);">Running in this browser &middot; nothing is sent anywhere</span>
+            </div>
+            <div style="font-size:12.5px; color:var(--ink-3); margin-top:6px; line-height:1.45;"> In the desktop program, an administrator sets you a new PIN under Staff.
+            </div>
 
-              <div style="display:flex; align-items:center; gap:8px; border-top:1px solid #eae7e7; padding-top:14px;">
-                <div style="width:8px; height:8px; background:#16703F; flex-shrink:0;"></div>
-                <div style="font-size:11.5px; color:#605d5d;">Local SQLite Database Active & Verified</div>
-              </div>
-
-              <div style="font-size:11.5px; color:#7d7979; line-height:1.4;">
-                In the desktop program, an administrator sets a new PIN for you under Staff.
-              </div>
+            <div style="margin-top:12px;">
+              <button onclick="setAuthMode('signup')" class="btn-m quiet" style="padding:0;">Add a staff account</button>
             </div>
           ` : `
-            <!-- SIGN UP FORM (Requires Admin/Owner Authorization) -->
-            <div style="margin-bottom:18px;">
-              <h1 style="font-size:24px; font-weight:800; letter-spacing:-.02em; margin:0 0 4px; color:#201e1d;">Create Staff Login</h1>
-              <div style="font-size:11.5px; color:#0284C7; font-weight:700;">🔒 Owner / Admin authorization required to register staff</div>
+            <div style="font-size:32px; font-weight:700; letter-spacing:-.025em; color:var(--ink);">New account</div>
+            <div style="font-size:13px; color:var(--ink-3); margin-top:2px;"> An administrator has to approve one in the desktop program.
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:12px;">
-              <div>
-                <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Full Name</label>
-                <input type="text" id="su-name" placeholder="e.g. Ritu Sharma" style="height:36px; border:1px solid #bab6b6; padding:0 12px; font-size:13px; font-weight:600; width:100%; outline:none;">
-              </div>
+            <div style="margin-top:20px;"> ${L("Their name")}
+              <input type="text" id="su-name" placeholder="Ritu Patil" style="${FIELD}">
+            </div>
 
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div>
-                  <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Username</label>
-                  <input type="text" id="su-username" placeholder="ritu" style="height:36px; border:1px solid #bab6b6; padding:0 12px; font-size:13px; font-weight:600; width:100%; outline:none;">
-                </div>
-                <div>
-                  <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Role</label>
-                  <select id="su-role" style="height:36px; border:1px solid #bab6b6; padding:0 10px; font-size:13px; font-weight:700; width:100%; background:#ffffff;">
-                    <option value="Reception">Reception</option>
-                    <option value="Technologist">Technologist</option>
-                    <option value="Admin">Administrator</option>
-                  </select>
-                </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;">
+              <div> ${L("Username")}
+                <input type="text" id="su-username" placeholder="ritu" style="${FIELD}">
               </div>
-
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div>
-                  <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">New Staff PIN</label>
-                  <input type="password" id="su-pin" placeholder="••••" maxlength="8" style="height:36px; border:1px solid #bab6b6; padding:0 12px; font-size:16px; letter-spacing:.3em; width:100%; outline:none;">
-                </div>
-                <div>
-                  <label style="display:block; font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#605d5d; margin-bottom:4px;">Confirm PIN</label>
-                  <input type="password" id="su-pin-confirm" placeholder="••••" maxlength="8" style="height:36px; border:1px solid #bab6b6; padding:0 12px; font-size:16px; letter-spacing:.3em; width:100%; outline:none;">
-                </div>
+              <div> ${L("Role")}
+                <select id="su-role" style="${FIELD} font-weight:600;">
+                  <option value="Reception">Reception</option>
+                  <option value="Technologist">Technologist</option>
+                  <option value="Admin">Administrator</option>
+                </select>
               </div>
+            </div>
 
-              <div style="background:#F1F5F9; border:1px solid #CBD5E1; padding:10px 12px; margin-top:2px;">
-                <div style="font-size:10.5px; color:#334155; font-weight:600;">In the desktop program an administrator has to type their own PIN to approve a new account. This page is a demonstration and cannot check one.</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;">
+              <div> ${L("PIN")}
+                <input type="password" id="su-pin" placeholder="&bull;&bull;&bull;&bull;" maxlength="8" style="${FIELD} letter-spacing:.3em;">
               </div>
-
-              <button onclick="handleSignUpSubmit()" style="height:44px; display:flex; align-items:center; justify-content:center; background:#0A3668; color:#ffffff; font-size:14px; font-weight:800; letter-spacing:.05em; border:none; width:100%; cursor:pointer; margin-top:4px; transition:background .1s ease;">
-                Create the account
-              </button>
-
-              <div style="font-size:11.5px; color:#7d7979; text-align:center; border-top:1px solid #eae7e7; padding-top:10px;">
-                Already have an account? <span style="font-weight:700; color:#0284C7; cursor:pointer;" onclick="setAuthMode('signin')">Sign in here →</span>
+              <div> ${L("PIN again")}
+                <input type="password" id="su-pin-confirm" placeholder="&bull;&bull;&bull;&bull;" maxlength="8" style="${FIELD} letter-spacing:.3em;">
               </div>
+            </div>
+
+            <div style="background:var(--fill); border:1px solid var(--line-2); border-radius:10px; padding:11px 13px; margin-top:14px;">
+              <div style="font-size:12.5px; color:var(--ink-2); line-height:1.45;"> In the desktop program an administrator has to type their own
+                PIN to approve a new account. This page is a demonstration and
+                cannot check one.
+              </div>
+            </div>
+
+            <button onclick="handleSignUpSubmit()"
+                    style="margin-top:18px; height:46px; width:100%; display:flex; align-items:center; justify-content:center; background:var(--accent-ink); color:var(--on-accent); font-size:15px; font-weight:700; border:none; border-radius:10px; cursor:pointer;"> Create the account
+            </button>
+
+            <div style="margin-top:12px; text-align:center;">
+              <button onclick="setAuthMode('signin')" class="btn-m quiet" style="padding:0;">Back to sign in</button>
             </div>
           `}
 
         </div>
-
       </div>
-
     </div>
   `;
 }
@@ -2110,12 +2368,10 @@ function renderJobScreen(container) {
   Object.keys(groups).forEach(gName => {
     const gCodes = groups[gName];
     resultsHTML += `
-      <div class="dept-header-strip" style="background:#F1F5F9; border-bottom:1px solid #CBD5E1; padding:6px 16px; display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-weight:800; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#0A3668;">
-          🧬 ${gName} (${gCodes.length} tests)
+      <div class="dept-header-strip" style="background:var(--fill); border-bottom:1px solid var(--line-2); padding:8px 16px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:700; font-size:13px; letter-spacing:0; text-transform:none; color:var(--ink);"> ${titleCase(gName)} &middot; ${gCodes.length} test${gCodes.length===1?'':'s'}
         </span>
-        <button class="btn-m" style="padding:2px 8px; font-size:10px; color:#DC2626; border:1px solid #fca5a5; background:#FFFFFF;" onclick="removeGroup('${gName}')" title="Remove entire ${gName} department">
-          ${getIcon('trash', 12, '#DC2626')} Remove Group
+        <button class="btn-m" style="padding:2px 10px; font-size:11.5px; color:var(--alert); border:1px solid var(--alert); background:transparent;" onclick="removeGroup('${gName}')" title="Take the whole ${gName} group off this job"> ${getIcon('trash', 12, '#DC2626')} Remove Group
         </button>
       </div>
     `;
@@ -2127,7 +2383,7 @@ function renderJobScreen(container) {
       if (val && !isNaN(val) && (t.hi !== undefined || t.lo !== undefined)) {
         const num = parseFloat(val);
         if ((t.panicHi !== undefined && num >= t.panicHi) || (t.panicLo !== undefined && num <= t.panicLo)) {
-          flagHTML = '<div class="flag-badge" style="background:#991b1b; color:#ffffff; font-weight:800; border:1px solid #7f1d1d;">🚨 CRITICAL</div>';
+          flagHTML = '<div class="flag-badge" style="background:#991b1b; color:#ffffff; font-weight:800; border:1px solid #7f1d1d;"> CRITICAL</div>';
         } else if (t.hi !== undefined && num > t.hi) {
           flagHTML = '<div class="flag-badge flag-H">HIGH</div>';
         } else if (t.lo !== undefined && num < t.lo) {
@@ -2144,8 +2400,7 @@ function renderJobScreen(container) {
       if (t.opts) {
         inputField = `
           <select class="field-input" onchange="onResultInput('${code}', this.value)" style="height:34px; font-weight:700; font-size:12.5px;">
-            <option value="">— Select —</option>
-            ${t.opts.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join("")}
+            <option value="">— Select —</option> ${t.opts.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join("")}
           </select>
         `;
       } else {
@@ -2165,18 +2420,17 @@ function renderJobScreen(container) {
       }
 
       resultsHTML += `
-        <div class="desktop-results-head" style="background:#FFFFFF; border-bottom:1px solid #E2E8F0; font-size:12.5px; font-weight:normal; text-transform:none; letter-spacing:normal; color:#0F172A; align-items:center;">
+        <div class="desktop-result-row" style="background:var(--panel); border-bottom:1px solid var(--line-2); font-size:12.5px; font-weight:normal; text-transform:none; letter-spacing:normal; color:var(--ink); align-items:center;">
           <div style="min-width:0;">
-            <div style="font-size:13px; font-weight:700; ${isCalc?'font-style:italic; color:#64748B;':''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-              ${t.n}
+            <div style="font-size:13px; font-weight:700; ${isCalc?'font-style:italic; color:var(--ink-3);':''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"> ${t.n}
             </div>
-            <div style="font-size:10.5px; color:#64748B;">${t.m || 'Standard Method'} · <span style="color:#94A3B8;">${t.g}</span>${deltaHTML}</div>
+            <div style="font-size:10.5px; color:var(--ink-3);">${t.m || 'Standard Method'} · <span style="color:var(--ink-3);">${t.g}</span>${deltaHTML}</div>
           </div>
           <div>${inputField}</div>
-          <div style="font-size:11.5px; color:#64748B;">${t.u || '—'}</div>
-          <div style="font-size:11.5px; color:#64748B; font-variant-numeric:tabular-nums;">${t.r || '—'}</div>
+          <div style="font-size:11.5px; color:var(--ink-3);">${t.u || '—'}</div>
+          <div style="font-size:11.5px; color:var(--ink-3); font-variant-numeric:tabular-nums;">${t.r || '—'}</div>
           <div>${flagHTML}</div>
-          <div><button class="btn-m" style="border:none; color:#DC2626; padding:0; width:24px; height:24px; background:transparent;" onclick="removeTest('${code}')" title="Remove test">✕</button></div>
+          <div><button class="btn-m" style="border:none; color:var(--alert); padding:0; width:26px; height:26px; font-size:17px; line-height:1; background:transparent;" onclick="removeTest('${code}')" title="Take this test off the job">&times;</button></div>
         </div>
       `;
     });
@@ -2204,7 +2458,7 @@ function renderJobScreen(container) {
 
       <div class="rail-right-actions">
         <button class="btn-m" onclick="newJob()" title="Start a fresh job (F2)">New job</button>
-        <button class="btn-m" style="background:#25D366; color:#ffffff; font-weight:700; border:none;" onclick="openWhatsAppDispatchModal(activeJob)" title="Send structured WhatsApp report (F8)">📱 WhatsApp</button>
+        <button class="btn-m" style="background:#25D366; color:#ffffff; font-weight:700; border:none;" onclick="openWhatsAppDispatchModal(activeJob)" title="Send structured WhatsApp report (F8)"> WhatsApp</button>
         <button class="btn-m" onclick="openReportPreview(activeJob)" title="Look at the report before sending it">Preview</button>
         <button class="btn-m ${ready?'primary':''}" style="${ready?'background:#059669; border-color:#059669; color:#FFFFFF;':'background:#CBD5E1; color:#64748B; border:none;'}" onclick="openReportPreview(activeJob)" title="Check every test is filled in, then make the report (F9)">Check & make report</button>
       </div>
@@ -2218,7 +2472,7 @@ function renderJobScreen(container) {
         <div class="patient-block-ui">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <span class="counsel-title">Patient</span>
-            <button class="btn-m" style="font-size:10.5px; padding:2px 6px; border:none; background:transparent; color:#0284C7; text-decoration:underline;" onclick="currentTab='patients'; render();">Patient history →</button>
+            <button class="btn-m" style="font-size:11.5px; padding:2px 6px; border:none; background:transparent; color:var(--accent-ink); text-decoration:underline;" onclick="currentTab='patients'; render();">Patient history →</button>
           </div>
 
           <div class="patient-grid-ui">
@@ -2245,7 +2499,7 @@ function renderJobScreen(container) {
             <div>
               <label class="counsel-title" style="font-size:7pt;">Age</label>
               <div style="display:flex; gap:4px;">
-                <input type="number" class="field-input" value="${activeJob.age}" oninput="activeJob.age=this.value; saveState();" style="height:32px; font-size:12px; width:50px;">
+                <input type="number" class="field-input" value="${activeJob.age}" oninput="activeJob.age=this.value; saveState();" style="height:32px; font-size:12px; width:68px;">
                 <select class="field-input" onchange="activeJob.age_unit=this.value; saveState();" style="height:32px; font-size:12px; flex:1;">
                   <option value="years" ${activeJob.age_unit==='years'?'selected':''}>Years</option>
                   <option value="months" ${activeJob.age_unit==='months'?'selected':''}>Months</option>
@@ -2256,8 +2510,7 @@ function renderJobScreen(container) {
             <div>
               <label class="counsel-title" style="font-size:7pt;">Referred by</label>
               <select class="field-input" onchange="activeJob.referrer=this.value; saveState();" style="height:32px; font-size:12px;">
-                <option value="Self">— none —</option>
-                ${DOCTORS.map(d => `<option value="${d.name}" ${activeJob.referrer.includes(d.name)?'selected':''}>${d.name}</option>`).join("")}
+                <option value="Self">— none —</option> ${DOCTORS.map(d => `<option value="${d.name}" ${activeJob.referrer.includes(d.name)?'selected':''}>${d.name}</option>`).join("")}
               </select>
             </div>
           </div>
@@ -2275,8 +2528,7 @@ function renderJobScreen(container) {
             <div id="test-search-results" class="search-drop-list" style="display:none;"></div>
           </div>
 
-          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
-            ${DESKTOP_PANELS.map(p => `
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;"> ${DESKTOP_PANELS.map(p => `
               <button class="panel-tag-btn" onclick="addPanel('${p}')">${p}</button>
             `).join("")}
           </div>
@@ -2284,7 +2536,7 @@ function renderJobScreen(container) {
       </div>
 
       <!-- 2. Center Working Field -->
-      <div style="background:#FFFFFF; border-right:1.5px solid #CBD5E1; display:flex; flex-direction:column;">
+      <div style="background:var(--panel); border-right:1px solid var(--line-2); display:flex; flex-direction:column;">
         <!-- Money Band -->
         <div class="desktop-money-band">
           <div class="money-stat">
@@ -2297,7 +2549,7 @@ function renderJobScreen(container) {
           </div>
           <div class="money-stat">
             <span class="m-lbl">Discount</span>
-            <span class="m-val">₹ ${discount}.00</span>
+            <span class="m-val${discount>0?' owed':''}">₹ ${discount}.00</span>
           </div>
           <div class="money-stat">
             <span class="m-lbl">Paid</span>
@@ -2305,13 +2557,13 @@ function renderJobScreen(container) {
           </div>
           <div class="money-stat">
             <span class="m-lbl">Outstanding</span>
-            <span class="m-val" style="${outstanding>0?'color:#F87171;':''}">₹ ${outstanding}.00</span>
+            <span class="m-val${outstanding>0?' owed':''}">₹ ${outstanding}.00</span>
           </div>
 
           <div class="money-band-actions">
-            <button class="btn-m" onclick="openPOSReceiptModal(activeJob)" title="Open 80mm POS Thermal Slip" style="background:transparent; color:#FFFFFF; border:1px solid #64748B;">🧾 POS Receipt</button>
-            <button class="btn-m" onclick="openBillModal()" title="Print the A4 bill" style="background:transparent; color:#FFFFFF; border:1px solid #64748B;">Print bill…</button>
-            <button class="btn-m" onclick="openBillModal()" style="background:#FFFFFF; color:#0F172A; font-weight:800; border:none;">Make the bill</button>
+            <button class="btn-m" onclick="openPOSReceiptModal(activeJob)" title="Open 80mm POS Thermal Slip" style="background:transparent; color:var(--on-money); border:1px solid var(--bar-muted);">Counter slip</button>
+            <button class="btn-m" onclick="openBillModal()" title="Print the A4 bill" style="background:transparent; color:var(--on-money); border:1px solid var(--bar-muted);">Print bill…</button>
+            <button class="btn-m" onclick="openBillModal()" style="background:var(--on-money); color:var(--money-band); font-weight:700; border:none;">Make the bill</button>
           </div>
         </div>
 
@@ -2326,12 +2578,9 @@ function renderJobScreen(container) {
         </div>
 
         <!-- Results Table Body / Empty State -->
-        <div class="desktop-results-body">
-          ${activeJob.tests.length === 0 ? `
+        <div class="desktop-results-body"> ${activeJob.tests.length === 0 ? `
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:340px; color:#64748B; text-align:center; padding:20px;">
-              <div style="font-size:13px; font-weight:600; line-height:1.8;">
-                No tests chosen yet.<br>
-                Click a panel on the left, or type a test name — the result boxes appear here.<br>
+              <div style="font-size:13px; font-weight:600; line-height:1.8;"> No tests chosen yet.<br> Click a panel on the left, or type a test name — the result boxes appear here.<br>
                 <span style="font-size:11px; color:#94A3B8;">F2 starts a new job.</span>
               </div>
             </div>
@@ -2343,8 +2592,7 @@ function renderJobScreen(container) {
       <div class="desktop-counsel-rail">
         <div class="counsel-section">
           <span class="counsel-title">Before it can go</span>
-          <div style="font-size:11.5px; color:#64748B; line-height:1.5;">
-            ${!isNameSet ? "• The patient's name is needed before this job can be finished.<br>" : ""}
+          <div style="font-size:11.5px; color:#64748B; line-height:1.5;"> ${!isNameSet ? "• The patient's name is needed before this job can be finished.<br>" : ""}
             Everything typed so far is already saved. Leaving now loses nothing.
           </div>
         </div>
@@ -2400,7 +2648,7 @@ function updateJobNotes() {
   } else {
     box.innerHTML = `
       <div style="color:var(--text-muted);">Prints as: <b>${activeJob.name} .${activeJob.initial}.</b></div>
-      <div style="color:var(--accent-green); font-weight:700;">✓ Patient details complete</div>
+      <div style="color:var(--accent-green); font-weight:700;"> Patient details complete</div>
     `;
   }
 }
@@ -2549,8 +2797,7 @@ function onSearchTest(term) {
   // Search Panels
   const panelMatches = Object.keys(PANELS).filter(p => p.toLowerCase().includes(term));
   // Search Tests
-  const testMatches = Object.keys(TESTS).filter(k => 
-    k.toLowerCase().includes(term) || 
+  const testMatches = Object.keys(TESTS).filter(k => k.toLowerCase().includes(term) ||
     TESTS[k].n.toLowerCase().includes(term) || 
     (TESTS[k].g && TESTS[k].g.toLowerCase().includes(term))
   );
@@ -2563,12 +2810,12 @@ function onSearchTest(term) {
 
   let html = "";
   if (panelMatches.length > 0) {
-    html += `<div style="padding:5px 12px; font-size:10px; font-weight:800; color:var(--brand-blue); text-transform:uppercase; background:var(--surface-alt); border-bottom:1px solid var(--border-light);">★ Common Panels</div>`;
+    html += `<div style="padding:5px 12px; font-size:12px; font-weight:700; color:var(--brand-blue); text-transform:none; background:var(--surface-alt); border-bottom:1px solid var(--border-light);"> Common Panels</div>`;
     panelMatches.slice(0, 4).forEach(p => {
       const count = PANELS[p].length;
       html += `
         <div class="search-item-row" onclick="addPanelFromSearch('${p}')">
-          <span style="font-weight:800; color:var(--text); font-size:12px;">★ ${p}</span>
+          <span style="font-weight:800; color:var(--text); font-size:12px;"> ${p}</span>
           <span style="font-size:10px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:2px;">${count} tests</span>
         </div>
       `;
@@ -2576,7 +2823,7 @@ function onSearchTest(term) {
   }
 
   if (testMatches.length > 0) {
-    html += `<div style="padding:5px 12px; font-size:10px; font-weight:800; color:var(--brand-blue); text-transform:uppercase; background:var(--surface-alt); border-bottom:1px solid var(--border-light); border-top:1px solid var(--border-light);">🧪 Individual Investigations</div>`;
+    html += `<div style="padding:5px 12px; font-size:12px; font-weight:700; color:var(--brand-blue); text-transform:none; background:var(--surface-alt); border-bottom:1px solid var(--border-light); border-top:1px solid var(--border-light);">Individual Investigations</div>`;
     testMatches.slice(0, 10).forEach(code => {
       const t = TESTS[code];
       const isAdded = activeJob.tests.includes(code);
@@ -2586,8 +2833,7 @@ function onSearchTest(term) {
             <div style="font-weight:700; color:var(--text); font-size:12.5px;">${t.n}</div>
             <div style="font-size:10px; color:var(--text-dim);">${code} · ${t.g || 'General'} · ₹${t.rate}</div>
           </div>
-          <div>
-            ${isAdded ? '<span style="font-size:10px; font-weight:700; color:var(--accent-green);">✓ Added</span>' : '<button class="btn-m primary" style="padding:2px 8px; font-size:11px;">+ Add</button>'}
+          <div> ${isAdded ? '<span style="font-size:10px; font-weight:700; color:var(--accent-green);"> Added</span>' : '<button class="btn-m primary" style="padding:2px 8px; font-size:11px;">+ Add</button>'}
           </div>
         </div>
       `;
@@ -2646,8 +2892,7 @@ function searchPatientAutocomplete(query) {
   const matches = jobs.filter(j => j.name.toLowerCase().includes(query) || j.mobile.includes(query));
   if (!matches.length) { box.innerHTML = ""; return; }
   box.innerHTML = `
-    <div style="position:absolute; top:4px; left:0; right:0; background:var(--surface); border:2px solid var(--border); box-shadow:0 8px 24px rgba(0,0,0,.2); max-height:160px; overflow:auto;">
-      ${matches.map(m => `
+    <div style="position:absolute; top:4px; left:0; right:0; background:var(--surface); border:2px solid var(--border); box-shadow:0 8px 24px rgba(0,0,0,.2); max-height:160px; overflow:auto;"> ${matches.map(m => `
         <div style="padding:8px 12px; border-bottom:1px solid var(--border-subtle); cursor:pointer;" onclick="fillPatientFromPrev('${m.id}')">
           <b>${m.name} .${m.initial}.</b> &nbsp;·&nbsp; <span style="color:var(--text-muted);">${m.mobile}</span> &nbsp;·&nbsp; ${m.sex} (${m.age} ${m.age_unit})
         </div>
@@ -2743,16 +2988,15 @@ function renderQueueScreen(container) {
       <table style="width:100%; border-collapse:collapse;" id="queue-table">
         <thead>
           <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;">No</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;">Patient Name & Mobile</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;">Tests</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;">Registered</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;">Status</th>
-            <th style="padding:10px 14px; text-align:right; font-size:9.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;">Action</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; letter-spacing:0; text-transform:none;">No</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; letter-spacing:0; text-transform:none;">Patient Name & Mobile</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; letter-spacing:0; text-transform:none;">Tests</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; letter-spacing:0; text-transform:none;">Registered</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; letter-spacing:0; text-transform:none;">Status</th>
+            <th style="padding:10px 14px; text-align:right; font-size:12px; font-weight:700; letter-spacing:0; text-transform:none;">Action</th>
           </tr>
         </thead>
-        <tbody>
-          ${jobs.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:60px; color:var(--text-muted);">Queue is empty. Register patients in the Job tab.</td></tr>' :
+        <tbody> ${jobs.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:60px; color:var(--text-muted);">Queue is empty. Register patients in the Job tab.</td></tr>' :
             jobs.map(j => `
               <tr style="border-bottom:1px solid var(--border-subtle);">
                 <td style="padding:10px 14px; font-weight:800; font-size:13.5px;">${j.report_no}</td>
@@ -2766,8 +3010,8 @@ function renderQueueScreen(container) {
                   <span class="status-pill sp-${j.status}">${j.status}</span>
                 </td>
                 <td style="padding:10px 14px; text-align:right;">
-                  <button class="btn-m" onclick="openReportPreview(jobs.find(x=>x.id===${j.id}))">👁️ Preview</button>
-                  <button class="btn-m" onclick="activeJob=JSON.parse(JSON.stringify(jobs.find(x=>x.id===${j.id}))); setTab('job');">✏️ Open</button>
+                  <button class="btn-m" onclick="openReportPreview(jobs.find(x=>x.id===${j.id}))"> Preview</button>
+                  <button class="btn-m" onclick="activeJob=JSON.parse(JSON.stringify(jobs.find(x=>x.id===${j.id}))); setTab('job');"> Open</button>
                 </td>
               </tr>
             `).join("")
@@ -2797,13 +3041,12 @@ function renderPatientsScreen(container) {
       <div style="width:360px; background:var(--surface); border-right:2px solid var(--border); display:flex; flex-direction:column;">
         <div style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
           <div style="display:flex; align-items:baseline; margin-bottom:10px;">
-            <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;">Patients Registry</div>
+            <div style="font-size:12.5px; font-weight:700; letter-spacing:0; text-transform:none;">Patients Registry</div>
             <div style="margin-left:auto; font-size:11px; color:var(--text-muted);">${jobs.length} records</div>
           </div>
           <input type="text" class="field-input" placeholder="Search patient by name or phone…">
         </div>
-        <div style="flex:1; overflow:auto;">
-          ${jobs.length === 0 ? '<div style="padding:30px; text-align:center; color:var(--text-muted);">No patients registered yet.</div>' :
+        <div style="flex:1; overflow:auto;"> ${jobs.length === 0 ? '<div style="padding:30px; text-align:center; color:var(--text-muted);">No patients registered yet.</div>' :
             jobs.map((p, i) => `
               <div style="padding:12px 16px; border-bottom:1px solid var(--border-subtle); cursor:pointer; background:${i===0?'var(--surface-alt)':'transparent'}; box-shadow:${i===0?'inset 4px 0 0 0 var(--accent-red)':'none'};" onclick="selectPatientCard('${p.id}')">
                 <div style="display:flex; align-items:baseline; gap:8px;">
@@ -2818,8 +3061,7 @@ function renderPatientsScreen(container) {
       </div>
 
       <!-- Right Patient Folder Details -->
-      <div style="flex:1; display:flex; flex-direction:column; min-width:0; background:var(--surface);">
-        ${jobs.length === 0 ? '<div style="padding:60px; text-align:center; color:var(--text-muted);">Select or register a patient.</div>' : `
+      <div style="flex:1; display:flex; flex-direction:column; min-width:0; background:var(--surface);"> ${jobs.length === 0 ? '<div style="padding:60px; text-align:center; color:var(--text-muted);">Select or register a patient.</div>' : `
           <div style="padding:18px 22px; border-bottom:2px solid var(--border);">
             <div style="display:flex; align-items:flex-start; gap:16px;">
               <div>
@@ -2836,11 +3078,10 @@ function renderPatientsScreen(container) {
           <div style="flex:1; display:flex; min-height:0;">
             <div style="flex:1; border-right:1px solid var(--border-light); display:flex; flex-direction:column;">
               <div style="height:34px; display:flex; align-items:center; padding:0 18px; border-bottom:2px solid var(--border); gap:10px; background:var(--surface-alt);">
-                <div style="font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;">Patient Visits on Disk</div>
+                <div style="font-size:12px; font-weight:700; letter-spacing:0; text-transform:none;">Patient Visits on Disk</div>
                 <div style="font-size:10px; color:var(--text-dim);">patients/${jobs[0].name.replace(/\\s+/g, '_')}/</div>
               </div>
-              <div style="flex:1; overflow:auto;">
-                ${jobs.map(v => `
+              <div style="flex:1; overflow:auto;"> ${jobs.map(v => `
                   <div style="display:grid; grid-template-columns:100px 1fr 140px 100px; gap:12px; align-items:center; padding:10px 18px; border-bottom:1px solid var(--border-subtle);">
                     <div style="font-size:12px; font-weight:700;">${v.date}</div>
                     <div>
@@ -2858,7 +3099,7 @@ function renderPatientsScreen(container) {
 
             <!-- Haemoglobin / HbA1c Trend Widget -->
             <div style="width:280px; background:var(--bg); padding:16px;">
-              <div style="font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:12px;">Glycemic / Hb Trend</div>
+              <div style="font-size:12.5px; font-weight:700; letter-spacing:0; text-transform:none; margin-bottom:12px;">Glycemic / Hb Trend</div>
               <div style="display:flex; align-items:flex-end; gap:10px; height:120px; border-bottom:2px solid var(--border); padding-bottom:6px;">
                 <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
                   <span style="font-size:10px; font-weight:800;">11.2</span>
@@ -2876,8 +3117,7 @@ function renderPatientsScreen(container) {
                   <span style="font-size:9px; color:var(--text-muted);">Aug</span>
                 </div>
               </div>
-              <div style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.45;">
-                Screen trend comparison. Helps clinicians assess glycemic response over time.
+              <div style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.45;"> Screen trend comparison. Helps clinicians assess glycemic response over time.
               </div>
             </div>
           </div>
@@ -2913,16 +3153,15 @@ function renderDoctorsScreen(container) {
       <table style="width:100%; border-collapse:collapse;">
         <thead>
           <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Doctor Name</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Specialty</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Hospital</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Phone</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Commission (%)</th>
-            <th style="padding:10px 14px; text-align:right; font-size:9.5px; font-weight:700; text-transform:uppercase;">Action</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Doctor Name</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Specialty</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Hospital</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Phone</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Commission (%)</th>
+            <th style="padding:10px 14px; text-align:right; font-size:12px; font-weight:700; text-transform:none;">Action</th>
           </tr>
         </thead>
-        <tbody>
-          ${DOCTORS.map((d, i) => `
+        <tbody> ${DOCTORS.map((d, i) => `
             <tr style="border-bottom:1px solid var(--border-subtle);">
               <td style="padding:10px 14px; font-weight:700;">${d.name} <span style="font-size:11px; color:var(--text-muted);">(${d.qual||''})</span></td>
               <td style="padding:10px 14px;">${d.spec}</td>
@@ -2987,16 +3226,15 @@ function renderTestsScreen(container) {
       <table style="width:100%; border-collapse:collapse;">
         <thead>
           <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Code</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Test Name & Method</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Group</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Unit</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Reference Range</th>
-            <th style="padding:10px 14px; text-align:right; font-size:9.5px; font-weight:700; text-transform:uppercase;">Rate (₹)</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Code</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Test Name & Method</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Group</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Unit</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Reference Range</th>
+            <th style="padding:10px 14px; text-align:right; font-size:12px; font-weight:700; text-transform:none;">Rate (₹)</th>
           </tr>
         </thead>
-        <tbody>
-          ${Object.keys(TESTS).map(k => `
+        <tbody> ${Object.keys(TESTS).map(k => `
             <tr style="border-bottom:1px solid var(--border-subtle);">
               <td style="padding:10px 14px; font-weight:800;">${k}</td>
               <td style="padding:10px 14px;">
@@ -3026,16 +3264,15 @@ function renderBillingScreen(container) {
       <table style="width:100%; border-collapse:collapse;">
         <thead>
           <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Report No</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Patient</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Tests</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Total Charged</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Payment Mode</th>
-            <th style="padding:10px 14px; text-align:right; font-size:9.5px; font-weight:700; text-transform:uppercase;">Status</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Report No</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Patient</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Tests</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Total Charged</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Payment Mode</th>
+            <th style="padding:10px 14px; text-align:right; font-size:12px; font-weight:700; text-transform:none;">Status</th>
           </tr>
         </thead>
-        <tbody>
-          ${jobs.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-muted);">No transactions recorded yet.</td></tr>' :
+        <tbody> ${jobs.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-muted);">No transactions recorded yet.</td></tr>' :
             jobs.map(j => `
               <tr style="border-bottom:1px solid var(--border-subtle);">
                 <td style="padding:10px 14px; font-weight:800;">${j.report_no}</td>
@@ -3079,7 +3316,7 @@ function renderSummariesScreen(container) {
   container.innerHTML = `
     <div style="padding:14px 18px; background:var(--surface); border-bottom:2px solid var(--border); display:flex; align-items:center;">
       <h1 style="font-size:18px; font-weight:800; margin:0;">Daily Cash & Monthly Financial Summaries</h1>
-      <button class="btn-m" style="margin-left:auto;" onclick="exportSummaryCSV()">📥 Export Sheet to CSV</button>
+      <button class="btn-m" style="margin-left:auto;" onclick="exportSummaryCSV()">Export Sheet to CSV</button>
     </div>
 
     <div style="padding:18px; display:grid; grid-template-columns:repeat(4,1fr); gap:12px; background:var(--surface); border-bottom:2px solid var(--border);">
@@ -3103,7 +3340,7 @@ function renderSummariesScreen(container) {
 
     <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:0; background:var(--surface); overflow:auto;">
       <div style="border-right:1px solid var(--border-light); padding:18px;">
-        <h3 style="font-size:14px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; margin-bottom:10px;">Day Sheet Test Volumes</h3>
+        <h3 style="font-size:14px; font-weight:700; letter-spacing:0; text-transform:none; margin-bottom:10px;">Day Sheet Test Volumes</h3>
         <table style="width:100%; border-collapse:collapse;">
           <thead>
             <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
@@ -3112,8 +3349,7 @@ function renderSummariesScreen(container) {
               <th style="padding:8px 10px; text-align:right; font-size:9.5px; font-weight:700;">Revenue</th>
             </tr>
           </thead>
-          <tbody>
-            ${Object.keys(testCounts).length === 0 ? '<tr><td colspan="3" style="text-align:center; padding:30px; color:var(--text-muted);">No tests today.</td></tr>' :
+          <tbody> ${Object.keys(testCounts).length === 0 ? '<tr><td colspan="3" style="text-align:center; padding:30px; color:var(--text-muted);">No tests today.</td></tr>' :
               Object.keys(testCounts).map(c => `
                 <tr style="border-bottom:1px solid var(--border-subtle);">
                   <td style="padding:8px 10px; font-weight:700;">${TESTS[c]?.n || c}</td>
@@ -3127,7 +3363,7 @@ function renderSummariesScreen(container) {
       </div>
 
       <div style="padding:18px;">
-        <h3 style="font-size:14px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; margin-bottom:10px;">Doctor Commission Statement</h3>
+        <h3 style="font-size:14px; font-weight:700; letter-spacing:0; text-transform:none; margin-bottom:10px;">Doctor Commission Statement</h3>
         <table style="width:100%; border-collapse:collapse;">
           <thead>
             <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
@@ -3136,8 +3372,7 @@ function renderSummariesScreen(container) {
               <th style="padding:8px 10px; text-align:right; font-size:9.5px; font-weight:700;">Commission Due</th>
             </tr>
           </thead>
-          <tbody>
-            ${DOCTORS.map(d => `
+          <tbody> ${DOCTORS.map(d => `
               <tr style="border-bottom:1px solid var(--border-subtle);">
                 <td style="padding:8px 10px; font-weight:700;">${d.name}</td>
                 <td style="padding:8px 10px; text-align:center; font-weight:800;">${docComms[d.name]?.count || 0}</td>
@@ -3174,22 +3409,20 @@ function renderStaffScreen(container) {
       <table style="width:100%; border-collapse:collapse;">
         <thead>
           <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Username</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Full Name</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">Role</th>
-            <th style="padding:10px 14px; text-align:left; font-size:9.5px; font-weight:700; text-transform:uppercase;">4-digit PIN</th>
-            <th style="padding:10px 14px; text-align:right; font-size:9.5px; font-weight:700; text-transform:uppercase;">Action</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Username</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Full Name</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Role</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">4-digit PIN</th>
+            <th style="padding:10px 14px; text-align:right; font-size:12px; font-weight:700; text-transform:none;">Action</th>
           </tr>
         </thead>
-        <tbody>
-          ${STAFF_ACCOUNTS.map((s, i) => `
+        <tbody> ${STAFF_ACCOUNTS.map((s, i) => `
             <tr style="border-bottom:1px solid var(--border-subtle);">
               <td style="padding:10px 14px; font-weight:800;">${s.username}</td>
               <td style="padding:10px 14px; font-weight:700;">${s.name}</td>
               <td style="padding:10px 14px;"><span class="status-pill sp-prog">${s.role}</span></td>
               <td style="padding:10px 14px; color:var(--text-muted);">no PIN in the demonstration</td>
-              <td style="padding:10px 14px; text-align:right;">
-                ${s.username==='demo' ? '<span style="color:var(--text-muted); font-size:11px;">Demonstration account</span>' : `<button class="btn-m" style="color:var(--accent-red);" onclick="if(confirm('Delete user?')){STAFF_ACCOUNTS.splice(${i},1); saveState(); render();}">Delete</button>`}
+              <td style="padding:10px 14px; text-align:right;"> ${s.username==='demo' ? '<span style="color:var(--text-muted); font-size:11px;">Demonstration account</span>' : `<button class="btn-m" style="color:var(--accent-red);" onclick="if(confirm('Delete user?')){STAFF_ACCOUNTS.splice(${i},1); saveState(); render();}">Delete</button>`}
               </td>
             </tr>
           `).join("")}
@@ -3242,15 +3475,14 @@ function saveNewStaff() {
 function renderSettingsScreen(container) {
   container.innerHTML = `
     <div style="padding:14px 18px; background:var(--surface); border-bottom:2px solid var(--border);">
-      <h1 style="font-size:18px; font-weight:800; margin:0;">⚙️ Laboratory Settings & Letterhead Customizer</h1>
+      <h1 style="font-size:18px; font-weight:800; margin:0;">Laboratory Settings & Letterhead Customizer</h1>
       <div style="font-size:11.5px; color:var(--text-muted);">Customize lab header branding, letterhead styling, and clinical signatories</div>
     </div>
 
     <div style="flex:1; overflow:auto; background:var(--bg); padding:20px; display:flex; flex-direction:column; gap:20px;">
       <!-- Lab Profile Branding Form -->
       <div style="background:var(--surface); border:2px solid var(--border); padding:18px;">
-        <h3 style="font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin:0 0 14px; color:var(--brand-blue);">
-          🏥 Laboratory Profile & Contact Details
+        <h3 style="font-size:13px; font-weight:700; letter-spacing:0; text-transform:none; margin:0 0 14px; color:var(--brand-blue);"> Laboratory Profile & Contact Details
         </h3>
         <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
           <div>
@@ -3300,8 +3532,7 @@ function renderSettingsScreen(container) {
 
       <!-- Letterhead Theme Selector -->
       <div style="background:var(--surface); border:2px solid var(--border); padding:18px;">
-        <h3 style="font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin:0 0 12px; color:var(--brand-blue);">
-          🎨 Official Report Letterhead Style
+        <h3 style="font-size:13px; font-weight:700; letter-spacing:0; text-transform:none; margin:0 0 12px; color:var(--brand-blue);"> Official Report Letterhead Style
         </h3>
         <div style="display:flex; flex-direction:column; gap:10px;">
           <label><input type="radio" name="lh_style" value="classic" ${letterheadStyle==='classic'?'checked':''} onchange="letterheadStyle=this.value; saveState();"> <b>Classic Blue</b> (Icy blue banner with circular diagnostic emblem)</label>
@@ -3312,8 +3543,7 @@ function renderSettingsScreen(container) {
 
       <!-- Authorized Clinical Signatories -->
       <div style="background:var(--surface); border:2px solid var(--border); padding:18px;">
-        <h3 style="font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin:0 0 14px; color:var(--brand-blue);">
-          ✍️ Authorized Signatories (Printed at bottom of report)
+        <h3 style="font-size:13px; font-weight:700; letter-spacing:0; text-transform:none; margin:0 0 14px; color:var(--brand-blue);"> Authorized Signatories (Printed at bottom of report)
         </h3>
         <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
           <div style="background:var(--surface-alt); padding:12px; border:1px solid var(--border-light);">
@@ -3339,12 +3569,11 @@ function renderSettingsScreen(container) {
 
       <!-- Developer Info & Demo Data -->
       <div style="background:var(--surface); border:2px solid var(--border); padding:18px;">
-        <h3 style="font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin:0 0 10px; color:var(--brand-blue);">
-          ℹ️ Developer & Data Tools
+        <h3 style="font-size:13px; font-weight:700; letter-spacing:0; text-transform:none; margin:0 0 10px; color:var(--brand-blue);">
+          ℹ Developer & Data Tools
         </h3>
         <p style="margin:0 0 12px; font-size:12.5px; color:var(--text-muted);">
-          <b>LabSoft v${APP_VERSION}</b> — Developed by <b>${AUTHOR}</b>.<br>
-          Clinical diagnostic information & pathology laboratory information system.
+          <b>LabSoft v${APP_VERSION}</b> — Developed by <b>${AUTHOR}</b>.<br> Clinical diagnostic information & pathology laboratory information system.
         </p>
         <div style="display:flex; gap:10px;">
           <button class="btn-m primary" onclick="showAbout()">View About Dialog</button>
@@ -3424,8 +3653,7 @@ function openReportPreview(job) {
     for (const [groupName, testList] of Object.entries(testItems)) {
       rowsHTML += `
         <tr>
-          <td colspan="3" style="font-weight:800; color:#0E4D92; padding:10px 0 4px; font-size:11.5px; text-transform:uppercase; border-bottom:1.5px solid #c9dff7;">
-            ${groupName}
+          <td colspan="3" style="font-weight:700; color:#0E4D92; padding:10px 0 4px; font-size:11.5px; text-transform:none; border-bottom:1.5px solid #c9dff7;"> ${groupName}
           </td>
         </tr>
       `;
@@ -3453,8 +3681,7 @@ function openReportPreview(job) {
               <div style="font-size:9.5px; color:#616A72;">Method: ${t.m || 'Standard'}</div>
             </td>
             <td style="font-size:13px; text-align:center; padding:6px 0;">
-              <span style="${highlightStyle}">${valDisplay}</span>
-              ${isPanic ? '<span style="font-size:9px; background:#991b1b; color:#fff; padding:1px 4px; border-radius:2px; margin-left:4px;">CRITICAL</span>' : ''}
+              <span style="${highlightStyle}">${valDisplay}</span> ${isPanic ? '<span style="font-size:9px; background:#991b1b; color:#fff; padding:1px 4px; border-radius:2px; margin-left:4px;">CRITICAL</span>' : ''}
             </td>
             <td style="color:#4A5157; text-align:right; padding:6px 0; font-size:11.5px; font-variant-numeric:tabular-nums;">${t.r || '—'}</td>
           </tr>
@@ -3497,8 +3724,7 @@ function openReportPreview(job) {
   function getLetterheadHTML() {
     if (letterheadStyle === "modern") {
       return `
-        <div class="letterhead-modern">
-          ${getLogoSVG()}
+        <div class="letterhead-modern"> ${getLogoSVG()}
           <div class="lh-title-block">
             <div class="lh-pre">${LAB_CONFIG.prefix || 'NEW'}</div>
             <div class="lh-main">${LAB_CONFIG.name || 'MITHRA'}</div>
@@ -3508,13 +3734,8 @@ function openReportPreview(job) {
             </div>
           </div>
           <div class="lh-contact" style="display:flex; align-items:center; justify-content:flex-end;">
-            <div>
-              ${LAB_CONFIG.address_1 || ''}<br>
-              ${LAB_CONFIG.address_2 || ''}<br>
-              Ph: ${LAB_CONFIG.phone || ''}<br>
-              e-mail: ${LAB_CONFIG.email || ''}
-            </div>
-            ${getQRCodeSVG()}
+            <div> ${LAB_CONFIG.address_1 || ''}<br> ${LAB_CONFIG.address_2 || ''}<br> Ph: ${LAB_CONFIG.phone || ''}<br> e-mail: ${LAB_CONFIG.email || ''}
+            </div> ${getQRCodeSVG()}
           </div>
         </div>
       `;
@@ -3522,8 +3743,7 @@ function openReportPreview(job) {
       return `<div class="letterhead-preprinted"></div>`;
     } else {
       return `
-        <div class="letterhead-classic">
-          ${getLogoSVG()}
+        <div class="letterhead-classic"> ${getLogoSVG()}
           <div class="lh-title-block">
             <div class="lh-pre">${LAB_CONFIG.prefix || 'NEW'}</div>
             <div class="lh-main">${LAB_CONFIG.name || 'MITHRA'}</div>
@@ -3533,13 +3753,8 @@ function openReportPreview(job) {
             </div>
           </div>
           <div class="lh-contact" style="display:flex; align-items:center; justify-content:flex-end;">
-            <div>
-              ${LAB_CONFIG.address_1 || ''}<br>
-              ${LAB_CONFIG.address_2 || ''}<br>
-              Ph: ${LAB_CONFIG.phone || ''}<br>
-              e-mail: ${LAB_CONFIG.email || ''}
-            </div>
-            ${getQRCodeSVG()}
+            <div> ${LAB_CONFIG.address_1 || ''}<br> ${LAB_CONFIG.address_2 || ''}<br> Ph: ${LAB_CONFIG.phone || ''}<br> e-mail: ${LAB_CONFIG.email || ''}
+            </div> ${getQRCodeSVG()}
           </div>
         </div>
       `;
@@ -3570,12 +3785,12 @@ function openReportPreview(job) {
         <div class="sign-role">${LAB_CONFIG.sig1_role || 'Technologist'}</div>
       </div>
       <div class="sign-person">
-        <div class="sign-name">${LAB_CONFIG.sig2_name || 'FATTIMATH SAKIRA. M.'}</div>
+        <div class="sign-name">${LAB_CONFIG.sig2_name || 'B. Microbiologist'}</div>
         <div class="sign-qual">${LAB_CONFIG.sig2_qual || 'MScMicrobiology'}</div>
         <div class="sign-role">${LAB_CONFIG.sig2_role || 'Microbiologist'}</div>
       </div>
       <div class="sign-person">
-        <div class="sign-name">${LAB_CONFIG.sig3_name || 'ABDUNNASER MAYYERI'}</div>
+        <div class="sign-name">${LAB_CONFIG.sig3_name || 'C. Pathologist'}</div>
         <div class="sign-qual">${LAB_CONFIG.sig3_qual || 'DMLT BScMLT'}</div>
         <div class="sign-role">${LAB_CONFIG.sig3_role || 'Lab Incharge'}</div>
       </div>
@@ -3584,14 +3799,13 @@ function openReportPreview(job) {
 
   const hba1cParagraph = `
     <div class="clinical-box" style="margin-top:10px;">
-      <b>Clinical Significance of Glycosylated Hemoglobin (HbA1c):</b><br>
-      Glycosylated hemoglobin values reflect mean glycemic control over the preceding 100-120 days. HbA1c is used to monitor long-term blood glucose regulation and guide therapeutic management.
+      <b>Clinical Significance of Glycosylated Hemoglobin (HbA1c):</b><br> Glycosylated hemoglobin values reflect mean glycemic control over the preceding 100-120 days. HbA1c is used to monitor long-term blood glucose regulation and guide therapeutic management.
     </div>
   `;
 
   const clinicalNotesBlock = job.clinical_notes ? `
     <div style="margin-top:10px; border:1px solid #c9dff7; background:#f8fafc; padding:8px 12px; font-size:11px; line-height:1.4;">
-      <div style="font-weight:800; color:#0A3668; text-transform:uppercase; margin-bottom:3px;">Clinical Remarks / Impression:</div>
+      <div style="font-weight:700; color:#0A3668; text-transform:none; margin-bottom:3px;">Clinical Remarks / Impression:</div>
       <div style="color:#334155; white-space:pre-line;">${job.clinical_notes}</div>
     </div>
   ` : '';
@@ -3625,8 +3839,7 @@ function openReportPreview(job) {
 
     // Page 1
     pagesHTML += `
-      <div class="report-page" style="margin-bottom:20px;">
-        ${getLetterheadHTML()}
+      <div class="report-page" style="margin-bottom:20px;"> ${getLetterheadHTML()}
         ${patientMetaHeader}
         <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:#0E4D92; margin-top:8px; border-bottom:1px solid #c9dff7; padding-bottom:2px;">
           <span>DIAGNOSTIC REPORT (Page 1 of 2)</span>
@@ -3640,8 +3853,7 @@ function openReportPreview(job) {
               <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; text-align:right; padding:6px 0;">Reference Range</th>
             </tr>
           </thead>
-          <tbody>
-            ${renderTestRows(page1Groups)}
+          <tbody> ${renderTestRows(page1Groups)}
           </tbody>
         </table>
         <div style="text-align:right; font-weight:700; font-size:10px; color:#616A72; margin-top:auto; padding-top:10px;">
@@ -3652,8 +3864,7 @@ function openReportPreview(job) {
 
     // Page 2
     pagesHTML += `
-      <div class="report-page">
-        ${getLetterheadHTML()}
+      <div class="report-page"> ${getLetterheadHTML()}
         <div style="display:flex; justify-content:space-between; align-items:center; background:#f0f7ff; border:1px solid #c9dff7; padding:6px 12px; margin-bottom:10px; font-size:11px;">
           <span><b>Patient:</b> ${job.name} .${job.initial}. (${job.age} ${job.age_unit} / ${job.sex})</span>
           <span><b>Report No:</b> #${job.report_no}</span>
@@ -3667,23 +3878,18 @@ function openReportPreview(job) {
               <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; text-align:right; padding:6px 0;">Reference Range</th>
             </tr>
           </thead>
-          <tbody>
-            ${renderTestRows(page2Groups)}
+          <tbody> ${renderTestRows(page2Groups)}
           </tbody>
-        </table>
-
-        ${clinicalNotesBlock}
+        </table> ${clinicalNotesBlock}
         ${isHbA1c ? hba1cParagraph : ''}
 
-        <div style="text-align:center; font-weight:700; font-size:10.5px; margin:14px 0; color:#616A72;">** End Of Report · Page 2 of 2 **</div>
-        ${signaturesBlock}
+        <div style="text-align:center; font-weight:700; font-size:10.5px; margin:14px 0; color:#616A72;">** End Of Report · Page 2 of 2 **</div> ${signaturesBlock}
       </div>
     `;
   } else {
     // Single Page Report
     pagesHTML = `
-      <div class="report-page" id="printable-report">
-        ${getLetterheadHTML()}
+      <div class="report-page" id="printable-report"> ${getLetterheadHTML()}
         ${patientMetaHeader}
 
         <table style="margin-top:8px;">
@@ -3694,26 +3900,22 @@ function openReportPreview(job) {
               <th style="background:none; color:#0E4D92; font-size:11.5px; font-weight:800; text-align:right; padding:6px 0;">Reference Range</th>
             </tr>
           </thead>
-          <tbody>
-            ${renderTestRows(groups)}
+          <tbody> ${renderTestRows(groups)}
           </tbody>
-        </table>
-
-        ${clinicalNotesBlock}
+        </table> ${clinicalNotesBlock}
         ${isHbA1c ? hba1cParagraph : ''}
 
-        <div style="text-align:center; font-weight:700; font-size:10.5px; margin:14px 0; color:#616A72;">** End Of Report **</div>
-        ${signaturesBlock}
+        <div style="text-align:center; font-weight:700; font-size:10.5px; margin:14px 0; color:#616A72;">** End Of Report **</div> ${signaturesBlock}
       </div>
     `;
   }
 
-  document.getElementById("modal-dialog-title").textContent = `🖨️ Official Diagnostic Report — #${job.report_no} ${job.name} .${job.initial}.`;
+  document.getElementById("modal-dialog-title").textContent = `Official Diagnostic Report — #${job.report_no} ${job.name} .${job.initial}.`;
   document.getElementById("modal-dialog-body").className = "modal-dialog-body";
   document.getElementById("modal-dialog-body").innerHTML = pagesHTML;
   document.getElementById("modal-dialog-footer").innerHTML = `
-    <button class="btn-m primary" onclick="window.print()">🖨️ Print Report</button>
-    <button class="btn-m" onclick="openWhatsAppDispatchModal(activeJob)">📱 WhatsApp Dispatch</button>
+    <button class="btn-m primary" onclick="window.print()">Print Report</button>
+    <button class="btn-m" onclick="openWhatsAppDispatchModal(activeJob)"> WhatsApp Dispatch</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
   document.getElementById("modal-container").classList.add("open");
@@ -3726,7 +3928,7 @@ function openWhatsAppDispatchModal(job) {
     return `• *${t?.n || c}:* ${val} ${t?.u || ''}`;
   }).join("\n");
 
-  const msg = `🏥 *NEW MITHRA MEDICAL LABORATORY*\n*Diagnostic Investigation Report*\n━━━━━━━━━━━━━━━━━━━━\n👤 *Patient:* ${job.name} .${job.initial}.\n📋 *Report No:* #${job.report_no}\n📅 *Date:* ${job.date}\n🧪 *Sample Specimen:* ${job.specimen || 'Serum'}\n👨‍⚕️ *Ref by:* ${job.referrer || 'Self'}\n━━━━━━━━━━━━━━━━━━━━\n*INVESTIGATION RESULTS:*\n${resultSummary}\n━━━━━━━━━━━━━━━━━━━━\n🔒 _Official digital report generated & verified._\n📍 Sample Road, Sample Town\n📞 +91 00000 00000`;
+  const msg = `*NEW MITHRA MEDICAL LABORATORY*\n*Diagnostic Investigation Report*\n━━━━━━━━━━━━━━━━━━━━\n*Patient:* ${job.name} .${job.initial}.\n*Report No:* #${job.report_no}\n*Date:* ${job.date}\n*Sample Specimen:* ${job.specimen || 'Serum'}\n*Ref by:* ${job.referrer || 'Self'}\n━━━━━━━━━━━━━━━━━━━━\n*INVESTIGATION RESULTS:*\n${resultSummary}\n━━━━━━━━━━━━━━━━━━━━\n _Official digital report generated & verified._\nSample Road, Sample Town\n+91 00000 00000`;
 
   const cleanPhone = job.mobile.replace(/\D/g, "");
   const targetPhone = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
@@ -3735,7 +3937,7 @@ function openWhatsAppDispatchModal(job) {
   const content = `
     <div style="padding:10px 14px;">
       <div style="background:#075E54; color:#FFF; padding:14px 18px; display:flex; align-items:center; gap:14px; margin-bottom:16px;">
-        <span style="font-size:28px;">📱</span>
+        <span style="font-size:28px;"></span>
         <div>
           <h3 style="margin:0; color:#FFF; font-size:16px; font-weight:800;">WhatsApp Report Dispatch</h3>
           <div style="font-size:12px; color:#E0F2F1;">Sending to: <b>+${targetPhone}</b> (${job.name} .${job.initial}.)</div>
@@ -3757,8 +3959,8 @@ function openWhatsAppDispatchModal(job) {
       </div>
 
       <div style="display:flex; gap:10px;">
-        <button class="btn-m primary" onclick="window.print()">📥 1. Save / Download PDF</button>
-        <a class="btn-m" href="${waUrl}" target="_blank" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#201e1d; color:#fff;">💬 2. Open WhatsApp Web ↗</a>
+        <button class="btn-m primary" onclick="window.print()">1. Save / Download PDF</button>
+        <a class="btn-m" href="${waUrl}" target="_blank" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#201e1d; color:#fff;"> 2. Open WhatsApp Web ↗</a>
       </div>
     </div>
   `;
@@ -3781,12 +3983,11 @@ function openBillModal() {
       <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
         <thead>
           <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
-            <th style="padding:8px 10px; text-align:left; font-size:10px; text-transform:uppercase;">Test Description</th>
-            <th style="padding:8px 10px; text-align:right; font-size:10px; text-transform:uppercase;">Rate (₹)</th>
+            <th style="padding:8px 10px; text-align:left; font-size:12px; text-transform:none;">Test Description</th>
+            <th style="padding:8px 10px; text-align:right; font-size:12px; text-transform:none;">Rate (₹)</th>
           </tr>
         </thead>
-        <tbody>
-          ${activeJob.tests.map(c => `
+        <tbody> ${activeJob.tests.map(c => `
             <tr style="border-bottom:1px solid var(--border-subtle);">
               <td style="padding:8px 10px; font-weight:600;">${TESTS[c]?.n||c}</td>
               <td style="padding:8px 10px; text-align:right; font-weight:700;">₹ ${TESTS[c]?.rate||100}.00</td>
@@ -3826,7 +4027,7 @@ function openBillModal() {
   document.getElementById("modal-dialog-body").innerHTML = content;
   document.getElementById("modal-dialog-footer").innerHTML = `
     <button class="btn-m primary" onclick="activeJob.bill_paid=${total}; saveJobLocal(); printA4Invoice();">Print A4 bill</button>
-    <button class="btn-m" style="background:#201e1d; color:#fff;" onclick="activeJob.bill_paid=${total}; saveJobLocal(); printPOSReceipt();">🧾 Print 80mm POS Receipt</button>
+    <button class="btn-m" style="background:#201e1d; color:#fff;" onclick="activeJob.bill_paid=${total}; saveJobLocal(); printPOSReceipt();">Print 80mm POS Receipt</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
   document.getElementById("modal-container").classList.add("open");
@@ -3870,8 +4071,7 @@ function printA4Invoice() {
             <th style="padding:8px 10px; text-align:right; font-size:11px;">Amount (₹)</th>
           </tr>
         </thead>
-        <tbody>
-          ${activeJob.tests.map((c, i) => `
+        <tbody> ${activeJob.tests.map((c, i) => `
             <tr style="border-bottom:1px solid #e2e8f0; font-size:12px;">
               <td style="padding:8px 10px;">${i + 1}</td>
               <td style="padding:8px 10px; font-weight:600;">${TESTS[c]?.n || c}</td>
@@ -3903,8 +4103,8 @@ function printA4Invoice() {
   document.getElementById("modal-dialog-body").className = "modal-dialog-body";
   document.getElementById("modal-dialog-body").innerHTML = invoiceHTML;
   document.getElementById("modal-dialog-footer").innerHTML = `
-    <button class="btn-m primary" onclick="window.print()">🖨️ Print A4 Invoice</button>
-    <button class="btn-m" onclick="printPOSReceipt()">🧾 Switch to 80mm POS Slip</button>
+    <button class="btn-m primary" onclick="window.print()">Print A4 Invoice</button>
+    <button class="btn-m" onclick="printPOSReceipt()">Switch to 80mm POS Slip</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
 }
@@ -3913,9 +4113,7 @@ function printPOSReceipt() {
   const content = `
     <div class="pos-receipt">
       <div style="text-align:center;">
-        <b>NEW MITHRA MEDICAL LABORATORY</b><br>
-        Kuttippala, Opp. Ayurveda Dispensary<br>
-        Ph: 8157887311, 9526677311<br>
+        <b>NEW MITHRA MEDICAL LABORATORY</b><br> Kuttippala, Opp. Ayurveda Dispensary<br> Ph: 8157887311, 9526677311<br>
         ----------------------------------------<br>
         <b>CASH RECEIPT</b><br>
         ----------------------------------------
@@ -3924,15 +4122,12 @@ function printPOSReceipt() {
       <div>Date: ${activeJob.date}</div>
       <div>Patient: ${activeJob.name} .${activeJob.initial}.</div>
       <div>Mobile: ${activeJob.mobile}</div>
-      ----------------------------------------<br>
-      ${activeJob.tests.map(c => `<div>${(TESTS[c]?.n||c).slice(0,20).padEnd(20, ' ')} ₹${TESTS[c]?.rate||100}.00</div>`).join("")}
+      ----------------------------------------<br> ${activeJob.tests.map(c => `<div>${(TESTS[c]?.n||c).slice(0,20).padEnd(20, ' ')} ₹${TESTS[c]?.rate||100}.00</div>`).join("")}
       ----------------------------------------<br>
       <div><b>TOTAL PAID: ₹ ${activeJob.bill_paid}.00</b></div>
       <div>Payment Mode: ${activeJob.bill_mode || 'Cash'}</div>
       ----------------------------------------<br>
-      <div style="text-align:center; font-size:11px; margin-top:6px;">
-        Thank you for choosing New Mithra!<br>
-        Reports ready same day evening.
+      <div style="text-align:center; font-size:11px; margin-top:6px;"> Thank you for choosing New Mithra!<br> Reports ready same day evening.
       </div>
     </div>
   `;
@@ -3955,7 +4150,7 @@ function showAbout() {
           <span style="background:#FFFFFF; color:#0A3668; font-size:11px; font-weight:800; padding:2px 7px; border-radius:3px;">2026.08</span>
         </div>
         <div style="color:#E0F2FE; font-size:13px; font-weight:600; margin:6px 0 2px 0;">Medical Diagnostic Laboratory Information & Reporting System</div>
-        <div style="color:#BAE6FD; font-size:10.5px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase;">Accuracy • Clinical Care • Trust</div>
+        <div style="color:#BAE6FD; font-size:10.5px; font-weight:700; letter-spacing:1.5px; text-transform:none;">Accuracy • Clinical Care • Trust</div>
       </div>
 
       <div style="background:#FFFFFF; border:1.5px solid #CBD5E1; border-radius:6px; padding:16px; margin-bottom:16px;">
@@ -3974,13 +4169,13 @@ function showAbout() {
       </div>
 
       <div style="font-size:12.5px; color:#334155; line-height:1.7;">
-        <b style="color:#0A3668; letter-spacing:.5px; text-transform:uppercase; font-size:11.5px;">Key Clinical Capabilities:</b>
+        <b style="color:#0A3668; letter-spacing:.5px; text-transform:none; font-size:11.5px;">Key Clinical Capabilities:</b>
         <div style="margin-top:6px; display:grid; gap:4px;">
-          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Real-time clinical formula calculation & automatic delta check</span></div>
-          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Multi-style diagnostic letterheads & dual HbA1c layout sheets</span></div>
-          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Executive Day-Book analytics, revenue tracking & CSV export</span></div>
-          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Two documents: an A4 bill and an 80mm counter slip</span></div>
-          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;">✓</span><span>Automated WhatsApp PDF dispatch & medico-legal audit trails</span></div>
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;"></span><span>Real-time clinical formula calculation & automatic delta check</span></div>
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;"></span><span>Multi-style diagnostic letterheads & dual HbA1c layout sheets</span></div>
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;"></span><span>Executive Day-Book analytics, revenue tracking & CSV export</span></div>
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;"></span><span>Two documents: an A4 bill and an 80mm counter slip</span></div>
+          <div style="display:flex; gap:8px; align-items:flex-start;"><span style="color:#059669; font-weight:800;"></span><span>Automated WhatsApp PDF dispatch & medico-legal audit trails</span></div>
         </div>
       </div>
     </div>
@@ -4083,17 +4278,16 @@ function openTubeLabelModal(job) {
           <span>${job.date}</span>
         </div>
       </div>
-      <div style="font-size:12px; color:var(--text-muted); text-align:center;">
-        Standard 50mm × 25mm Phlebotomy Barcode Sticker for Vacutainer Tubes.
+      <div style="font-size:12px; color:var(--text-muted); text-align:center;"> Standard 50mm × 25mm Phlebotomy Barcode Sticker for Vacutainer Tubes.
       </div>
     </div>
   `;
 
-  document.getElementById("modal-dialog-title").textContent = `🏷️ Phlebotomy Vial Label — Sample #${job.report_no}`;
+  document.getElementById("modal-dialog-title").textContent = ` Phlebotomy Vial Label — Sample #${job.report_no}`;
   document.getElementById("modal-dialog-body").className = "modal-dialog-body plain";
   document.getElementById("modal-dialog-body").innerHTML = content;
   document.getElementById("modal-dialog-footer").innerHTML = `
-    <button class="btn-m primary" onclick="window.print()">🖨️ Print Label Sticker</button>
+    <button class="btn-m primary" onclick="window.print()">Print Label Sticker</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
   document.getElementById("modal-container").classList.add("open");
@@ -4121,23 +4315,14 @@ function openPOSReceiptModal(job) {
           <b style="font-size:10px;">CASH RECEIPT</b><br>
           ------------------------------------
         </div>
-        <div style="margin:6px 0; font-size:10px;">
-          Bill No: <b>#${job.id || '101'}</b><br>
-          Date   : ${new Date().toLocaleString()}<br>
-          Patient: <b>${job.name || 'PATIENT'} .${job.initial || ''}.</b> (${job.age || ''} ${job.age_unit || ''}/${job.sex || ''})<br>
-          Ref By : ${job.referrer || 'SELF / DIRECT'}<br>
+        <div style="margin:6px 0; font-size:10px;"> Bill No: <b>#${job.id || '101'}</b><br> Date   : ${new Date().toLocaleString()}<br> Patient: <b>${job.name || 'PATIENT'} .${job.initial || ''}.</b> (${job.age || ''} ${job.age_unit || ''}/${job.sex || ''})<br> Ref By : ${job.referrer || 'SELF / DIRECT'}<br>
           ------------------------------------
         </div>
         <table style="width:100%; font-family:monospace; font-size:10.5px; border-collapse:collapse;">
-          <tr style="border-bottom:1px solid #000;"><th align="left">Test Description</th><th align="right">Amount</th></tr>
-          ${tests.map(t => `<tr><td>${t.n.slice(0, 20)}</td><td align="right">₹${t.rate}</td></tr>`).join("")}
+          <tr style="border-bottom:1px solid #000;"><th align="left">Test Description</th><th align="right">Amount</th></tr> ${tests.map(t => `<tr><td>${t.n.slice(0, 20)}</td><td align="right">₹${t.rate}</td></tr>`).join("")}
         </table>
-        <div style="margin-top:8px; border-top:1px solid #000; padding-top:4px; font-size:10.5px;">
-          Gross Total : <span style="float:right;">₹${total}</span><br>
-          Discount    : <span style="float:right;">₹${discount}</span><br>
-          <b style="font-size:11px;">NET PAYABLE : <span style="float:right;">₹${net}</span></b><br>
-          Amount Paid : <span style="float:right;">₹${paid}</span><br>
-          Balance Due : <span style="float:right;">₹${due}</span><br>
+        <div style="margin-top:8px; border-top:1px solid #000; padding-top:4px; font-size:10.5px;"> Gross Total : <span style="float:right;">₹${total}</span><br> Discount    : <span style="float:right;">₹${discount}</span><br>
+          <b style="font-size:11px;">NET PAYABLE : <span style="float:right;">₹${net}</span></b><br> Amount Paid : <span style="float:right;">₹${paid}</span><br> Balance Due : <span style="float:right;">₹${due}</span><br>
           ------------------------------------<br>
           <div style="text-align:center; font-size:9.5px; margin-top:6px;">* Thank You & Wish You Good Health *</div>
         </div>
@@ -4145,7 +4330,7 @@ function openPOSReceiptModal(job) {
     </div>
   `;
 
-  document.getElementById("modal-dialog-title").textContent = "🧾 80mm POS Thermal Receipt Preview";
+  document.getElementById("modal-dialog-title").textContent = "80mm POS Thermal Receipt Preview";
   document.getElementById("modal-dialog-body").className = "modal-dialog-body plain";
   document.getElementById("modal-dialog-body").innerHTML = receiptHtml;
   document.getElementById("modal-dialog-footer").innerHTML = `
@@ -4438,10 +4623,10 @@ function printReceiptDirect() {
     color: #94A3B8;
   }
 
+
 </style>
       </head>
-      <body onload="window.print(); window.close();">
-        ${content}
+      <body onload="window.print(); window.close();"> ${content}
       </body>
     </html>
   `);
@@ -4487,12 +4672,12 @@ function renderAnalyticsScreen(container) {
   container.innerHTML = `
     <div style="padding:14px 18px; background:var(--surface); border-bottom:2px solid var(--border); display:flex; align-items:center;">
       <div>
-        <h1 style="font-size:18px; font-weight:800; margin:0;">📊 Executive Day-Book & Financial Analytics</h1>
+        <h1 style="font-size:18px; font-weight:800; margin:0;"> Executive Day-Book & Financial Analytics</h1>
         <div style="font-size:11.5px; color:var(--text-muted);">Real-time revenue, workload performance and referral statements</div>
       </div>
       <div style="margin-left:auto; display:flex; gap:10px;">
         <button class="btn-m" onclick="exportDaySheetCSV()">${getIcon('download', 13, '#FFFFFF')} Export Day Sheet (CSV)</button>
-        <button class="btn-m primary" onclick="window.print()">🖨️ Print Executive Statement</button>
+        <button class="btn-m primary" onclick="window.print()">Print Executive Statement</button>
       </div>
     </div>
 
@@ -4525,12 +4710,9 @@ function renderAnalyticsScreen(container) {
       <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:16px;">
         <!-- Top Ordered Investigations -->
         <div style="background:var(--surface); border:1px solid var(--border-light); padding:16px;">
-          <h3 style="font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; margin:0 0 12px; color:var(--brand-blue);">
-            🔬 Top 5 Diagnostic Investigations Conducted
-          </h3>
-          ${sortedTests.length === 0 ? '<div style="padding:20px; text-align:center; color:var(--text-muted);">No investigations conducted yet today.</div>' :
-            `<div style="display:flex; flex-direction:column; gap:10px;">
-              ${sortedTests.map(code => {
+          <h3 style="font-size:13px; font-weight:700; text-transform:none; letter-spacing:0; margin:0 0 12px; color:var(--brand-blue);"> Top 5 Diagnostic Investigations Conducted
+          </h3> ${sortedTests.length === 0 ? '<div style="padding:20px; text-align:center; color:var(--text-muted);">No investigations conducted yet today.</div>' :
+            `<div style="display:flex; flex-direction:column; gap:10px;"> ${sortedTests.map(code => {
                 const count = testCounts[code];
                 const pct = Math.min(100, Math.round((count / Math.max(1, jobs.length)) * 100));
                 return `
@@ -4551,20 +4733,19 @@ function renderAnalyticsScreen(container) {
 
         <!-- Payment Mode Split -->
         <div style="background:var(--surface); border:1px solid var(--border-light); padding:16px;">
-          <h3 style="font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; margin:0 0 12px; color:var(--brand-blue);">
-            💳 Payment Mode Settlement Breakdown
+          <h3 style="font-size:13px; font-weight:700; text-transform:none; letter-spacing:0; margin:0 0 12px; color:var(--brand-blue);"> Payment Mode Settlement Breakdown
           </h3>
           <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-alt); border-left:3px solid #16703F;">
-              <span style="font-weight:700;">💵 Hard Cash Counter</span>
+              <span style="font-weight:700;"> Hard Cash Counter</span>
               <span style="font-weight:800; font-size:14px;">₹ ${cashRev}.00</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-alt); border-left:3px solid #0284c7;">
-              <span style="font-weight:700;">📱 UPI / GPay / Card</span>
+              <span style="font-weight:700;"> UPI / GPay / Card</span>
               <span style="font-weight:800; font-size:14px;">₹ ${digitalRev}.00</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-alt); border-left:3px solid #6b7280;">
-              <span style="font-weight:700;">🤝 Patient Balance / Due</span>
+              <span style="font-weight:700;"> Patient Balance / Due</span>
               <span style="font-weight:800; font-size:14px;">₹ 0.00</span>
             </div>
           </div>
@@ -4573,8 +4754,7 @@ function renderAnalyticsScreen(container) {
 
       <!-- Doctor Referral Accounting -->
       <div style="background:var(--surface); border:1px solid var(--border-light); padding:16px;">
-        <h3 style="font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; margin:0 0 12px; color:var(--brand-blue);">
-          🩺 Referring Clinician Referral & Incentive Statement
+        <h3 style="font-size:13px; font-weight:700; text-transform:none; letter-spacing:0; margin:0 0 12px; color:var(--brand-blue);"> Referring Clinician Referral & Incentive Statement
         </h3>
         <table style="width:100%; border-collapse:collapse;">
           <thead>
@@ -4586,8 +4766,7 @@ function renderAnalyticsScreen(container) {
               <th style="padding:8px 10px; text-align:right; font-size:10px; font-weight:700;">Incentive Payable (₹)</th>
             </tr>
           </thead>
-          <tbody>
-            ${DOCTORS.map(d => {
+          <tbody> ${DOCTORS.map(d => {
               const row = docComms[d.name] || { count: 0, billing: 0, comm: 0, pct: d.pct };
               return `
                 <tr style="border-bottom:1px solid var(--border-subtle);">

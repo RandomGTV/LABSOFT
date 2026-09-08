@@ -81,11 +81,13 @@ class SummariesScreen(QWidget):
         lay.setSpacing(12)
 
         self.mode = QComboBox()
+        self.mode.setAccessibleName("Period")
         self.mode.addItems(["Day sheet", "Month sheet"])
         self.mode.setFixedWidth(160)
         self.mode.currentIndexChanged.connect(lambda _i: self.refresh())
 
         self.date_edit = QDateEdit(QDate.currentDate())
+        self.date_edit.setAccessibleName("Date")
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setDisplayFormat("dd-MM-yyyy")
         self.date_edit.dateChanged.connect(lambda _d: self.refresh())
