@@ -15,12 +15,12 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-from PyQt6.QtCore import QPoint, QRect, QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QEvent, QPoint, QRect, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QComboBox, QCompleter, QFrame, QGridLayout, QGroupBox, QHBoxLayout, QLabel,
     QLayout, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QProgressBar,
-    QScrollArea, QSizePolicy, QSpinBox, QTextEdit, QVBoxLayout, QWidget,
+    QScrollArea, QSplitter, QSizePolicy, QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
 
 from .. import services
@@ -38,11 +38,11 @@ from .widgets import (
 #: Result-field column widths, in pixels. The header row and every result row
 #: use the same numbers, which is the only way a QGridLayout and a separate
 #: header bar can stay in step.
-LEFT_RAIL_W = 400
-RESULT_W = 150
-UNIT_W = 78
+LEFT_RAIL_W = 330
+RESULT_W = 120
+UNIT_W = 58
 RANGE_W = 132
-FLAG_W = 78
+FLAG_W = 64
 MENU_W = 34
 ROW_H = 52
 
@@ -277,29 +277,68 @@ class JobScreen(QWidget):
         outer.setSpacing(0)
 
         outer.addWidget(self._build_status_rail())
+        self.step_buttons = {}
         steps = QHBoxLayout()
         steps.setContentsMargins(18, 8, 18, 8)
         for title, action in (("1. Patient", "patient"), ("2. Tests", "tests"),
                               ("3. Results", "results"), ("4. Review", "review"),
                               ("5. Deliver", "deliver")):
-            steps.addWidget(button(title, "quiet", lambda checked=False, a=action: self._go_step(a)))
+            step_button = button(title, "quiet", lambda checked=False, a=action: self._go_step(a))
+            step_button.setCheckable(True)
+            step_button.setObjectName("workflowStep")
+            self.step_buttons[action] = step_button
+            steps.addWidget(step_button)
         outer.addLayout(steps)
 
         body = QWidget()
         body_lay = QHBoxLayout(body)
         body_lay.setContentsMargins(0, 0, 0, 0)
         body_lay.setSpacing(0)
-        body_lay.addWidget(self._build_left_rail())
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setChildrenCollapsible(False)
+        intake = self._build_left_rail()
+        intake.setMinimumWidth(280)
+        intake.setMaximumWidth(440)
+        splitter.addWidget(intake)
 
         right = QWidget()
         right_lay = QVBoxLayout(right)
         right_lay.setContentsMargins(0, 0, 0, 0)
         right_lay.setSpacing(0)
+        self.billing_toggle = button("Show billing details", "quiet", self._toggle_billing)
+        bill_toggle = self.billing_toggle
+        bill_toggle.setToolTip("Expand or collapse billing details; F4 opens billing")
+        right_lay.addWidget(bill_toggle)
         right_lay.addWidget(self._build_bill())
+        self.bill_box.hide()
         right_lay.addWidget(self._build_results(), 1)
-        body_lay.addWidget(right, 1)
+        splitter.addWidget(right)
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([330, 1000])
+        body_lay.addWidget(splitter, 1)
 
         outer.addWidget(body, 1)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        width = self.parentWidget().width() if self.parentWidget() else self.width()
+        self._adapt_layout(width)
+
+    def eventFilter(self, watched, event):
+        if event.type() == QEvent.Type.Resize:
+            self._adapt_layout(event.size().width())
+        return super().eventFilter(watched, event)
+
+    def _adapt_layout(self, width):
+        if not hasattr(self, "results_split"):
+            return
+        narrow = width < 1150
+        orientation = Qt.Orientation.Vertical if narrow else Qt.Orientation.Horizontal
+        changed = self.results_split.orientation() != orientation
+        self.results_split.setOrientation(orientation)
+        self.counsel_scroll.setMaximumWidth(16777215 if narrow else 300)
+        if changed:
+            self.results_split.setSizes([650, 240] if narrow else [800, 264])
 
     # -- the rail across the top ---------------------------------------
     def _build_status_rail(self) -> QWidget:
@@ -321,7 +360,7 @@ class JobScreen(QWidget):
         # to touch.
         who = QFrame()
         who.setObjectName("railLeft")
-        who.setFixedWidth(LEFT_RAIL_W)
+        who.setMinimumWidth(460)
         who_lay = QHBoxLayout(who)
         who_lay.setContentsMargins(16, 8, 12, 8)
         who_lay.setSpacing(14)
@@ -339,7 +378,7 @@ class JobScreen(QWidget):
         self.due_label.setProperty("role", "hint")
         self.due_label.setMinimumWidth(120)
         who_lay.addLayout(self._rail_item("Due", self.due_label), 1)
-        lay.addWidget(who)
+        lay.addWidget(who, 1)
 
         self.status_label = label("", "hint")
         self.progress_label = label("", "hint")
@@ -364,7 +403,7 @@ class JobScreen(QWidget):
         lay.addWidget(self.message)
 
         self.clear_button = button("New job", "", self.new_job, "Start a fresh job (F2)"); self.clear_button.setIcon(icons.get_icon("new_job", style.INK2, 16))
-        self.whatsapp_button = button("WhatsApp", "", self._open_whatsapp_dispatch, "Send structured WhatsApp report", "F8"); self.whatsapp_button.setIcon(icons.get_icon("whatsapp", style.GREEN, 16))
+        self.whatsapp_button = button("WhatsApp", "", self._open_whatsapp_dispatch, "Send structured WhatsApp report", "F8"); self.whatsapp_button.setIcon(icons.get_icon("send", style.GREEN, 16))
         self.preview_button = button("Preview", "", self.preview, "Look at the report before sending it"); self.preview_button.setIcon(icons.get_icon("preview", style.INK2, 16))
         self.verify_button = button("Check && make report", "go", self.verify, "Check every test is filled in, then make the report", "F9"); self.verify_button.setIcon(icons.get_icon("check_report", style.ON_ACCENT, 16))
         for b in (self.clear_button, self.whatsapp_button, self.preview_button, self.verify_button):
@@ -390,7 +429,7 @@ class JobScreen(QWidget):
     def _build_left_rail(self) -> QWidget:
         rail = QFrame()
         rail.setObjectName("leftRail")
-        rail.setFixedWidth(LEFT_RAIL_W)
+        rail.setMinimumWidth(280)
         lay = QVBoxLayout(rail)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
@@ -468,10 +507,12 @@ class JobScreen(QWidget):
         grid.addWidget(self.phone_edit, 3, 0)
         grid.addWidget(self.sex_combo, 3, 1)
         grid.addWidget(label("Age", "micro"), 4, 0)
-        grid.addWidget(label("Referred by", "micro"), 4, 1)
+        grid.addWidget(label("Referred by", "micro"), 6, 0, 1, 2)
         age_row = row(self.age_spin, self.age_unit)
-        grid.addWidget(age_row, 5, 0)
-        grid.addWidget(self.referrer_combo, 5, 1)
+        self.age_spin.setMinimumWidth(80)
+        self.age_unit.setMinimumWidth(110)
+        grid.addWidget(age_row, 5, 0, 1, 2)
+        grid.addWidget(self.referrer_combo, 7, 0, 1, 2)
         grid.setColumnStretch(0, 3)
         grid.setColumnStretch(1, 2)
         self.initial_edit.setMaximumWidth(84)
@@ -553,10 +594,10 @@ class JobScreen(QWidget):
         """What is owed, in ink, at the size the counter argues about."""
         self.bill_box = QFrame()
         self.bill_box.setObjectName("moneyBand")
-        self.bill_box.setFixedHeight(96)
+        self.bill_box.setMinimumHeight(84)
         lay = QHBoxLayout(self.bill_box)
         lay.setContentsMargins(20, 12, 20, 12)
-        lay.setSpacing(28)
+        lay.setSpacing(12)
 
         self.bill_summary = label("—", "money")
         net = QVBoxLayout()
@@ -591,13 +632,22 @@ class JobScreen(QWidget):
         lay.addWidget(self.bill_button2)
         return self.bill_box
 
+    def _toggle_billing(self) -> None:
+        from ..core import auth
+        if not auth.can(auth.P_BILL):
+            return
+        visible = self.bill_box.isHidden()
+        self.bill_box.setVisible(visible)
+        self.billing_toggle.setText("Hide billing details" if visible else "Show billing details")
+
     def _refresh_bill(self) -> None:
         from ..core import auth, billing
 
         if not auth.can(auth.P_BILL):
             self.bill_box.hide()
+            self.billing_toggle.hide()
             return
-        self.bill_box.show()
+        self.billing_toggle.setVisible(True)
 
         # Nothing to print until the job exists and has tests on it.
         self.bill_print_button.setEnabled(bool(self.job_id and self.test_ids))
@@ -669,6 +719,8 @@ class JobScreen(QWidget):
         self.blockers.setStyleSheet(f"color: {style.INK2};")
         action = "patient" if problem else "tests" if not self.test_ids else "results" if pending else "review"
         self.next_step = action
+        for key, step_button in self.step_buttons.items():
+            step_button.setChecked(key == action)
         self.next_button.setText({"patient": "Complete patient details", "tests": "Choose tests",
                                   "results": "Go to first empty result", "review": "Review report"}[action])
 
@@ -737,7 +789,7 @@ class JobScreen(QWidget):
 
         head = QFrame()
         head.setObjectName("resultsHead")
-        head.setFixedHeight(30)
+        head.setFixedHeight(40)
         head_lay = QHBoxLayout(head)
         head_lay.setContentsMargins(18, 0, 18, 0)
         head_lay.setSpacing(12)
@@ -793,8 +845,24 @@ class JobScreen(QWidget):
         foot_lay.addWidget(self.bill_button)
         lay.addWidget(foot)
 
-        wrap_lay.addWidget(self.results_box, 1)
-        wrap_lay.addWidget(self._build_counsel())
+        panels = QSplitter(Qt.Orientation.Horizontal)
+        self.results_split = panels
+        panels.setChildrenCollapsible(False)
+        panels.addWidget(self.results_box)
+        counsel = self._build_counsel()
+        self.counsel_panel = counsel
+        counsel.setMinimumWidth(240)
+        counsel.setMaximumWidth(340)
+        self.counsel_scroll = QScrollArea()
+        self.counsel_scroll.setWidgetResizable(True)
+        self.counsel_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        counsel.setMaximumWidth(16777215)
+        self.counsel_scroll.setWidget(counsel)
+        self.counsel_scroll.setMinimumWidth(250)
+        panels.addWidget(self.counsel_scroll)
+        panels.setStretchFactor(0, 1)
+        panels.setSizes([800, 264])
+        wrap_lay.addWidget(panels)
         return wrap
 
     def _build_counsel(self) -> QWidget:
@@ -805,7 +873,7 @@ class JobScreen(QWidget):
         """
         panel = QFrame()
         panel.setObjectName("counsel")
-        panel.setFixedWidth(292)
+        panel.setMinimumWidth(240)
         lay = QVBoxLayout(panel)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
@@ -853,7 +921,9 @@ class JobScreen(QWidget):
         inner = QVBoxLayout(block)
         inner.setContentsMargins(16, 14, 16, 14)
         inner.setSpacing(7)
-        inner.addWidget(label(caption, "micro"))
+        heading = label(caption, "micro")
+        heading.setWordWrap(True)
+        inner.addWidget(heading)
         return block, inner
 
     # -------------------------------------------------------------- lifecycle
@@ -1278,7 +1348,7 @@ class JobScreen(QWidget):
                 sl.setContentsMargins(18, 0, 18, 0)
                 sl.addWidget(label(group, "group"))
                 sl.addStretch(1)
-                rem_btn = button("✕ Remove group", "quiet", lambda _c=False, g=group: self._remove_group(g))
+                rem_btn = button("Remove group", "quiet", lambda _c=False, g=group: self._remove_group(g))
                 rem_btn.setStyleSheet(f"font-size: 8pt; color: {style.ACCENT_INK};")
                 sl.addWidget(rem_btn)
                 self.grid.addWidget(strip, r, 0, 1, 6)
@@ -1319,7 +1389,9 @@ class JobScreen(QWidget):
                 self.grid.addWidget(rr.flag_label, r, 4)
                 self.grid.setRowMinimumHeight(r, ROW_H)
 
-            menu_button = button("⋯", "quiet")
+            menu_button = button("", "quiet")
+            menu_button.setIcon(icons.get_icon("menu"))
+            menu_button.setAccessibleName("More actions for " + t["name"])
             menu_button.setFixedWidth(MENU_W)
             menu_button.setToolTip("More for this test")
             menu_button.clicked.connect(

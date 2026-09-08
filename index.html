@@ -1571,6 +1571,78 @@
   .modal-dialog-body:has(.report-page),
   .modal-dialog-body:has(.pos-receipt) { background: var(--paper-mount); }
 
+
+/* Clinical Clarity: one authoritative screen layer; printed paper stays independent. */
+@media screen {
+ body { --brand:#0F766E; --accent-ink:#0F766E; --brand-dark:#115E59; --brand-soft:#E6F4F1; --bg:#F3F6F8; --ink-3:#526477; --accent-red:#B91C1C; }
+ body.dark { --brand:#5EEAD4; --accent-ink:#5EEAD4; --brand-dark:#99F6E4; --brand-soft:#123C3A; --bg:#101820; --panel:#192630; --fill:#14212B; --ink:#ECF3F7; --ink-2:#C4D2DC; --ink-3:#A1B3C1; --line:#3D5262; --line-2:#2D414F; --on-accent:#102A2A; }
+ body:not(.auth-mode) .app-container { display:grid; grid-template-columns:180px minmax(0,1fr); grid-template-rows:64px minmax(0,1fr); max-width:none; width:100%; min-height:100dvh; margin:0; border:0; }
+ .top-header { grid-column:1/-1; height:64px; padding:0 22px; gap:16px; }
+ .nav-bar { grid-column:1; grid-row:2; display:flex; flex-direction:column; align-items:stretch; padding:16px 10px; gap:5px; border:0; border-right:1px solid var(--line-2); background:var(--panel); }
+ .nav-tab { display:flex; align-items:center; justify-content:flex-start; gap:12px; flex:none; height:44px; padding:0 12px; border:0; border-radius:8px; font-size:13px; font-weight:600; color:var(--ink-2); }
+ .nav-tab.active { background:var(--brand-soft); color:var(--accent-ink); border:0; }
+ #main-content { grid-column:2; grid-row:2; min-width:0; padding:20px; gap:14px; }
+ body.nav-compact .app-container { grid-template-columns:64px minmax(0,1fr); }
+ body.nav-compact .nav-label { display:none; }
+ .keyboard-hud-bar { display:none; }
+ body.shortcuts-open .keyboard-hud-bar { display:flex; position:fixed; z-index:30; bottom:16px; left:80px; right:24px; height:auto; min-height:44px; flex-wrap:wrap; border-radius:10px; box-shadow:var(--shadow-lg); padding:10px; }
+ .btn-m, .btn-m.primary { border-radius:8px; min-height:36px; font-weight:600; letter-spacing:0; box-shadow:none; }
+ .btn-m.primary { background:var(--accent-ink); color:var(--on-accent); border-color:var(--accent-ink); }
+ .btn-m.primary:hover { background:var(--brand-dark); color:var(--on-accent); }
+ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:2px solid var(--brand); outline-offset:3px; }
+ .icon-svg { display:inline-flex; align-items:center; flex-shrink:0; vertical-align:middle; }
+ .desktop-body-grid { grid-template-columns:250px minmax(0,1fr) 250px; min-height:0; border:1px solid var(--line-2); border-radius:12px; overflow:hidden; }
+ .desktop-left-rail, .desktop-counsel-rail { min-width:0; background:var(--panel); }
+ .desktop-results-head, .desktop-result-row { grid-template-columns:minmax(120px,1fr) 116px 58px 132px 72px 28px; gap:10px; padding:12px; }
+ .desktop-result-row:focus-within { background:var(--brand-soft) !important; box-shadow:inset 3px 0 var(--brand); }
+ .desktop-result-row input, .desktop-result-row select { background:var(--panel); color:var(--ink); border-color:var(--field-border) !important; border-radius:6px; font-variant-numeric:tabular-nums; }
+ .desktop-result-row input[readonly] { background:var(--fill); color:var(--ink-3); border-style:dashed !important; }
+ .desktop-results-body { min-height:300px; }
+ .desktop-counsel-rail textarea { background:var(--panel) !important; color:var(--ink); border:1px solid var(--field-border) !important; min-height:90px; }
+ .desktop-counsel-rail .counsel-section { padding:16px; }
+ .desktop-counsel-rail .counsel-section:last-child { display:none; }
+ .billing-details { border-bottom:1px solid var(--line-2); background:var(--fill); }
+ .billing-details summary { padding:14px 18px; cursor:pointer; color:var(--ink-2); font-weight:600; }
+ .desktop-money-band { min-height:72px; padding:14px; gap:12px; }
+ .money-stat .m-val.large { font-size:22px; }
+ .rail-left-box { width:auto !important; min-width:280px; max-width:50%; }
+ .rail-item .r-val { max-width:none !important; white-space:normal; }
+ #queue-table { font-variant-numeric:tabular-nums; }
+ #queue-table thead th { position:sticky; top:0; background:var(--fill); z-index:1; }
+ #queue-table tbody tr:hover { background:var(--brand-soft); }
+ #queue-table td { padding-top:16px !important; padding-bottom:16px !important; }
+ .queue-toolbar { flex-wrap:wrap; gap:16px !important; border:1px solid var(--line-2) !important; border-radius:12px; }
+ .queue-table-wrap { border:1px solid var(--line-2); border-radius:12px; }
+ .workflow { border:1px solid var(--line-2); border-radius:10px; }
+ @media(max-width:1300px) { .desktop-body-grid { grid-template-columns:260px minmax(0,1fr); } .desktop-counsel-rail { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr 1fr; border-top:1px solid var(--line-2); } }
+ @media(max-width:900px) { body:not(.auth-mode) .app-container { grid-template-columns:64px minmax(0,1fr); } .nav-label { display:none; } .top-header { flex-wrap:wrap; height:auto; min-height:64px; padding:10px; } .top-header > div:nth-of-type(2) { display:none; } #main-content { padding:10px; } .desktop-body-grid { display:flex; flex-direction:column; } .desktop-counsel-rail { display:block; } .desktop-results-body { overflow:auto; } .desktop-result-row,.desktop-results-head { min-width:620px; } .rail-right-actions { flex-wrap:wrap; } }
+ .nav-bar { height:auto; min-height:0; max-height:none; overflow-y:auto; }
+ #main-content > * { flex-shrink:0; }
+ .desktop-body-grid { overflow:visible; }
+ .desktop-status-rail { height:auto; min-height:64px; flex-wrap:wrap; gap:12px; padding:10px 12px; border:1px solid var(--line-2); border-radius:10px; background:var(--panel); }
+ .desktop-status-rail .rail-left-box { flex:1; min-width:280px; max-width:none; background:transparent; border:0; padding:0; }
+ .desktop-status-rail .val-lbl { max-width:none; white-space:normal; overflow:visible; font-size:14px; }
+ .desktop-status-rail .rail-right-actions { flex-wrap:wrap; margin-left:auto; }
+ .queue-table-wrap { min-height:240px; flex-shrink:1 !important; }
+ .patient-grid-ui > div:nth-child(5), .patient-grid-ui > div:nth-child(6) { grid-column:1/-1; }
+ .desktop-counsel-rail { align-self:start; position:sticky; top:0; }
+ @media(max-width:1300px) { .desktop-counsel-rail { position:static; } }
+ #queue-details { position:fixed; inset:0 0 0 auto; margin:0; width:min(460px,100vw); max-width:100vw; height:100dvh; max-height:100dvh; padding:28px; border:0; border-left:1px solid var(--line); background:var(--panel); color:var(--ink); box-shadow:var(--shadow-xl); }
+ #queue-details::backdrop { background:rgb(10 25 41 / 40%); }
+ #queue-details h2 { font-size:26px; margin:28px 0 8px; }
+ #queue-details h3 { font-size:14px; margin-top:28px; }
+ .overview-progress { padding:18px; background:var(--fill); border-radius:10px; margin:24px 0; }
+ .overview-progress progress { display:block; width:100%; margin-top:12px; accent-color:var(--brand); }
+ .overview-tests { list-style:none; padding:0; }
+ .overview-tests li { display:flex; justify-content:space-between; gap:20px; padding:14px 0; border-bottom:1px solid var(--line-2); font-size:13px; }
+ .overview-tests li span:last-child { color:var(--ink-3); }
+ .workflow button[aria-current="step"] { background:var(--brand-soft) !important; color:var(--accent-ink) !important; border-color:var(--brand) !important; }
+ body:not(.auth-mode) .app-container { height:100dvh; overflow:hidden; }
+ #main-content { overflow:auto; }
+ .nav-bar { overflow-y:auto; }
+ @media(max-width:900px) { .desktop-top-rail { flex-wrap:wrap; height:auto; min-height:64px; } .rail-left-box { max-width:100%; } }
+ @media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; } }
+}
 </style>
 </head>
 <body>
@@ -1830,38 +1902,10 @@ let DOCTORS = JSON.parse(localStorage.getItem("labsoft_docs_v2") || "null") || [
 /* --------------------------------------------------------------------------
    Medical & UI SVG Iconography Engine (Zero External Dependencies)
    -------------------------------------------------------------------------- */
-function getIcon(name, size = 16, color = "currentColor", strokeWidth = 2) {
-  const icons = {
-    "job": `<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>`,
-    "queue": `<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h6"/>`,
-    "patients": `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`,
-    "doctors": `<path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/>`,
-    "tests": `<path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/>`,
-    "billing": `<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>`,
-    "analytics": `<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>`,
-    "summaries": `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>`,
-    "staff": `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`,
-    "settings": `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>`,
-    "printer": `<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>`,
-    "whatsapp": `<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>`,
-    "barcode": `<path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/>`,
-    "sparkles": `<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>`,
-    "plus": `<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>`,
-    "trash": `<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>`,
-    "x": `<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>`,
-    "search": `<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>`,
-    "alert": `<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
-    "check": `<polyline points="20 6 9 17 4 12"/>`,
-    "sun": `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`,
-    "moon": `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`,
-    "info": `<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>`,
-    "logout": `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>`,
-    "user": `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
-    "download": `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>`
-  };
-
-  const svgBody = icons[name] || icons["info"];
-  return `<span class="icon-svg" style="width:${size}px; height:${size}px; color:${color};"><svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">${svgBody}</svg></span>`;
+// Shared icon catalog. Generated by sync_web_icons.py; no network needed.
+const ICON_PATHS = {"job": "<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/>", "queue": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M7 8h10\"/><path d=\"M7 12h10\"/><path d=\"M7 16h6\"/>", "patients": "<path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>", "doctors": "<path d=\"M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3\"/><path d=\"M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4\"/><circle cx=\"20\" cy=\"10\" r=\"2\"/>", "tests": "<path d=\"M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2\"/><path d=\"M8.5 2h7\"/><path d=\"M7 16h10\"/>", "billing": "<rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"/><line x1=\"2\" y1=\"10\" x2=\"22\" y2=\"10\"/>", "analytics": "<line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"10\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"14\"/>", "summaries": "<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/>", "staff": "<path d=\"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/>\n        <circle cx=\"9\" cy=\"7\" r=\"4\"/>\n        <path d=\"M23 21v-2a4 4 0 0 0-3-3.87\"/>\n        <path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>", "settings": "<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z\"/>", "printer": "<polyline points=\"6 9 6 2 18 2 18 9\"/><path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"/><rect x=\"6\" y=\"14\" width=\"12\" height=\"8\"/>", "whatsapp": "<path d=\"M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z\"/>", "barcode": "<path d=\"M3 5v14\"/><path d=\"M8 5v14\"/><path d=\"M12 5v14\"/><path d=\"M17 5v14\"/><path d=\"M21 5v14\"/>", "sparkles": "<path d=\"m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z\"/>", "plus": "<line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"/><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/>", "trash": "<polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/>", "x": "<line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"/><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/>", "alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z\"/><line x1=\"12\" y1=\"9\" x2=\"12\" y2=\"13\"/><line x1=\"12\" y1=\"17\" x2=\"12.01\" y2=\"17\"/>", "check": "<polyline points=\"20 6 9 17 4 12\"/>", "sun": "<circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/>", "moon": "<path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"/>", "info": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"16\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"8\" x2=\"12.01\" y2=\"8\"/>", "logout": "<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><polyline points=\"16 17 21 12 16 7\"/><line x1=\"21\" y1=\"12\" x2=\"9\" y2=\"12\"/>", "user": "<path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>", "download": "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/>", "new_job": "<line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"/><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/>", "preview": "<path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", "check_report": "<polyline points=\"20 6 9 17 4 12\"/>", "pos": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1-2 1z\"/>\n        <line x1=\"8\" y1=\"7\" x2=\"16\" y2=\"7\"/>\n        <line x1=\"8\" y1=\"11\" x2=\"16\" y2=\"11\"/>\n        <line x1=\"8\" y1=\"15\" x2=\"13\" y2=\"15\"/>", "print": "<polyline points=\"6 9 6 2 18 2 18 9\"/><path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"/><rect x=\"6\" y=\"14\" width=\"12\" height=\"8\"/>", "bill": "<rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"/><line x1=\"2\" y1=\"10\" x2=\"22\" y2=\"10\"/>", "save": "<path d=\"M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z\"/>\n        <polyline points=\"17 21 17 13 7 13 7 21\"/>\n        <polyline points=\"7 3 7 8 15 8\"/>", "send": "<path d=\"m22 2-7 20-4-9-9-4Z\"/><path d=\"m22 2-11 11\"/>", "menu": "<path d=\"M4 6h16M4 12h16M4 18h16\"/>", "chevron": "<path d=\"m9 5 7 7-7 7\"/>"};
+function getIcon(name, size = 18, color = "currentColor") {
+  return `<span class="icon-svg" aria-hidden="true" style="width:${size}px;height:${size}px;color:${color};"><svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" focusable="false">${ICON_PATHS[name] || ICON_PATHS.info}</svg></span>`;
 }
 
 
@@ -2064,6 +2108,7 @@ function render() {
   root.innerHTML = `
     <!-- Top Header Bar -->
     <header class="top-header">
+      <button class="btn-m" aria-label="Toggle navigation labels" aria-expanded="${!document.body.classList.contains('nav-compact')}" onclick="document.body.classList.toggle('nav-compact'); this.setAttribute('aria-expanded',String(!document.body.classList.contains('nav-compact')))">${getIcon('menu')}</button>
       <div style="font-weight:900; letter-spacing:2px; font-size:14px; color:#FFFFFF; display:flex; align-items:center; gap:8px;"> ${getIcon('tests', 16, '#38BDF8')} LABSOFT
       </div>
       <div style="font-size:11.5px; color:#94A3B8;">${LAB_CONFIG.name || 'MITHRA'} · demonstration in your browser</div>
@@ -2072,21 +2117,22 @@ function render() {
         <button onclick="signOut()" class="btn-m" style="background:#DC2626; color:#fff; border:none; height:26px; padding:0 10px; font-size:11px;">${getIcon('logout', 13)} Sign Out</button>
       </div>
       <button class="btn-m" onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="height:28px; padding:0 10px; font-size:11.5px;">${currentTheme==='dark'?getIcon('sun', 14, '#FBBF24'):getIcon('moon', 14, '#0A3668')} ${currentTheme==='dark'?'Light':'Dark'}</button>
+      <button class="btn-m" aria-label="Show keyboard shortcuts" onclick="document.body.classList.toggle('shortcuts-open')">Shortcuts</button>
       <button class="btn-m" onclick="showAbout()" title="About & Credits" style="height:28px; padding:0 10px; font-size:11.5px;">${getIcon('info', 14)} About</button>
     </header>
 
-    <!-- Navigation Tabs -->
-    <nav class="nav-bar">
-      <button class="nav-tab ${currentTab==='job'?'active':''}" onclick="setTab('job')">${getIcon('job', 15)} 01. Job (F2)</button>
-      <button class="nav-tab ${currentTab==='queue'?'active':''}" onclick="setTab('queue')">${getIcon('queue', 15)} 02. Queue</button>
-      <button class="nav-tab ${currentTab==='patients'?'active':''}" onclick="setTab('patients')">${getIcon('patients', 15)} 03. Patients</button>
-      <button class="nav-tab ${currentTab==='doctors'?'active':''}" onclick="setTab('doctors')">${getIcon('doctors', 15)} 04. Doctors</button>
-      <button class="nav-tab ${currentTab==='tests'?'active':''}" onclick="setTab('tests')">${getIcon('tests', 15)} 05. Tests</button>
-      <button class="nav-tab ${currentTab==='billing'?'active':''}" onclick="setTab('billing')">${getIcon('billing', 15)} 06. Billing (F4)</button>
-      <button class="nav-tab ${currentTab==='analytics'?'active':''}" onclick="setTab('analytics')">${getIcon('analytics', 15)} 07. Day Book (F10)</button>
-      <button class="nav-tab ${currentTab==='summaries'?'active':''}" onclick="setTab('summaries')">${getIcon('summaries', 15)} 08. Summaries</button>
-      <button class="nav-tab ${currentTab==='staff'?'active':''}" onclick="setTab('staff')">${getIcon('staff', 15)} 09. Staff</button>
-      <button class="nav-tab ${currentTab==='settings'?'active':''}" onclick="setTab('settings')">${getIcon('settings', 15)} 10. Settings</button>
+    <!-- Navigation -->
+    <nav class="nav-bar" aria-label="Main navigation">
+      <button class="nav-tab ${currentTab==='job'?'active':''}" onclick="setTab('job')" title="Job (F2)">${getIcon('job', 15)} <span class="nav-label">Job (F2)</span></button>
+      <button class="nav-tab ${currentTab==='queue'?'active':''}" onclick="setTab('queue')" title="Queue">${getIcon('queue', 15)} <span class="nav-label">Queue</span></button>
+      <button class="nav-tab ${currentTab==='patients'?'active':''}" onclick="setTab('patients')" title="Patients">${getIcon('patients', 15)} <span class="nav-label">Patients</span></button>
+      <button class="nav-tab ${currentTab==='doctors'?'active':''}" onclick="setTab('doctors')" title="Doctors">${getIcon('doctors', 15)} <span class="nav-label">Doctors</span></button>
+      <button class="nav-tab ${currentTab==='tests'?'active':''}" onclick="setTab('tests')" title="Tests">${getIcon('tests', 15)} <span class="nav-label">Tests</span></button>
+      <button class="nav-tab ${currentTab==='billing'?'active':''}" onclick="setTab('billing')" title="Billing (F4)">${getIcon('billing', 15)} <span class="nav-label">Billing (F4)</span></button>
+      <button class="nav-tab ${currentTab==='analytics'?'active':''}" onclick="setTab('analytics')" title="Day Book (F10)">${getIcon('analytics', 15)} <span class="nav-label">Day Book (F10)</span></button>
+      <button class="nav-tab ${currentTab==='summaries'?'active':''}" onclick="setTab('summaries')" title="Summaries">${getIcon('summaries', 15)} <span class="nav-label">Summaries</span></button>
+      <button class="nav-tab ${currentTab==='staff'?'active':''}" onclick="setTab('staff')" title="Staff">${getIcon('staff', 15)} <span class="nav-label">Staff</span></button>
+      <button class="nav-tab ${currentTab==='settings'?'active':''}" onclick="setTab('settings')" title="Settings">${getIcon('settings', 15)} <span class="nav-label">Settings</span></button>
     </nav>
 
     
@@ -2480,7 +2526,7 @@ function renderJobScreen(container) {
   });
 
   container.innerHTML = `
-    <nav aria-label="Job workflow" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);">
+    <nav class="workflow" aria-label="Job workflow" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);">
       ${['patient','tests','results','review','deliver'].map((step,i) => `<button class="btn-m ${jobReadiness(activeJob).step === step ? 'primary' : ''}" data-job-step="${step}" ${jobReadiness(activeJob).step === step ? 'aria-current="step"' : ''} onclick="jobStep('${step}')">${i+1}. ${titleCase(step)}</button>`).join('')}
     </nav>
     <!-- Top Status Rail -->
@@ -2503,10 +2549,10 @@ function renderJobScreen(container) {
       </div>
 
       <div class="rail-right-actions">
-        <button class="btn-m" onclick="newJob()" title="Start a fresh job (F2)">New job</button>
-        <button class="btn-m" style="background:#25D366; color:#ffffff; font-weight:700; border:none;" onclick="openWhatsAppDispatchModal(activeJob)" title="Send structured WhatsApp report (F8)"> WhatsApp</button>
-        <button class="btn-m" onclick="openReportPreview(activeJob)" title="Look at the report before sending it">Preview</button>
-        <button class="btn-m ${ready?'primary':''}" style="${ready?'background:#059669; border-color:#059669; color:#FFFFFF;':'background:#CBD5E1; color:#64748B; border:none;'}" onclick="openReportPreview(activeJob)" title="Check every test is filled in, then make the report (F9)">Check & make report</button>
+        <button class="btn-m" onclick="newJob()" title="Start a fresh job (F2)">${getIcon('plus')} New job</button>
+        <button class="btn-m"  onclick="openWhatsAppDispatchModal(activeJob)" title="Send structured WhatsApp report (F8)">${getIcon('send')} WhatsApp</button>
+        <button class="btn-m" onclick="openReportPreview(activeJob)" title="Look at the report before sending it">${getIcon('preview')} Preview</button>
+        <button class="btn-m ${ready?'primary':''}"  onclick="openReportPreview(activeJob)" title="Check every test is filled in, then make the report (F9)">${getIcon('check')} Check & make report</button>
       </div>
     </div>
 
@@ -2584,6 +2630,7 @@ function renderJobScreen(container) {
       <!-- 2. Center Working Field -->
       <div style="background:var(--panel); border-right:1px solid var(--line-2); display:flex; flex-direction:column;">
         <!-- Money Band -->
+        <details class="billing-details"><summary>Billing · ₹ ${netPayable}.00 net · ₹ ${outstanding}.00 outstanding</summary>
         <div class="desktop-money-band">
           <div class="money-stat">
             <span class="m-lbl">Net payable</span>
@@ -2607,11 +2654,12 @@ function renderJobScreen(container) {
           </div>
 
           <div class="money-band-actions">
-            <button class="btn-m" onclick="openPOSReceiptModal(activeJob)" title="Open 80mm POS Thermal Slip" style="background:transparent; color:var(--on-money); border:1px solid var(--bar-muted);">Counter slip</button>
-            <button class="btn-m" onclick="openBillModal()" title="Print the A4 bill" style="background:transparent; color:var(--on-money); border:1px solid var(--bar-muted);">Print bill…</button>
+            <button class="btn-m" onclick="openPOSReceiptModal(activeJob)" title="Open 80mm POS Thermal Slip" style="background:transparent; color:var(--on-money); border:1px solid var(--bar-muted);">${getIcon('pos')} Counter slip</button>
+            <button class="btn-m" onclick="openBillModal()" title="Print the A4 bill" style="background:transparent; color:var(--on-money); border:1px solid var(--bar-muted);">${getIcon('print')} Print bill…</button>
             <button class="btn-m" onclick="openBillModal()" style="background:var(--on-money); color:var(--money-band); font-weight:700; border:none;">Make the bill</button>
           </div>
         </div>
+        </details>
 
         <!-- Results Table Header -->
         <div class="desktop-results-head">
@@ -2990,6 +3038,27 @@ function verifyAndCompleteJob() {
    02. Work Queue Screen
    -------------------------------------------------------------------------- */
 
+let queueScroll = 0;
+function uiText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function openQueueDetails(index) {
+  const job = jobs[index];
+  if (!job) return;
+  const dialog = document.getElementById('queue-details');
+  const missing = jobReadiness(job).missing.length;
+  dialog.innerHTML = `<form method="dialog" style="display:flex;align-items:center;justify-content:space-between;gap:20px;">
+    <span class="stat-label">Job overview</span><button class="btn-m" aria-label="Close job overview">${getIcon('x')}</button></form>
+    <h2 id="queue-details-title">${uiText(job.name)}</h2>
+    <p style="color:var(--ink-3)">#${uiText(job.report_no)} · ${uiText(job.mobile)} · ${uiText(job.sex)}</p>
+    <div class="overview-progress"><strong>${job.tests.length - missing} / ${job.tests.length} results entered</strong>
+    <progress value="${job.tests.length - missing}" max="${Math.max(1,job.tests.length)}" aria-label="Results entered"></progress></div>
+    <h3>Investigations</h3><ul class="overview-tests">${job.tests.map(code => `<li><span>${uiText(TESTS[code]?.n || code)}</span><span>${String(job.results?.[code] ?? '').trim() ? 'Entered' : 'Pending'}</span></li>`).join('') || '<li>No tests selected</li>'}</ul>
+    <p style="color:var(--ink-3)">Next: ${missing ? 'complete the remaining results' : job.tests.length ? 'review the report before delivery' : 'choose tests'}.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;"><button class="btn-m primary" onclick="document.getElementById('queue-details').close();activeJob=JSON.parse(JSON.stringify(jobs[${index}]));setTab('job')">${getIcon('job')} Continue job</button>
+    <button class="btn-m" onclick="document.getElementById('queue-details').close();openReportPreview(jobs[${index}])">${getIcon('preview')} Report preview</button></div>`;
+  dialog.showModal();
+}
 let queueScope = 'all';
 let queueSearch = '';
 function renderQueueScreen(container) {
@@ -2999,7 +3068,7 @@ function renderQueueScreen(container) {
 
   container.innerHTML = `
     <!-- Top Filter Header -->
-    <div style="background:var(--surface); border-bottom:2px solid var(--border); padding:14px 18px; display:flex; align-items:center; gap:20px;">
+    <div class="queue-toolbar" style="background:var(--surface); border-bottom:2px solid var(--border); padding:14px 18px; display:flex; align-items:center; gap:20px;">
       <div style="flex:0 0 320px;">
         <div class="stat-label">Search Work Queue</div>
         <input type="text" class="field-input" placeholder="Report no, name or mobile — filters live…" oninput="filterQueueLive(this.value)">
@@ -3034,7 +3103,7 @@ function renderQueueScreen(container) {
       <span id="queue-count" role="status" style="align-self:center;color:var(--ink-3);"></span>
     </div>
     <!-- Queue Table -->
-    <div style="flex:1; background:var(--surface); overflow:auto;">
+    <div class="queue-table-wrap" style="flex:1; background:var(--surface); overflow:auto;">
       <table style="width:100%; border-collapse:collapse;" id="queue-table">
         <thead>
           <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
@@ -3060,8 +3129,8 @@ function renderQueueScreen(container) {
                   <span class="status-pill sp-${j.status}">${j.status}</span>
                 </td>
                 <td style="padding:10px 14px; text-align:right;">
-                  <button class="btn-m" onclick="openReportPreview(jobs.find(x=>x.id===${j.id}))"> Preview</button>
-                  <button class="btn-m" onclick="activeJob=JSON.parse(JSON.stringify(jobs.find(x=>x.id===${j.id}))); setTab('job');"> Open</button>
+                  <button class="btn-m" onclick="openQueueDetails(${index})">${getIcon('preview')} Quick view</button>
+                  <button class="btn-m" onclick="activeJob=JSON.parse(JSON.stringify(jobs.find(x=>x.id===${j.id}))); setTab('job');">${getIcon('job')} Open</button>
                 </td>
               </tr>
             `).join("")
@@ -3069,7 +3138,11 @@ function renderQueueScreen(container) {
         </tbody>
       </table>
     </div>
+    <dialog id="queue-details" aria-labelledby="queue-details-title"></dialog>
   `;
+  const tableWrap = container.querySelector('.queue-table-wrap');
+  tableWrap.scrollTop = queueScroll;
+  tableWrap.addEventListener('scroll', () => { queueScroll = tableWrap.scrollTop; });
   const search = container.querySelector('input');
   search.value = queueSearch;
   search.setAttribute('aria-label', 'Search queue by report number, patient or mobile');

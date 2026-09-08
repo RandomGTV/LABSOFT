@@ -43,7 +43,7 @@ HEADERS = ["", "Report no", "Patient", "Tests", "Received", "Progress",
 
 GAP = 12            # the gutter, taken out of the right of every cell
 EDGE = 18           # the page margin on the far right of the board
-ROW_H = 52
+ROW_H = 60
 HEAD_H = 44
 
 COL_W = {
@@ -245,7 +245,7 @@ class Board(Table):
         self.setObjectName("boardTable")
         self.setItemDelegate(BoardDelegate(self))
         self.setShowGrid(False)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         vertical = self.verticalHeader()
         vertical.setDefaultSectionSize(ROW_H)
@@ -377,8 +377,12 @@ class QueueScreen(QWidget):
     def _build_filter_bar(self) -> QWidget:
         bar = QWidget()
         bar.setObjectName("filterBar")
-        lay = QHBoxLayout(bar)
-        lay.setContentsMargins(24, 20, 24, 18)
+        outer = QVBoxLayout(bar)
+        outer.setContentsMargins(20, 16, 20, 12)
+        outer.setSpacing(12)
+        lay = QHBoxLayout()
+        outer.addLayout(lay)
+        lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(20)
 
         self.search = SearchBox("Report no, name or mobile — filters as you type")
@@ -410,6 +414,11 @@ class QueueScreen(QWidget):
         lay.addWidget(stats_row, 0, Qt.AlignmentFlag.AlignVCenter)
         lay.addStretch(1)
 
+        actions = QHBoxLayout()
+        actions.addWidget(label("Select a job to review or continue", "hint"))
+        actions.addStretch(1)
+        outer.addLayout(actions)
+
         self.revise_button = button("Correct && reissue", "", self._revise_selected)
         self.send_button = button("Send / reprint", "", self._send_selected)
         self.open_button = button("Open · Space", "go", self._open_selected)
@@ -418,7 +427,7 @@ class QueueScreen(QWidget):
         for b in (self.preview_button, self.revise_button, self.send_button,
                   self.open_button):
             b.setFixedHeight(38)
-            lay.addWidget(b, 0, Qt.AlignmentFlag.AlignVCenter)
+            actions.addWidget(b, 0, Qt.AlignmentFlag.AlignVCenter)
         lay.setSpacing(9)
         return bar
 
@@ -475,9 +484,17 @@ class QueueScreen(QWidget):
         self.refresh()
 
     def refresh(self) -> None:
+        selected = self._selected(complain=False)
+        selected_id = selected["id"] if selected else None
+        scroll = self.table.verticalScrollBar().value()
         term = self.search.text().strip()
         self.rows = q.list_jobs(self.scope, term)
         self.table.set_jobs([self._painted(j) for j in self.rows])
+        for i, job in enumerate(self.rows):
+            if job["id"] == selected_id:
+                self.table.selectRow(i)
+                break
+        self.table.verticalScrollBar().setValue(scroll)
         self.table.set_empty_text(self._empty_message(term))
         self._refresh_stats(term)
         self._update_summary()

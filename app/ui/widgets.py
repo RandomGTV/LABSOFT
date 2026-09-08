@@ -17,6 +17,15 @@ from . import style
 def button(text: str, kind: str = "", on_click: Optional[Callable] = None,
            tooltip: str = "", shortcut: str = "") -> QPushButton:
     b = QPushButton(text)
+    from . import icons
+    key = text.replace("&", "").strip().lower()
+    mappings = (("preview", "preview"), ("print", "print"), ("download", "download"),
+                ("export", "download"), ("send", "send"), ("whatsapp", "send"),
+                ("save", "save"), ("delete", "trash"), ("remove", "trash"),
+                ("new", "plus"), ("add", "plus"), ("bill", "bill"), ("close", "x"))
+    icon = next((icon for prefix, icon in mappings if key.startswith(prefix)), None)
+    if icon:
+        b.setIcon(icons.get_icon(icon, style.ON_ACCENT if kind in ("go", "primary") else style.INK2))
     if kind:
         b.setProperty("kind", kind)
     if on_click:
@@ -478,74 +487,105 @@ def age_unit_combo() -> QComboBox:
 
 
 class TabDeck(QWidget):
-    """A tab bar and its pages, with room between them for another strip.
-
-    QTabWidget welds its bar to its pane, and the web application puts the
-    function-key strip in exactly that gap. This keeps the small part of
-    QTabWidget's interface the rest of the program uses, and lets the shell
-    decide what goes between.
-    """
-
+    """Accessible sidebar navigation with the existing tab-deck interface."""
     def __init__(self, parent=None):
-        from PyQt6.QtWidgets import QStackedWidget, QTabBar
-
+        from PyQt6.QtWidgets import QStackedWidget, QListWidget, QToolButton
         super().__init__(parent)
-        self.bar = QTabBar()
-        self.bar.setDrawBase(False)
-        self.bar.setExpanding(False)
-        self.bar.setUsesScrollButtons(True)
-        self.bar.setElideMode(Qt.TextElideMode.ElideNone)
         self.stack = QStackedWidget()
-
+        self.bar = QListWidget()
+        self.bar.setObjectName("navigationList")
+        self.bar.setAccessibleName("Main navigation")
+        self.bar.setFixedWidth(174)
+        self.bar.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._labels = []
+        self._pages = []
+        self._compact = False
+        self.toggle = QToolButton()
+        self.toggle.setText("Collapse navigation")
+        self.toggle.setAccessibleName("Toggle navigation labels")
+        self.toggle.setCheckable(True)
+        from . import icons
+        self.toggle.setIcon(icons.get_icon("menu"))
+        self.toggle.setToolTip("Collapse navigation")
+        self.toggle.clicked.connect(self._toggle_navigation)
+        sidebar = QVBoxLayout()
+        sidebar.setContentsMargins(0, 8, 0, 0)
+        sidebar.addWidget(self.toggle)
+        sidebar.addWidget(self.bar, 1)
+        self.shortcut_toggle = QToolButton()
+        self.shortcut_toggle.setText("Shortcuts")
+        self.shortcut_toggle.setToolTip("Show or hide keyboard shortcuts")
+        self.shortcut_toggle.setAccessibleName("Show keyboard shortcuts")
+        self.shortcut_toggle.setCheckable(True)
+        self.shortcut_toggle.toggled.connect(self._show_shortcuts)
+        sidebar.addWidget(self.shortcut_toggle)
         self._between = QVBoxLayout()
         self._between.setContentsMargins(0, 0, 0, 0)
-        self._between.setSpacing(0)
-
-        lay = QVBoxLayout(self)
+        content = QVBoxLayout()
+        content.setContentsMargins(0, 0, 0, 0)
+        content.addLayout(self._between)
+        content.addWidget(self.stack, 1)
+        lay = QHBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
-        lay.addWidget(self.bar)
-        lay.addLayout(self._between)
-        lay.addWidget(self.stack, 1)
+        lay.addLayout(sidebar)
+        lay.addLayout(content, 1)
+        self.bar.currentRowChanged.connect(self.stack.setCurrentIndex)
+        self.currentChanged = self.bar.currentRowChanged
 
-        self.bar.currentChanged.connect(self.stack.setCurrentIndex)
-        self.currentChanged = self.bar.currentChanged
+    def _show_shortcuts(self, visible):
+        for i in range(self._between.count()):
+            widget = self._between.itemAt(i).widget()
+            if widget:
+                widget.setVisible(visible)
 
-    # -- the slice of QTabWidget the rest of the program calls ---------------
-    def addTab(self, widget, *args) -> int:            # noqa: N802 - Qt naming
-        """addTab(widget, text) or addTab(widget, icon, text)."""
-        self.stack.addWidget(widget)
-        return self.bar.addTab(*args)
+    def _toggle_navigation(self):
+        from . import icons
+        self._compact = not self._compact
+        self.bar.setFixedWidth(60 if self._compact else 174)
+        self.toggle.setText("" if self._compact else "Collapse navigation")
+        self.shortcut_toggle.setText("Keys" if self._compact else "Shortcuts")
+        self.toggle.setIcon(icons.get_icon("menu"))
+        self.toggle.setToolTip("Expand navigation" if self._compact else "Collapse navigation")
+        for i, text in enumerate(self._labels):
+            self.bar.item(i).setText("" if self._compact else text)
 
-    def insertBetween(self, widget) -> None:           # noqa: N802
-        """Put a widget in the gap between the tabs and the page."""
+    def addTab(self, widget, *args):
+        from PyQt6.QtWidgets import QListWidgetItem
+        import re
+        from PyQt6.QtWidgets import QScrollArea, QFrame
+        wrapper = QScrollArea()
+        wrapper.setWidgetResizable(True)
+        wrapper.setFrameShape(QFrame.Shape.NoFrame)
+        wrapper.setWidget(widget)
+        if hasattr(widget, "_adapt_layout"):
+            wrapper.viewport().installEventFilter(widget)
+        self._pages.append(widget)
+        self.stack.addWidget(wrapper)
+        text = re.sub(r"^\d+\.\s*", "", args[-1])
+        item = QListWidgetItem(args[0], text) if len(args) == 2 else QListWidgetItem(text)
+        item.setToolTip(text)
+        item.setData(Qt.ItemDataRole.AccessibleTextRole, text)
+        self._labels.append(text)
+        self.bar.addItem(item)
+        if self.bar.currentRow() < 0:
+            self.bar.setCurrentRow(0)
+        return self.bar.count() - 1
+
+    def insertBetween(self, widget):
         self._between.addWidget(widget)
+        widget.hide()  # Shortcuts remain available through action tooltips.
 
-    def count(self) -> int:
-        return self.bar.count()
-
-    def tabText(self, index: int) -> str:              # noqa: N802
-        return self.bar.tabText(index)
-
-    def setCurrentIndex(self, index: int) -> None:     # noqa: N802
-        self.bar.setCurrentIndex(index)
-
-    def currentIndex(self) -> int:                     # noqa: N802
-        return self.bar.currentIndex()
-
-    def widget(self, index: int):
-        return self.stack.widget(index)
-
-    def currentWidget(self):                           # noqa: N802
-        return self.stack.currentWidget()
-
-    def setCurrentWidget(self, widget) -> None:        # noqa: N802
-        index = self.stack.indexOf(widget)
-        if index >= 0:
-            self.setCurrentIndex(index)
-
-    def setDocumentMode(self, on: bool) -> None:       # noqa: N802
-        self.bar.setDocumentMode(on)
+    def count(self): return self.bar.count()
+    def tabText(self, index): return self._labels[index]
+    def setCurrentIndex(self, index): self.bar.setCurrentRow(index)
+    def currentIndex(self): return self.bar.currentRow()
+    def widget(self, index): return self._pages[index]
+    def currentWidget(self): return self._pages[self.currentIndex()] if self.currentIndex() >= 0 else None
+    def setCurrentWidget(self, widget):
+        index = self._pages.index(widget) if widget in self._pages else -1
+        if index >= 0: self.setCurrentIndex(index)
+    def setDocumentMode(self, on): pass
 
 
 # ---------------------------------------------------------------------------

@@ -180,6 +180,14 @@ THEMES = {"light": LIGHT, "dark": DARK}
 CURRENT_THEME = "light"
 
 
+# Clinical Clarity tokens shared with the web screen theme.
+LIGHT.update(BRAND="#0F766E", BRAND_DARK="#115E59", BRAND_SOFT="#E6F4F1",
+             ACCENT_INK="#0F766E", GO_HOVER="#115E59", BG="#F3F6F8", INK3="#526477")
+DARK.update(BRAND="#5EEAD4", BRAND_DARK="#99F6E4", BRAND_SOFT="#123C3A",
+            ACCENT_INK="#5EEAD4", GO_HOVER="#99F6E4", BG="#101820", PANEL="#192630",
+            FILL="#14212B", INK="#ECF3F7", INK2="#C4D2DC", INK3="#A1B3C1",
+            LINE="#3D5262", LINE2="#2D414F", ON_ACCENT="#102A2A")
+
 def _install(palette: Dict[str, str]) -> None:
     globals().update(palette)
 
@@ -1138,6 +1146,19 @@ QProgressBar {{
     text-align: center;
 }}
 QProgressBar::chunk {{ background: {ACCENT_INK}; border-radius: 6px; }}
+
+QPushButton#workflowStep {{ text-decoration: none; border: 1px solid {c["LINE2"]}; padding: 7px 12px; }}
+QPushButton#workflowStep:checked {{ color: {c["ACCENT_INK"]}; background: {c["BRAND_SOFT"]}; border: 1px solid {c["BRAND"]}; }}
+QListWidget#navigationList {{ background: {c["PANEL"]}; border: 0; border-right: 1px solid {c["LINE2"]}; padding: 8px; }}
+QListWidget#navigationList::item {{ min-height: 42px; padding: 0 8px; margin: 3px 0; border-radius: 8px; color: {c["INK2"]}; }}
+QListWidget#navigationList::item:selected {{ background: {c["BRAND_SOFT"]}; color: {c["ACCENT_INK"]}; }}
+QListWidget#navigationList::item:hover {{ background: {c["FILL"]}; }}
+QFrame#resultsField, QFrame#counsel {{ border: 1px solid {c["LINE2"]}; border-radius: 10px; }}
+QFrame#resultsHead {{ background: {c["FILL"]}; border-bottom: 1px solid {c["LINE2"]}; }}
+QLineEdit:focus, QComboBox:focus, QTextEdit:focus {{ border: 2px solid {c["BRAND"]}; background: {c["BRAND_SOFT"]}; }}
+QSplitter::handle {{ background: {c["LINE2"]}; width: 5px; }}
+QToolButton {{ color: {c["INK2"]}; background: {c["PANEL"]}; border: 1px solid {c["LINE2"]}; border-radius: 7px; padding: 8px; }}
+QToolButton:focus {{ border: 2px solid {c["BRAND"]}; }}
 """
 
 
