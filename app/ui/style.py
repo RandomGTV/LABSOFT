@@ -667,7 +667,7 @@ QPushButton {{
     font-weight: 600;
     min-height: 22px;
 }}
-QPushButton:hover {{ background: {LINE2}; border-color: {INK3}; }}
+QPushButton:hover {{ background: {FILL}; border-color: {ACCENT_INK}; }}
 QPushButton:pressed {{ background: {LINE}; }}
 QPushButton:disabled {{
     color: {c["PRIMARY_OFF_TEXT"]}; background: {LINE2}; border-color: {LINE};

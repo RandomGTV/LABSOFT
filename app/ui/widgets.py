@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, Iterable, List, Optional
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, QSize, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtWidgets import (
     QComboBox, QCompleter, QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
@@ -17,6 +17,7 @@ from . import style
 def button(text: str, kind: str = "", on_click: Optional[Callable] = None,
            tooltip: str = "", shortcut: str = "") -> QPushButton:
     b = QPushButton(text)
+    b.setIconSize(QSize(18, 18))
     from . import icons
     key = text.replace("&", "").strip().lower()
     mappings = (("preview", "preview"), ("print", "print"), ("download", "download"),
@@ -542,7 +543,22 @@ class TabDeck(QWidget):
     def _toggle_navigation(self):
         from . import icons
         self._compact = not self._compact
-        self.bar.setFixedWidth(60 if self._compact else 174)
+        target = 60 if self._compact else 174
+        previous = getattr(self, "_nav_animation", None)
+        if previous is not None:
+            previous.stop()
+        if motion_enabled():
+            from PyQt6.QtCore import QVariantAnimation, QEasingCurve
+            animation = QVariantAnimation(self)
+            animation.setDuration(160)
+            animation.setStartValue(self.bar.width())
+            animation.setEndValue(target)
+            animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+            animation.valueChanged.connect(lambda width: self.bar.setFixedWidth(int(width)))
+            self._nav_animation = animation
+            animation.start()
+        else:
+            self.bar.setFixedWidth(target)
         self.toggle.setText("" if self._compact else "Collapse navigation")
         self.shortcut_toggle.setText("Keys" if self._compact else "Shortcuts")
         self.toggle.setIcon(icons.get_icon("menu"))
@@ -624,6 +640,17 @@ def elevate(widget, level: int = 1):
     return widget
 
 
+def motion_enabled() -> bool:
+    """Follow Windows' animation preference; keep other platforms enabled."""
+    import sys
+    if sys.platform == "win32":
+        import ctypes
+        enabled = ctypes.c_int(1)
+        if ctypes.windll.user32.SystemParametersInfoW(0x1042, 0, ctypes.byref(enabled), 0):
+            return bool(enabled.value)
+    return True
+
+
 def fade_in(window, milliseconds: int = 110):
     """Bring a dialog up over a few frames instead of snapping it on.
 
@@ -633,6 +660,9 @@ def fade_in(window, milliseconds: int = 110):
     """
     from PyQt6.QtCore import QEasingCurve, QPropertyAnimation
 
+    if not motion_enabled():
+        window.setWindowOpacity(1.0)
+        return window
     window.setWindowOpacity(0.0)
     animation = QPropertyAnimation(window, b"windowOpacity", window)
     animation.setDuration(milliseconds)

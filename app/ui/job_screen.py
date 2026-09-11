@@ -1133,22 +1133,37 @@ class JobScreen(QWidget):
         """Put a patient's details into the intake fields."""
         if not p:
             return
-        self.patient_id = int(p["id"])
-        self.name_edit.setText(p["name"])
-        self.initial_edit.setText(p["initial"] or "")
+        was_loading = self._loading
+        self._loading = True
+        try:
+            self.patient_id = int(p["id"])
+            self.name_edit.setText(p["name"])
+            self.initial_edit.setText(p["initial"] or "")
+            self.phone_edit.setText(p["phone"] or "")
+            self.sex_combo.setCurrentText(p["sex"] or "")
+            self.age_spin.setValue(int(p["age_value"] or 0))
+            self.age_unit.setCurrentText((p["age_unit"] or "Years").title())
+            self.name_matches.hide()
+            if hasattr(self, "match_notice"):
+                self.match_notice.hide()
+        finally:
+            self._loading = was_loading
         self._refresh_printed_name()
-        self.phone_edit.setText(p["phone"] or "")
-        self.sex_combo.setCurrentText(p["sex"] or "")
-        self.age_spin.setValue(int(p["age_value"] or 0))
-        self.age_unit.setCurrentText((p["age_unit"] or "Years").title())
-        self.name_matches.hide()
-        if hasattr(self, "match_notice"):
-            self.match_notice.hide()
+        self.history_button.setEnabled(True)
+        self.last_visit.setText(self._last_visit_text())
+        self._write_draft()
 
     def _pick_existing_patient(self, item: QListWidgetItem) -> None:
         person = q.get_patient(item.data(Qt.ItemDataRole.UserRole))
         if not person:
             return
+        if self.job_id and int(person["id"]) != self.patient_id:
+            warn(self, "Start a new job", "This job belongs to another patient. Save it, then start a new job before selecting a different patient.")
+            return
+        if not self.job_id and self.patient_id and int(person["id"]) != self.patient_id:
+            if any(rr.value() for rr in self.rows.values()):
+                warn(self, "Results already entered", "Start a new job before switching patients so these results stay with the correct person.")
+                return
         self._fill_patient_fields(person)
         self.history_button.setEnabled(True)
         if hasattr(self, 'remarks_edit'):
