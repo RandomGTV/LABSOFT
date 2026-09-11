@@ -2007,7 +2007,28 @@ window.addEventListener('beforeunload', event => {
   if (saveMessage.startsWith('Could not') || storageBlocked) { event.preventDefault();event.returnValue=''; }
 });
 
+function patientMatchJobs() {
+  const name = String(activeJob.name || '').trim().toLowerCase();
+  const phone = String(activeJob.mobile || '').replace(/\D/g, '');
+  return jobs.filter(j => j.id !== activeJob.id && (
+    (name.length >= 3 && String(j.name || '').trim().toLowerCase() === name) ||
+    (phone.length >= 7 && String(j.mobile || '').replace(/\D/g, '') === phone)
+  ));
+}
+function refreshPatientHistory() {
+  const panel = document.getElementById('patient-history-panel');
+  if (!panel) return;
+  const matches = patientMatchJobs();
+  panel.innerHTML = matches.length ? `<strong>Possible existing patient · ${matches.length} earlier records</strong>
+    <p>Confirm name, mobile and age before using a record. Shared names or numbers may belong to different people.</p>
+    ${matches.slice().reverse().slice(0,10).map(j => `<details style="padding:8px 0;border-top:1px solid var(--line-2)"><summary style="cursor:pointer">${uiText(j.date)} · ${uiText(j.name)} · ${uiText(j.report_no)}</summary>
+    <p>${uiText(j.mobile)} · ${uiText(j.sex)} · ${uiText(j.age)} ${uiText(j.age_unit || 'years')}</p>
+    <ul>${j.tests.map(code => `<li>${uiText(code)}: ${uiText(j.results[code] ?? 'Not entered')}</li>`).join('')}</ul>
+    </details>`).join('')}` : 'No matching earlier records. Enter a name or mobile to check for previous visits.';
+}
+
 function saveState() {
+  refreshPatientHistory();
   if (!persistWorkspace()) return false;
   try {
   localStorage.setItem("labsoft_jobs_v3", JSON.stringify(jobs));
@@ -2191,7 +2212,7 @@ function render() {
   `;
 
   const main = document.getElementById("main-content");
-  if (currentTab === "job") renderJobScreen(main);
+  if (currentTab === "job") { renderJobScreen(main); refreshPatientHistory(); }
   else if (currentTab === "queue") renderQueueScreen(main);
   else if (currentTab === "patients") renderPatientsScreen(main);
   else if (currentTab === "doctors") renderDoctorsScreen(main);
@@ -2225,7 +2246,7 @@ function renderLoginScreen(container) {
   const lab = ((LAB_CONFIG.prefix || "") + " " + (LAB_CONFIG.name || "Laboratory")).trim();
   container.innerHTML = `
     <style>
-      .entry-screen {min-height:100dvh;display:grid;place-items:center;padding:24px;background:var(--bg);box-sizing:border-box;}
+      .entry-screen {min-height:100dvh;display:grid;place-items:center;padding:24px;background-color:var(--bg);background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyODAiIGhlaWdodD0iMjQwIiB2aWV3Qm94PSIwIDAgMjgwIDI0MCI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjk5Yjk1IiBzdHJva2Utb3BhY2l0eT0iLjE4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTM1IDMwaDI0bS0xOSAwdjQwYTcgNyAwIDAgMCAxNCAwVjMwbS0xNCAyNGgxNE0xNzUgMTMwaDI2bS0yMCAwdjIwbC0xNyAyOWE4IDggMCAwIDAgNyAxMmgzNGE4IDggMCAwIDAgNy0xMmwtMTctMjl2LTIwbS0yMyA0MGgzMiIvPjxwYXRoIGQ9Ik0xNzYgMzBjNDAgMTUtMTYgNDAgMjQgNTVtMC01NWMtNDAgMTUgMTYgNDAtMjQgNTVtNC00OGgxNm0tMTggMTRoMjBtLTIwIDE0aDIwbS0xOCAxM2gxNiIvPjxjaXJjbGUgY3g9IjU3IiBjeT0iMTcxIiByPSIxNyIvPjxjaXJjbGUgY3g9Ijg3IiBjeT0iMTQ1IiByPSI4Ii8+PGNpcmNsZSBjeD0iOTMiIGN5PSIxOTAiIHI9IjEwIi8+PHBhdGggZD0ibTcwIDE2MCAxMS0xMG0tOSAyOSAxMiA3TTEyOCAxMDBoMTJtLTYtNnYxMiIvPjwvZz48L3N2Zz4="),radial-gradient(ellipse at 15% 20%,rgba(41,155,149,.22),transparent 65%),linear-gradient(135deg,rgba(41,155,149,.12),rgba(84,145,187,.16));box-sizing:border-box;}
       .entry-card {width:100%;max-width:440px;box-sizing:border-box;padding:32px;border:1px solid var(--line-2);border-radius:16px;background:var(--panel);box-shadow:var(--shadow-lg);color:var(--ink);}
       .entry-card input,.entry-card select {width:100%;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid var(--field-border);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;margin:8px 0 16px;}
       .entry-card :focus-visible {outline:3px solid var(--accent-ink);outline-offset:3px;}
@@ -2502,7 +2523,7 @@ function renderJobScreen(container) {
         <div class="patient-block-ui">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <span class="counsel-title">Patient</span>
-            <button class="btn-m" style="font-size:11.5px; padding:2px 6px; border:none; background:transparent; color:var(--accent-ink); text-decoration:underline;" onclick="currentTab='patients'; render();">Patient history →</button>
+            <button class="btn-m" style="font-size:11.5px; padding:2px 6px; border:none; background:transparent; color:var(--accent-ink); text-decoration:underline;" onclick="refreshPatientHistory(); document.getElementById('patient-history-panel').scrollIntoView({block:'nearest'});">Patient history →</button>
           </div>
 
           <div class="patient-grid-ui">
@@ -2624,7 +2645,7 @@ function renderJobScreen(container) {
       <div class="desktop-counsel-rail">
         <div class="counsel-section">
           <span class="counsel-title">Report readiness</span>
-          <div id="readiness-checklist" aria-live="polite">${readinessHTML()}</div>
+          <section id="patient-history-panel" aria-label="Possible patient matches and earlier results" style="padding:14px;margin-bottom:12px;border:1px solid var(--line-2);border-radius:10px;background:var(--fill);font-size:13px;max-height:320px;overflow:auto">Enter a name or mobile to check earlier visits.</section><div id="readiness-checklist" aria-live="polite">${readinessHTML()}</div>
         </div>
 
         <div class="counsel-section">
@@ -3028,11 +3049,11 @@ function renderQueueScreen(container) {
           <span style="font-size:22px; font-weight:800; color:var(--accent-blue);">${pending}</span>
         </div>
         <div class="stat-block">
-          <span class="stat-label">Ready To Send</span>
+          <span class="stat-label">Approved</span>
           <span style="font-size:22px; font-weight:800; color:var(--accent-green);">${ready}</span>
         </div>
         <div class="stat-block">
-          <span class="stat-label">Sent</span>
+          <span class="stat-label">Delivered</span>
           <span style="font-size:22px; font-weight:800; color:var(--text-muted);">${sent}</span>
         </div>
       </div>
@@ -3043,9 +3064,13 @@ function renderQueueScreen(container) {
     </div>
 
     <div style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;" role="group" aria-label="Queue status filters">
-      ${['all','pending','ready','sent'].map(scope => `<button class="btn-m" data-queue-scope="${scope}" onclick="queueScope='${scope}'; filterQueueLive(queueSearch)">${titleCase(scope)}</button>`).join('')}
+      ${['all','pending','ready','sent'].map(scope => `<button class="btn-m" data-queue-scope="${scope}" onclick="queueScope='${scope}'; filterQueueLive(queueSearch)">${({all:'All',pending:'Pending',ready:'Approved',sent:'Delivered'})[scope]}</button>`).join('')}
       <span id="queue-count" role="status" style="align-self:center;color:var(--ink-3);"></span>
     </div>
+    <label style="display:flex;align-items:center;gap:10px;padding:0 18px 12px;">Row spacing
+      <select id="queue-density" class="field-input" style="width:auto;min-height:36px" onchange="setQueueDensity(this.value)"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select>
+    </label>
+    <style>#queue-table[data-density="comfortable"] tbody td{padding-top:16px!important;padding-bottom:16px!important}#queue-table[data-density="compact"] tbody td{padding-top:7px!important;padding-bottom:7px!important}</style>
     <!-- Queue Table -->
     <div class="queue-table-wrap" style="flex:1; background:var(--surface); overflow:auto;">
       <table style="width:100%; border-collapse:collapse;" id="queue-table">
@@ -3070,11 +3095,11 @@ function renderQueueScreen(container) {
                 <td style="padding:10px 14px; font-size:12px; color:var(--text-muted);">${j.tests.join(", ")}<br><small>${j.tests.length - jobReadiness(j).missing.length}/${j.tests.length} results entered</small></td>
                 <td style="padding:10px 14px; font-size:12px;">${j.date}</td>
                 <td style="padding:10px 14px;">
-                  <span class="status-pill sp-${j.status}">${({draft:'Draft',prog:'Needs review',ready:'Approved',sent:'Delivery confirmed'})[j.status] || j.status}</span>
+                  <span class="status-pill sp-${j.status}">${({draft:'Draft',prog:'In progress',ready:'Approved',sent:'Delivered'})[j.status] || j.status}</span>
                 </td>
                 <td style="padding:10px 14px; text-align:right;">
                   <button class="btn-m" onclick="openQueueDetails(${index})">${getIcon('preview')} Quick view</button>
-                  <button class="btn-m" onclick="activeJob=JSON.parse(JSON.stringify(jobs.find(x=>x.id===${j.id}))); setTab('job');">${getIcon('job')} Open</button>
+                  <button class="btn-m primary" onclick="activeJob=JSON.parse(JSON.stringify(jobs.find(x=>x.id===${j.id}))); setTab('job');">${getIcon('job')} ${j.status === 'ready' ? 'Open approved report' : j.status === 'sent' ? 'View job' : jobReadiness(j).step === 'review' ? 'Review' : 'Continue'}</button>
                 </td>
               </tr>
             `).join("")
@@ -3084,6 +3109,9 @@ function renderQueueScreen(container) {
     </div>
     <dialog id="queue-details" aria-labelledby="queue-details-title"></dialog>
   `;
+  let density = 'comfortable';
+  try { density = localStorage.getItem('labsoft_queue_density') || density; } catch (_) {}
+  setQueueDensity(density, false);
   const tableWrap = container.querySelector('.queue-table-wrap');
   tableWrap.scrollTop = queueScroll;
   tableWrap.addEventListener('scroll', () => { queueScroll = tableWrap.scrollTop; });
@@ -3091,6 +3119,13 @@ function renderQueueScreen(container) {
   search.value = queueSearch;
   search.setAttribute('aria-label', 'Search queue by report number, patient or mobile');
   filterQueueLive(queueSearch);
+}
+
+function setQueueDensity(value, remember = true) {
+  const density = value === 'compact' ? 'compact' : 'comfortable';
+  document.getElementById('queue-table').dataset.density = density;
+  document.getElementById('queue-density').value = density;
+  if (remember) { try { localStorage.setItem('labsoft_queue_density', density); } catch (_) {} }
 }
 
 function filterQueueLive(query) {

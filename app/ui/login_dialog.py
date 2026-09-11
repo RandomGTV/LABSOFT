@@ -27,8 +27,11 @@ from __future__ import annotations
 import platform
 from datetime import datetime
 from typing import Optional
+from pathlib import Path
 
-from PyQt6.QtCore import Qt, QSettings
+from PyQt6.QtCore import Qt, QSettings, QRectF
+from PyQt6.QtGui import QPainter, QColor, QLinearGradient
+from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import (
     QComboBox, QDialog, QFrame, QGridLayout, QHBoxLayout, QLineEdit,
     QStackedWidget, QVBoxLayout, QWidget,
@@ -38,6 +41,26 @@ from .. import config
 from ..core import auth
 from ..db import connection, queries as q
 from .widgets import button, elevate, fade_in, label, row
+
+
+class LabBackground(QFrame):
+    """Quiet laboratory glassware pattern behind the sign-in card."""
+
+    def __init__(self):
+        super().__init__()
+        self.pattern = QSvgRenderer(str(Path(__file__).resolve().parents[2] / "assets" / "lab-pattern.svg"), self)
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        gradient = QLinearGradient(0, 0, self.width(), self.height())
+        gradient.setColorAt(0, QColor(41, 155, 149, 48))
+        gradient.setColorAt(1, QColor(84, 145, 187, 35))
+        painter.fillRect(self.rect(), gradient)
+        for x in range(0, self.width(), 280):
+            for y in range(0, self.height(), 240):
+                self.pattern.render(painter, QRectF(x, y, 280, 240))
+        painter.end()
 
 
 class ModernLoginDialog(QDialog):
@@ -137,7 +160,7 @@ class ModernLoginDialog(QDialog):
         ]
 
     def _build_side(self) -> QWidget:
-        side = QFrame()
+        side = LabBackground()
         side.setObjectName("signInSide")
         outer = QVBoxLayout(side)
         outer.setContentsMargins(40, 40, 40, 40)

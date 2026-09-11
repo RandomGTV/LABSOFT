@@ -19,10 +19,10 @@ STATUS_SENT = "sent"
 STATUS_ORDER = [STATUS_DRAFT, STATUS_IN_PROGRESS, STATUS_READY, STATUS_SENT]
 
 _STATUS_LABELS = {
-    STATUS_DRAFT: "Registered",
+    STATUS_DRAFT: "Draft",
     STATUS_IN_PROGRESS: "In progress",
-    STATUS_READY: "Ready to send",
-    STATUS_SENT: "Sent",
+    STATUS_READY: "Approved",
+    STATUS_SENT: "Delivered",
 }
 
 

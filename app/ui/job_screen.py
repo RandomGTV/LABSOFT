@@ -533,12 +533,15 @@ class JobScreen(QWidget):
         self.name_matches = QListWidget()
         self.name_matches.setMaximumHeight(112)
         self.name_matches.hide()
+        if hasattr(self, "match_notice"):
+            self.match_notice.hide()
         self.name_matches.itemClicked.connect(self._pick_existing_patient)
 
         self.phone_edit = QLineEdit()
         self.phone_edit.setPlaceholderText("Mobile number")
         self.phone_edit.setAccessibleName("Patient mobile number")
         self.phone_edit.textEdited.connect(lambda _t: self._refresh_printed_name())
+        self.phone_edit.textEdited.connect(self._on_name_typed)
 
         self.sex_combo = sex_combo()
         self.sex_combo.setAccessibleName("Patient sex")
@@ -592,6 +595,10 @@ class JobScreen(QWidget):
         self.printed_name = label("", "hint")
         self.printed_name.setWordWrap(True)
         lay.addWidget(self.printed_name)
+        self.match_notice = label("Possible existing patient. Confirm details before selecting a record below.", "hint")
+        self.match_notice.setWordWrap(True)
+        self.match_notice.hide()
+        lay.addWidget(self.match_notice)
         lay.addWidget(self.name_matches)
         return box
 
@@ -817,13 +824,15 @@ class JobScreen(QWidget):
                    if j["id"] != self.job_id]
         if not earlier:
             return "No earlier visit."
-        last = earlier[0]
-        lines = [turnaround.format_date(q.to_dt(last["received_at"]))]
-        for t in q.job_tests(last["id"])[:4]:
-            r = (q.results_for_job(last["id"]) or {}).get(t["job_test_id"]) or {}
-            shown = (r.get("display_value") or "").strip()
-            if shown:
-                lines.append(f"{t['name']}   {shown}")
+        lines = [f"{len(earlier)} earlier visits · latest 3 shown"]
+        for visit in earlier[:3]:
+            lines.append("\n" + turnaround.format_date(q.to_dt(visit["received_at"])) + " · " + str(visit["report_no"]))
+            results = q.results_for_job(visit["id"]) or {}
+            for test in q.job_tests(visit["id"]):
+                result = results.get(test["job_test_id"]) or {}
+                shown = (result.get("display_value") or "").strip()
+                if shown:
+                    lines.append(f"{test['name']}: {shown} {test.get('unit') or ''}".strip())
         return "\n".join(lines)
 
     # -- the results field, and the column of counsel beside it --------
@@ -1016,6 +1025,8 @@ class JobScreen(QWidget):
         self.test_search.clear()
         self.test_matches.hide()
         self.name_matches.hide()
+        if hasattr(self, "match_notice"):
+            self.match_notice.hide()
         self.history_button.setEnabled(False)
         self.repeat_row.hide()
         self.title.setText("New job")
@@ -1064,7 +1075,9 @@ class JobScreen(QWidget):
         if hasattr(self, 'remarks_edit'):
             self.remarks_edit.setPlainText(job.get('remarks') or '')
         self.repeat_row.setVisible(bool(self._previous_test_ids()))
-        self.name_matches.hide()      # leftover suggestions belong to the old job
+        self.name_matches.hide()
+        if hasattr(self, "match_notice"):
+            self.match_notice.hide()      # leftover suggestions belong to the old job
 
         # Drop the previous job's rows before rebuilding. _rebuild_grid carries
         # typed values forward by test id, which is right while working on one
@@ -1083,9 +1096,11 @@ class JobScreen(QWidget):
         text = (text or "").strip()
         if len(text) < 2:
             self.name_matches.hide()
+            self.match_notice.hide()
             return
         matches = q.search_patients(text, limit=8)
         self.name_matches.clear()
+        self.name_matches.setToolTip("Possible existing patients. Confirm name, mobile and age before selecting; shared numbers may belong to different people.")
         for p in matches:
             bits = [q.patient_full_name(p)]
             if p["phone"]:
@@ -1102,6 +1117,7 @@ class JobScreen(QWidget):
             item.setData(Qt.ItemDataRole.UserRole, p["id"])
             self.name_matches.addItem(item)
         self.name_matches.setVisible(bool(matches))
+        self.match_notice.setVisible(bool(matches))
 
     def new_job_for(self, patient_id: int) -> None:
         """A fresh job with the patient already filled in.
@@ -1126,6 +1142,8 @@ class JobScreen(QWidget):
         self.age_spin.setValue(int(p["age_value"] or 0))
         self.age_unit.setCurrentText((p["age_unit"] or "Years").title())
         self.name_matches.hide()
+        if hasattr(self, "match_notice"):
+            self.match_notice.hide()
 
     def _pick_existing_patient(self, item: QListWidgetItem) -> None:
         person = q.get_patient(item.data(Qt.ItemDataRole.UserRole))

@@ -21,10 +21,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from PyQt6.QtCore import QRect, QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QRect, QSize, Qt, pyqtSignal, QSettings
 from PyQt6.QtGui import QColor, QFont, QFontMetrics, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
-    QHBoxLayout, QHeaderView, QStyle, QStyledItemDelegate, QTableWidgetItem,
+    QComboBox, QHBoxLayout, QHeaderView, QStyle, QStyledItemDelegate, QTableWidgetItem,
     QVBoxLayout, QWidget,
 )
 
@@ -63,14 +63,14 @@ ROW_ROLE = Qt.ItemDataRole.UserRole + 1
 
 #: Database status -> the four chips defined in the design system.
 CHIP = {
-    turnaround.STATUS_DRAFT: ("draft", "Registered"),
+    turnaround.STATUS_DRAFT: ("draft", "Draft"),
     turnaround.STATUS_IN_PROGRESS: ("prog", "In progress"),
-    turnaround.STATUS_READY: ("ready", "Ready to send"),
-    turnaround.STATUS_SENT: ("sent", "Sent"),
+    turnaround.STATUS_READY: ("ready", "Approved"),
+    turnaround.STATUS_SENT: ("sent", "Delivered"),
 }
 
 SCOPES = [("today", "Today"), ("pending", "Pending"), ("overdue", "Overdue"),
-          ("ready", "Ready to send"), ("unpaid", "Unpaid"), ("all", "All")]
+          ("ready", "Approved"), ("unpaid", "Unpaid"), ("all", "All")]
 
 
 def _font(px: int, weight: int = 400, spacing: float = 0.0) -> QFont:
@@ -405,7 +405,7 @@ class QueueScreen(QWidget):
         for caption, note, scope, key in (
                 ("Waiting", "no results yet", "pending", "waiting"),
                 ("In progress", "part entered", "pending", "in_progress"),
-                ("Ready to send", "verified", "ready", "ready"),
+                ("Approved", "verified", "ready", "ready"),
                 ("Overdue", "nothing late", "overdue", "overdue")):
             block = StatBlock(caption, note, scope)
             block.clicked.connect(self._set_scope)
@@ -449,6 +449,12 @@ class QueueScreen(QWidget):
             lay.addWidget(b)
         self.scope_buttons["today"].setChecked(True)
         lay.addStretch(1)
+        self.density = QComboBox()
+        self.density.setAccessibleName("Queue row spacing")
+        self.density.addItems(["Comfortable", "Compact"])
+        self.density.setCurrentText(QSettings("LabSoft", "LabSoft").value("queue_density", "Comfortable"))
+        self.density.currentTextChanged.connect(self._apply_density)
+        lay.addWidget(self.density)
         self.showing = label("", "foot")
         lay.addWidget(self.showing)
         return strip
@@ -490,6 +496,7 @@ class QueueScreen(QWidget):
         term = self.search.text().strip()
         self.rows = q.list_jobs(self.scope, term)
         self.table.set_jobs([self._painted(j) for j in self.rows])
+        self._apply_density(self.density.currentText())
         for i, job in enumerate(self.rows):
             if job["id"] == selected_id:
                 self.table.selectRow(i)
@@ -499,8 +506,25 @@ class QueueScreen(QWidget):
         self._refresh_stats(term)
         self._update_summary()
 
+    def _apply_density(self, value: str) -> None:
+        height = 50 if value == "Compact" else 64
+        self.table.verticalHeader().setDefaultSectionSize(height)
+        for row in range(self.table.rowCount()):
+            self.table.setRowHeight(row, height)
+        QSettings("LabSoft", "LabSoft").setValue("queue_density", value)
+
     def _update_summary(self) -> None:
         job = self._selected(complain=False)
+        self.open_button.setEnabled(bool(job))
+        self.open_button.setText("Open · Space")
+        if job:
+            self.open_button.setText("Review · Space" if job["n_tests"] and job["n_done"] == job["n_tests"] else "Continue · Space")
+        self.send_button.setText("Deliver / reprint" if job and job["status"] == turnaround.STATUS_READY else "Send / reprint")
+        self.send_button.setProperty("kind", "primary" if job and job["status"] == turnaround.STATUS_READY else "")
+        self.open_button.setProperty("kind", "" if job and job["status"] == turnaround.STATUS_READY else "primary")
+        for control in (self.send_button, self.open_button):
+            control.style().unpolish(control)
+            control.style().polish(control)
         if not job:
             self.quick_summary.setText("Select a job to see its results, payment and next action.")
             return
