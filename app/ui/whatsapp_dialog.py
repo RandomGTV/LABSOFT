@@ -39,7 +39,7 @@ class WhatsAppDialog(QDialog):
             f"*INVESTIGATION RESULTS:*\n"
             f"{results_summary}\n"
             f"*━━━━━━━━━━━━━━━━━━━━━━━━━━━━━*\n"
-            f"✅ *Status:* Verified & Approved\n"
+            f"*Status:* Review the report in LabSoft before delivery\n"
             f"📥 Detailed PDF report available at the laboratory desk."
         )
 

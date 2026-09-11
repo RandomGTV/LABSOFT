@@ -20,7 +20,7 @@ from ..output import report as rpt
 from ..output import sender as snd
 from ..output import winauto
 from . import style
-from .widgets import button, error, field_label, info, label, row, warn
+from .widgets import button, error, field_label, info, label, row, warn, confirm
 
 
 class _AttachWorker(QThread):
@@ -125,12 +125,21 @@ class SendDialog(QDialog):
             "Opens WhatsApp Web with the message. The report is NOT attached — "
             "a browser cannot take a file from LabSoft.")
         self.close_button = button("Close", "", self.reject)
-        self.send_button = button("Open WhatsApp && send", "go", self._send)
+        self.send_button = button("Open WhatsApp", "go", self._send)
+        self.confirm_button = button("Confirm delivery", "", self._confirm_delivery)
+        self.confirm_button.setEnabled(False)
+        lay.addWidget(self.confirm_button)
         lay.addWidget(row(self.print_button, self.folder_button, self.web_button,
                           None, self.close_button, self.send_button))
 
     # --------------------------------------------------------------- prepare
     def _prepare(self) -> None:
+        if not services.report_is_approved(self.job_id):
+            self._say("This report needs approval. Open the job and use Check & make report first.", style.AMBER)
+            self.send_button.setEnabled(False)
+            self.web_button.setEnabled(False)
+            self.print_button.setEnabled(False)
+            return
         try:
             self.pdf_path = services.generate_pdf(self.job_id)
         except Exception as exc:
@@ -229,7 +238,8 @@ class SendDialog(QDialog):
 
     # ---------------------------------------------------------------- actions
     def _send(self, force_mode: str = "") -> None:
-        if not self.pdf_path:
+        if not self.pdf_path or not services.report_is_approved(self.job_id):
+            self._say("Report changed; review and approve it again before delivery.", style.AMBER)
             return
         mode = force_mode or self.settings.get("whatsapp_mode", "desktop")
         sender = snd.get_sender("whatsapp", self.settings.get("country_code", "91"),
@@ -238,13 +248,13 @@ class SendDialog(QDialog):
             result = sender.send(self.pdf_path, self.phone_edit.text(),
                                  self.message_edit.toPlainText())
         except snd.SendError as exc:
+            q.log_action("delivery_handoff_failed", "job", self.job_id)
             warn(self, "Could not send", str(exc))
             return
 
-        q.update_job(self.job_id, status=turnaround.STATUS_SENT,
-                     sent_at=q.now_str(), sent_via=result.channel)
-        q.log_action("report_sent", "job", self.job_id,
-                     f"{result.channel} to {result.detail}")
+        self._delivery_channel = result.channel
+        q.log_action("delivery_handoff_attempted", "job", self.job_id, result.channel)
+        self.confirm_button.setEnabled(True)
 
         self.send_button.setEnabled(False)
         self.close_button.setText("Done")
@@ -261,15 +271,27 @@ class SendDialog(QDialog):
             self._worker.finished_with.connect(self._attach_done)
             self._worker.start()
         else:
-            self.send_button.setText("Sent ✓")
+            self.send_button.setText("WhatsApp opened")
             self._say(result.manual_step, style.AMBER)
+
+    def _confirm_delivery(self) -> None:
+        if not services.report_is_approved(self.job_id):
+            self._say("Report changed; approve it again before confirming delivery.", style.AMBER)
+            return
+        if not confirm(self, "Confirm delivery?", "Confirm only after checking that the patient received this report. This records your confirmation, not a WhatsApp delivery receipt.", "Confirm delivery"):
+            return
+        channel = getattr(self, "_delivery_channel", "manual")
+        q.update_job(self.job_id, status=turnaround.STATUS_SENT, sent_at=q.now_str(), sent_via=channel)
+        q.log_action("delivery_confirmed_by_staff", "job", self.job_id, channel)
+        self.confirm_button.setEnabled(False)
+        self._say("Delivery confirmed by staff.", style.GREEN)
 
     def _say(self, text: str, colour: str) -> None:
         self.note.setText(text)
         self.note.setStyleSheet(f"color: {colour}; font-weight: 600;")
 
     def _attach_done(self, ok: bool, reason: str) -> None:
-        self.send_button.setText("Sent ✓")
+        self.send_button.setText("WhatsApp opened")
         if ok:
             self._say("Report attached in WhatsApp. Press Send in WhatsApp to "
                       "deliver it.", style.GREEN)

@@ -1934,38 +1934,82 @@ let currentTab = "job";
 let currentTheme = localStorage.getItem("labsoft_theme_v2") || "light";
 let letterheadStyle = localStorage.getItem("labsoft_lh_v2") || "classic";
 let currentUser = null; // Always show the Artboard 09 Sign In & Sign Up screen on launch
-let jobs = JSON.parse(localStorage.getItem("labsoft_jobs_v3") || "[]");
-let activeJob = createEmptyJob();
-
-function createEmptyJob() {
-  const now = new Date();
-  const dateStr = now.toLocaleDateString("en-GB").replace(/\//g, "-");
-  const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  const nextNo = String(51359 + jobs.length);
-
-  return {
-    id: Date.now(),
-    report_no: nextNo,
-    date: dateStr,
-    collected_at: `${dateStr} ${timeStr}`,
-    reported_at: `${dateStr} ${timeStr}`,
-    name: "",
-    initial: "M",
-    mobile: "",
-    sex: "Male",
-    age: 30,
-    age_unit: "years",
-    referrer: "Self",
-    tests: ["HBA1C", "EAG"],
-    results: {},
-    status: "draft",
-    bill_paid: 450,
-    bill_mode: "Cash",
-    bill_disc: 0
-  };
+let legacyReadError = false;
+function readLegacyJobs() {
+  try {
+    const data = JSON.parse(localStorage.getItem('labsoft_jobs_v3') || '[]');
+    if (!Array.isArray(data)) throw new Error('Invalid jobs');
+    return data;
+  } catch (error) { legacyReadError = true; return []; }
 }
+let jobs = readLegacyJobs();
+let activeJob = createEmptyJob();
+let saveMessage = 'No changes yet';
+let storageBlocked = legacyReadError;
+if (storageBlocked) saveMessage = "Saved jobs could not be read. Existing storage has been preserved.";
+try {
+  const stored = localStorage.getItem('labsoft_workspace_v1');
+  if (stored) {
+    const workspace = JSON.parse(stored);
+    if (!Array.isArray(workspace.jobs) || !workspace.active || !Array.isArray(workspace.active.tests) || !workspace.active.results) throw new Error('Invalid workspace');
+    storageBlocked = false;
+    jobs = workspace.jobs;
+    activeJob = workspace.active;
+    saveMessage = 'Draft restored from this browser';
+  }
+} catch (error) {
+  storageBlocked = true;
+  saveMessage = 'Saved workspace could not be read. Existing storage has been preserved.';
+}
+let reportJob = null;
+function money(value) { return (Math.round(Math.max(0, Number(value) || 0) * 100) / 100).toFixed(2); }
+function billTotals(job) {
+  const grossCents = (job.tests || []).reduce((n,c) => n + Math.round(Number(TESTS[c]?.rate ?? 100) * 100), 0);
+  const discountCents = Math.min(grossCents, Math.round(Math.max(0, Number(job.bill_disc) || 0) * 100));
+  const paidCents = Math.round(Math.max(0, Number(job.paid ?? job.bill_paid ?? 0) || 0) * 100);
+  return {gross:grossCents/100, discount:discountCents/100, net:(grossCents-discountCents)/100,
+          paid:paidCents/100, due:Math.max(0,grossCents-discountCents-paidCents)/100,
+          credit:Math.max(0,paidCents-grossCents+discountCents)/100};
+}
+function reportFingerprint(job) {
+  return JSON.stringify([job.name,job.initial,job.mobile,job.sex,job.age,job.age_unit,job.referrer,job.date,job.specimen,job.fasting_status,job.clinical_notes,job.tests,job.tests.map(c=>job.results[c] ?? '')]);
+}
+function reportApproved(job) { return !!job.approved_at && job.approved_snapshot === reportFingerprint(job); }
+function refreshReportState(job) {
+  if (job.approved_at && !reportApproved(job)) {
+    job.approved_at = null; job.approved_snapshot = null;
+    job.delivery_state = 'not_started';
+  }
+  job.status = reportApproved(job) ? (job.delivery_state === 'confirmed' ? 'sent' : 'ready') :
+    job.tests.some(c=>String(job.results[c] ?? '').trim()) ? 'prog' : 'draft';
+}
+function saveFeedback() {
+  document.querySelectorAll('[data-save-status]').forEach(el=>{el.textContent=saveMessage;el.style.color=saveMessage.startsWith('Could not') || storageBlocked ? 'var(--alert)' : 'var(--ink-3)';});
+}
+function persistWorkspace() {
+  if (storageBlocked) { saveFeedback(); return false; }
+  try {
+    refreshReportState(activeJob);
+    activeJob.paid = billTotals(activeJob).paid;
+    activeJob.bill_paid = activeJob.paid;
+    const index = jobs.findIndex(j=>j.id===activeJob.id);
+    if (index >= 0) jobs[index] = JSON.parse(JSON.stringify(activeJob));
+    else if (String(activeJob.name || '').trim() || activeJob.tests.some(c=>String(activeJob.results[c] ?? '').trim())) jobs.push(JSON.parse(JSON.stringify(activeJob)));
+    localStorage.setItem('labsoft_workspace_v1', JSON.stringify({jobs,active:activeJob,saved_at:new Date().toISOString()}));
+    saveMessage = 'Draft saved in this browser';
+    saveFeedback(); return true;
+  } catch (error) {
+    saveMessage = 'Could not save. Keep this page open and free browser storage, then retry.';
+    saveFeedback(); return false;
+  }
+}
+window.addEventListener('beforeunload', event => {
+  if (saveMessage.startsWith('Could not') || storageBlocked) { event.preventDefault();event.returnValue=''; }
+});
 
 function saveState() {
+  if (!persistWorkspace()) return false;
+  try {
   localStorage.setItem("labsoft_jobs_v3", JSON.stringify(jobs));
   localStorage.setItem("labsoft_theme_v2", currentTheme);
   localStorage.setItem("labsoft_lh_v2", letterheadStyle);
@@ -1973,6 +2017,7 @@ function saveState() {
   localStorage.setItem("labsoft_staff_v2", JSON.stringify(STAFF_ACCOUNTS));
 
   localStorage.setItem("labsoft_config_v2", JSON.stringify(LAB_CONFIG));
+  } catch (error) { saveMessage = "Draft saved; some preferences could not be saved."; saveFeedback(); }
   const checklist = document.getElementById("readiness-checklist");
   if (checklist && activeJob) {
     checklist.innerHTML = readinessHTML();
@@ -1983,6 +2028,7 @@ function saveState() {
       else btn.removeAttribute('aria-current');
     });
   }
+  return true;
 }
 
 function applyTheme() {
@@ -2001,6 +2047,7 @@ function toggleTheme() {
 }
 
 function setTab(tab) {
+  if (!saveState()) return;
   currentTab = tab;
   render();
 }
@@ -2034,18 +2081,8 @@ function onSelectUser(uname) {
 }
 
 function handleSignInSubmit() {
-  const pinInput = document.getElementById("auth-pin-input");
-  const pin = pinInput ? pinInput.value.trim() : "";
   const user = STAFF_ACCOUNTS.find(u => u.username === selectedStaffUsername) || STAFF_ACCOUNTS[0];
-
-  if (!pin) {
-    alert("Please enter your 4-digit PIN.");
-    return;
-  }
-
-  // No master PIN, and nothing checked against a stored one: this page is a
-  // demonstration and says so, rather than pretending to a security it has no
-  // way of providing.
+  if (!user) return;
   currentUser = user || STAFF_ACCOUNTS[0];
   sessionStorage.setItem("labsoft_user_v2", JSON.stringify(currentUser));
   render();
@@ -2164,6 +2201,7 @@ function render() {
   else if (currentTab === "summaries") renderSummariesScreen(main);
   else if (currentTab === "staff") renderStaffScreen(main);
   else if (currentTab === "settings") renderSettingsScreen(main);
+  saveFeedback();
 }
 
 function getCurrentSignDateStr() {
@@ -2184,139 +2222,38 @@ function titleCase(s) {
 }
 
 function renderLoginScreen(container) {
-  // Drawn to the desktop sign-in screen: a flat hero panel carrying the
-  // laboratory's name, and one card on the ordinary page ground.
-  //
-  // What this replaces used a palette of its own -- a navy gradient beside
-  // a warm grey #f4f3f2, with #201e1d text and #bab6b6 field borders --
-  // none of which is in the design system, and none of which followed the
-  // night theme. Every colour below is a token.
-  const dateSub = getCurrentSignDateStr();
   const lab = ((LAB_CONFIG.prefix || "") + " " + (LAB_CONFIG.name || "Laboratory")).trim();
-
-  // Facts that are read, not invented. The panel used to claim "PATIENTS ON
-  // FILE 4,812" on a page holding none, and "PC-01 - Reception" on whatever
-  // machine happened to open it.
-  const facts = [
-    ["Jobs on this browser", String(jobs.length)],
-    ["Doctors on file", String(DOCTORS.length)],
-    ["Where this runs", "Your browser, offline"],
-  ];
-
-  const L = (t) => `<label style="display:block; font-size:13px; font-weight:600; color:var(--ink-2); margin-bottom:6px;">${t}</label>`;
-  const FIELD = "height:44px; width:100%; border:1px solid var(--field-border); border-radius:8px; padding:0 13px; font-size:14px; background:var(--panel); color:var(--ink); outline:none; font-family:inherit;";
-
   container.innerHTML = `
-    <div style="position:fixed; inset:0; width:100vw; height:100vh; display:flex; background:var(--bg); margin:0; padding:0; overflow:hidden; z-index:9999;">
+    <style>
+      .entry-screen {min-height:100dvh;display:grid;place-items:center;padding:24px;background:var(--bg);box-sizing:border-box;}
+      .entry-card {width:100%;max-width:440px;box-sizing:border-box;padding:32px;border:1px solid var(--line-2);border-radius:16px;background:var(--panel);box-shadow:var(--shadow-lg);color:var(--ink);}
+      .entry-card input,.entry-card select {width:100%;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid var(--field-border);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;margin:8px 0 16px;}
+      .entry-card :focus-visible {outline:3px solid var(--accent-ink);outline-offset:3px;}
+      .entry-card p {color:var(--ink-2);line-height:1.6;}
+      @media(max-width:480px){.entry-screen{padding:16px}.entry-card{padding:24px}}
+    </style>
+    <main class="entry-screen"><form class="entry-card" onsubmit="event.preventDefault();handleSignInSubmit()" aria-labelledby="entry-title">
+      <div style="font-weight:800;letter-spacing:.16em;color:var(--accent-ink)">LABSOFT</div>
+      <p>${uiText(lab)}</p>
+      <h1 id="entry-title" style="font-size:28px;letter-spacing:-.025em;margin-bottom:8px">Your demo workspace</h1>
+      <p>Explore the laboratory workflow with a demo staff profile. No PIN is required.</p>
+      <label for="staff-search">Find a demo profile</label>
+      <input id="staff-search" type="search" placeholder="Search by name or role" oninput="filterDemoStaff(this.value)">
+      <label for="auth-user-select">Demo staff profile</label>
+      <select id="auth-user-select" onchange="onSelectUser(this.value)"></select>
+      <p id="entry-feedback" role="status" aria-live="polite"></p>
+      <button id="entry-submit" type="submit" class="btn-m primary" style="width:100%;min-height:46px">Open demo workspace</button>
+      <p style="font-size:13px;border-top:1px solid var(--line-2);padding-top:18px;margin-bottom:0">Demo data is saved in this browser. Desktop staff sign-in uses your laboratory account and PIN.</p>
+    </form></main>`;
+  filterDemoStaff("");
+}
 
-      <!-- The laboratory's own panel -->
-      <div style="width:55vw; height:100vh; background:var(--hero); padding:48px 56px 44px; display:flex; flex-direction:column; color:var(--on-hero); box-sizing:border-box; flex-shrink:0;">
-
-        <div style="font-size:14px; font-weight:800; letter-spacing:.28em; color:var(--hero-muted);">LABSOFT</div>
-
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
-          <div style="font-size:52px; font-weight:800; letter-spacing:-.028em; line-height:1.06;">${lab}</div> ${LAB_CONFIG.subtitle ? `<div style="font-size:17px; font-weight:600; letter-spacing:.02em; color:var(--hero-muted); margin-top:6px;">${titleCase(LAB_CONFIG.subtitle)}</div>` : ""}
-          <div style="font-size:15px; font-weight:400; line-height:1.55; margin-top:22px; max-width:460px; color:var(--hero-muted);"> Everything runs in this browser. Signing in needs no internet, and
-            neither does anything you do after it.
-          </div>
-        </div>
-
-        <div style="height:1px; background:var(--hero-muted); opacity:.55;"></div>
-        <div style="display:flex; gap:40px; padding-top:18px;"> ${facts.map(([k, v]) => `
-            <div>
-              <div style="font-size:11px; font-weight:700; letter-spacing:.11em; color:var(--hero-muted);">${k.toUpperCase()}</div>
-              <div style="font-size:16px; font-weight:700; margin-top:4px;">${v}</div>
-            </div>`).join("")}
-        </div>
-      </div>
-
-      <!-- The card -->
-      <div style="width:45vw; height:100vh; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:40px 32px; box-sizing:border-box; flex-shrink:0;">
-        <div style="width:100%; max-width:420px; background:var(--panel); box-shadow:var(--shadow-lg); border:1px solid var(--line-2); border-radius:16px; padding:30px 32px 28px;"> ${authMode === "signin" ? `
-            <div style="font-size:32px; font-weight:700; letter-spacing:-.025em; color:var(--ink);">Sign in</div>
-            <div style="font-size:13px; color:var(--ink-3); margin-top:2px;">${dateSub} &middot; demonstration</div>
-
-            <div style="margin-top:22px;"> ${L("Who is at the counter")}
-              <select id="auth-user-select" style="${FIELD} font-weight:600;" onchange="onSelectUser(this.value)"> ${STAFF_ACCOUNTS.map(a => `<option value="${a.username}" ${a.username === selectedStaffUsername ? "selected" : ""}>${a.name} &middot; ${a.role}</option>`).join("")}
-              </select>
-            </div>
-
-            <div style="margin-top:16px;"> ${L("PIN")}
-              <input type="password" id="auth-pin-input" placeholder="&bull;&bull;&bull;&bull;" maxlength="8"
-                     style="${FIELD} height:44px; font-size:20px; font-weight:700; letter-spacing:.55em; text-align:center; padding:0 0 0 .55em;"
-                     onkeydown="if(event.key==='Enter')handleSignInSubmit()" autofocus>
-              <div style="font-size:12.5px; color:var(--ink-3); margin-top:7px;"> No PIN is needed here, and none is stored. A page served as
-                plain files has nowhere safe to keep one.
-              </div>
-            </div>
-
-            <button onclick="handleSignInSubmit()"
-                    style="margin-top:20px; height:46px; width:100%; display:flex; align-items:center; justify-content:center; background:var(--accent-ink); color:var(--on-accent); font-size:15px; font-weight:700; border:none; border-radius:10px; cursor:pointer;"> Sign in
-            </button>
-
-            <div style="height:1px; background:var(--line-2); margin:20px 0 14px;"></div>
-
-            <div style="display:flex; align-items:center; gap:9px;">
-              <span style="width:8px; height:8px; border-radius:50%; background:var(--green); flex:none;"></span>
-              <span style="font-size:12.5px; color:var(--ink-3);">Running in this browser &middot; nothing is sent anywhere</span>
-            </div>
-            <div style="font-size:12.5px; color:var(--ink-3); margin-top:6px; line-height:1.45;"> In the desktop program, an administrator sets you a new PIN under Staff.
-            </div>
-
-            <div style="margin-top:12px;">
-              <button onclick="setAuthMode('signup')" class="btn-m quiet" style="padding:0;">Add a staff account</button>
-            </div>
-          ` : `
-            <div style="font-size:32px; font-weight:700; letter-spacing:-.025em; color:var(--ink);">New account</div>
-            <div style="font-size:13px; color:var(--ink-3); margin-top:2px;"> An administrator has to approve one in the desktop program.
-            </div>
-
-            <div style="margin-top:20px;"> ${L("Their name")}
-              <input type="text" id="su-name" placeholder="Ritu Patil" style="${FIELD}">
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;">
-              <div> ${L("Username")}
-                <input type="text" id="su-username" placeholder="ritu" style="${FIELD}">
-              </div>
-              <div> ${L("Role")}
-                <select id="su-role" style="${FIELD} font-weight:600;">
-                  <option value="Reception">Reception</option>
-                  <option value="Technologist">Technologist</option>
-                  <option value="Admin">Administrator</option>
-                </select>
-              </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;">
-              <div> ${L("PIN")}
-                <input type="password" id="su-pin" placeholder="&bull;&bull;&bull;&bull;" maxlength="8" style="${FIELD} letter-spacing:.3em;">
-              </div>
-              <div> ${L("PIN again")}
-                <input type="password" id="su-pin-confirm" placeholder="&bull;&bull;&bull;&bull;" maxlength="8" style="${FIELD} letter-spacing:.3em;">
-              </div>
-            </div>
-
-            <div style="background:var(--fill); border:1px solid var(--line-2); border-radius:10px; padding:11px 13px; margin-top:14px;">
-              <div style="font-size:12.5px; color:var(--ink-2); line-height:1.45;"> In the desktop program an administrator has to type their own
-                PIN to approve a new account. This page is a demonstration and
-                cannot check one.
-              </div>
-            </div>
-
-            <button onclick="handleSignUpSubmit()"
-                    style="margin-top:18px; height:46px; width:100%; display:flex; align-items:center; justify-content:center; background:var(--accent-ink); color:var(--on-accent); font-size:15px; font-weight:700; border:none; border-radius:10px; cursor:pointer;"> Create the account
-            </button>
-
-            <div style="margin-top:12px; text-align:center;">
-              <button onclick="setAuthMode('signin')" class="btn-m quiet" style="padding:0;">Back to sign in</button>
-            </div>
-          `}
-
-        </div>
-      </div>
-    </div>
-  `;
+function filterDemoStaff(search) {
+  const matches = STAFF_ACCOUNTS.filter(a => `${a.name} ${a.role}`.toLowerCase().includes(search.toLowerCase().trim()));
+  if (!matches.some(a => a.username === selectedStaffUsername)) selectedStaffUsername = matches[0]?.username || "";
+  document.getElementById("auth-user-select").innerHTML = matches.map(a => `<option value="${uiText(a.username)}" ${a.username === selectedStaffUsername ? "selected" : ""}>${uiText(a.name)} · ${uiText(a.role)}</option>`).join("");
+  document.getElementById("entry-submit").disabled = !matches.length;
+  document.getElementById("entry-feedback").textContent = matches.length ? "" : "No profiles match. Try a different name or role.";
 }
 
 function toggleKeypad() {
@@ -2328,7 +2265,7 @@ function createEmptyJob() {
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-GB").replace(/\//g, "-");
   const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  const nextNo = String(51359 + jobs.length);
+  const nextNo = String(Math.max(51358, ...jobs.map(j=>Number(j.report_no)||0)) + 1);
 
   return {
     id: Date.now(),
@@ -2350,7 +2287,8 @@ function createEmptyJob() {
     tests: ["HBA1C", "EAG"],
     results: {},
     status: "draft",
-    bill_paid: 450,
+    paid: 0,
+    bill_paid: 0,
     bill_mode: "Cash",
     bill_disc: 0,
     technologist: "A. Technologist",
@@ -2437,10 +2375,10 @@ function renderJobScreen(container) {
   const isNameSet = activeJob.name.trim().length > 0;
   const ready = total > 0 && done === total && isNameSet;
 
-  const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate || 100), 0);
-  const discount = activeJob.bill_disc || 0;
+  const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate ?? 100), 0);
+  const discount = billTotals(activeJob).discount;
   const netPayable = Math.max(0, subtotal - discount);
-  const paid = activeJob.paid || 0;
+  const paid = billTotals(activeJob).paid;
   const outstanding = Math.max(0, netPayable - paid);
 
   // Group tests by Department / Clinical Group
@@ -2630,27 +2568,27 @@ function renderJobScreen(container) {
       <!-- 2. Center Working Field -->
       <div style="background:var(--panel); border-right:1px solid var(--line-2); display:flex; flex-direction:column;">
         <!-- Money Band -->
-        <details class="billing-details"><summary>Billing · ₹ ${netPayable}.00 net · ₹ ${outstanding}.00 outstanding</summary>
+        <details class="billing-details"><summary>Billing · ₹ ${money(netPayable)} net · ₹ ${money(outstanding)} outstanding</summary>
         <div class="desktop-money-band">
           <div class="money-stat">
             <span class="m-lbl">Net payable</span>
-            <span class="m-val large">₹ ${netPayable}.00</span>
+            <span class="m-val large">₹ ${money(netPayable)}</span>
           </div>
           <div class="money-stat">
             <span class="m-lbl">Charged</span>
-            <span class="m-val">₹ ${subtotal}.00</span>
+            <span class="m-val">₹ ${money(subtotal)}</span>
           </div>
           <div class="money-stat">
             <span class="m-lbl">Discount</span>
-            <span class="m-val${discount>0?' owed':''}">₹ ${discount}.00</span>
+            <span class="m-val${discount>0?' owed':''}">₹ ${money(discount)}</span>
           </div>
           <div class="money-stat">
             <span class="m-lbl">Paid</span>
-            <span class="m-val">₹ ${paid}.00</span>
+            <span class="m-val">₹ ${money(paid)}</span>
           </div>
           <div class="money-stat">
             <span class="m-lbl">Outstanding</span>
-            <span class="m-val${outstanding>0?' owed':''}">₹ ${outstanding}.00</span>
+            <span class="m-val${outstanding>0?' owed':''}">₹ ${money(outstanding)}</span>
           </div>
 
           <div class="money-band-actions">
@@ -2714,9 +2652,9 @@ function renderJobScreen(container) {
 
     <!-- Foot Bar -->
     <div class="desktop-foot-bar">
-      <span>Each box saves as you leave it. Nothing waits for a Save.</span>
+      <span><span data-save-status role="status">${uiText(saveMessage)}</span></span>
       <div style="display:flex; gap:10px;">
-        <button class="btn-m" onclick="saveState(); alert('Job saved cleanly.');">Save</button>
+        <button class="btn-m" onclick="saveState();">Save</button>
         <button class="btn-m primary" onclick="openBillModal()">Bill</button>
       </div>
     </div>
@@ -3008,30 +2946,36 @@ function fillPatientFromPrev(id) {
 }
 
 function newJob() {
+  if (!saveState()) return;
   activeJob = createEmptyJob();
+  saveState();
   render();
 }
 
 function saveJobLocal() {
-  if (!activeJob.name.trim()) {
-    alert("Please enter patient name.");
-    return;
-  }
-  let idx = jobs.findIndex(j => j.id === activeJob.id);
-  if (idx >= 0) jobs[idx] = JSON.parse(JSON.stringify(activeJob));
-  else jobs.push(JSON.parse(JSON.stringify(activeJob)));
-  saveState();
-  alert("Job #" + activeJob.report_no + " saved successfully!");
+  return saveState();
 }
-
-function verifyAndCompleteJob() {
-  if (!activeJob.name.trim() || !activeJob.mobile.trim() || !activeJob.sex.trim()) {
-    alert("Name, Mobile and Sex are required to produce the clinical report.");
-    return;
-  }
-  activeJob.status = "ready";
-  saveJobLocal();
-  openReportPreview(activeJob);
+function approveReport() {
+  const job = reportJob || activeJob;
+  if (jobReadiness(job).step !== 'review') { alert('Complete patient details and every result before approval.'); return false; }
+  job.approved_at = new Date().toISOString();
+  job.approved_by = currentUser?.name || 'Demo user';
+  job.approved_snapshot = reportFingerprint(job);
+  job.delivery_state = 'not_started';
+  activeJob = job;
+  if (!saveState()) return false;
+  openReportPreview(job); return true;
+}
+function verifyAndCompleteJob() { reportJob=activeJob; approveReport(); }
+function recordDelivery(state) {
+  if (!reportJob || !reportApproved(reportJob)) return false;
+  reportJob.delivery_state = state;
+  reportJob.delivery_events = [...(reportJob.delivery_events || []), {state,at:new Date().toISOString(),by:currentUser?.name || 'Demo user'}];
+  activeJob = reportJob;
+  if (!saveState()) return false;
+  const status = document.getElementById('delivery-status');
+  if (status) status.textContent = state === 'confirmed' ? 'Delivery confirmed by staff (not a WhatsApp receipt).' : state === 'failed' ? 'Delivery reported failed. Retry when ready.' : 'WhatsApp handoff attempted. Delivery is not confirmed.';
+  return true;
 }
 
 /* --------------------------------------------------------------------------
@@ -3126,7 +3070,7 @@ function renderQueueScreen(container) {
                 <td style="padding:10px 14px; font-size:12px; color:var(--text-muted);">${j.tests.join(", ")}<br><small>${j.tests.length - jobReadiness(j).missing.length}/${j.tests.length} results entered</small></td>
                 <td style="padding:10px 14px; font-size:12px;">${j.date}</td>
                 <td style="padding:10px 14px;">
-                  <span class="status-pill sp-${j.status}">${j.status}</span>
+                  <span class="status-pill sp-${j.status}">${({draft:'Draft',prog:'Needs review',ready:'Approved',sent:'Delivery confirmed'})[j.status] || j.status}</span>
                 </td>
                 <td style="padding:10px 14px; text-align:right;">
                   <button class="btn-m" onclick="openQueueDetails(${index})">${getIcon('preview')} Quick view</button>
@@ -3382,7 +3326,7 @@ function renderTestsScreen(container) {
               <td style="padding:10px 14px; font-size:11.5px; color:var(--text-muted);">${TESTS[k].g}</td>
               <td style="padding:10px 14px; font-size:11.5px;">${TESTS[k].u || '—'}</td>
               <td style="padding:10px 14px; font-size:11.5px;">${TESTS[k].r || '—'}</td>
-              <td style="padding:10px 14px; text-align:right; font-weight:700;">₹ ${TESTS[k].rate}.00</td>
+              <td style="padding:10px 14px; text-align:right; font-weight:700;">₹ ${money(TESTS[k].rate)}</td>
             </tr>
           `).join("")}
         </tbody>
@@ -3392,11 +3336,11 @@ function renderTestsScreen(container) {
 }
 
 function renderBillingScreen(container) {
-  const totalRev = jobs.reduce((acc, j) => acc + (j.bill_paid || 150), 0);
+  const totalRev = jobs.reduce((acc, j) => acc + billTotals(j).paid, 0);
   container.innerHTML = `
     <div style="padding:14px 18px; background:var(--surface); border-bottom:2px solid var(--border); display:flex; align-items:center;">
       <h1 style="font-size:18px; font-weight:800; margin:0;">Billing & Counter Collections</h1>
-      <span style="margin-left:auto; font-size:16px; font-weight:800; color:var(--accent-green);">Total Collections: ₹ ${totalRev}.00</span>
+      <span style="margin-left:auto; font-size:16px; font-weight:800; color:var(--accent-green);">Total Collections: ₹ ${money(totalRev)}</span>
     </div>
     <div style="flex:1; background:var(--surface); overflow:auto;">
       <table style="width:100%; border-collapse:collapse;">
@@ -3405,7 +3349,7 @@ function renderBillingScreen(container) {
             <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Report No</th>
             <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Patient</th>
             <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Tests</th>
-            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Total Charged</th>
+            <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Amount received</th>
             <th style="padding:10px 14px; text-align:left; font-size:12px; font-weight:700; text-transform:none;">Payment Mode</th>
             <th style="padding:10px 14px; text-align:right; font-size:12px; font-weight:700; text-transform:none;">Status</th>
           </tr>
@@ -3416,9 +3360,9 @@ function renderBillingScreen(container) {
                 <td style="padding:10px 14px; font-weight:800;">${j.report_no}</td>
                 <td style="padding:10px 14px; font-weight:700;">${j.name} .${j.initial}.</td>
                 <td style="padding:10px 14px; font-size:12px; color:var(--text-muted);">${j.tests.length} tests</td>
-                <td style="padding:10px 14px; font-weight:800;">₹ ${j.bill_paid || 150}.00</td>
+                <td style="padding:10px 14px; font-weight:800;">₹ ${money(billTotals(j).paid)}</td>
                 <td style="padding:10px 14px;">${j.bill_mode || 'Cash'}</td>
-                <td style="padding:10px 14px; text-align:right;"><span class="status-pill sp-ready">Paid</span></td>
+                <td style="padding:10px 14px; text-align:right;"><span class="status-pill sp-${billTotals(j).due ? 'draft' : 'sent'}">${billTotals(j).due ? 'Balance ₹ ' + money(billTotals(j).due) : 'Paid'}</span></td>
               </tr>
             `).join("")
           }
@@ -3430,7 +3374,7 @@ function renderBillingScreen(container) {
 
 function renderSummariesScreen(container) {
   const todayStr = new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
-  const totalBilled = jobs.reduce((acc, j) => acc + (j.bill_paid || 150), 0);
+  const totalBilled = jobs.reduce((acc, j) => acc + billTotals(j).paid, 0);
 
   const testCounts = {};
   jobs.forEach(j => {
@@ -3446,7 +3390,7 @@ function renderSummariesScreen(container) {
       const doc = DOCTORS.find(d => j.referrer.includes(d.name));
       if (doc) {
         docComms[doc.name].count++;
-        docComms[doc.name].comm += Math.round((j.bill_paid || 150) * (doc.pct / 100));
+        docComms[doc.name].comm += Math.round(billTotals(j).paid * (doc.pct / 100));
       }
     }
   });
@@ -3464,7 +3408,7 @@ function renderSummariesScreen(container) {
       </div>
       <div style="background:var(--surface-alt); padding:14px;">
         <div class="stat-label">Total Collections</div>
-        <div style="font-size:24px; font-weight:800; color:var(--accent-green);">₹ ${totalBilled}.00</div>
+        <div style="font-size:24px; font-weight:800; color:var(--accent-green);">₹ ${money(totalBilled)}</div>
       </div>
       <div style="background:var(--surface-alt); padding:14px;">
         <div class="stat-label">Day Sheet Date</div>
@@ -3492,7 +3436,7 @@ function renderSummariesScreen(container) {
                 <tr style="border-bottom:1px solid var(--border-subtle);">
                   <td style="padding:8px 10px; font-weight:700;">${TESTS[c]?.n || c}</td>
                   <td style="padding:8px 10px; text-align:center; font-weight:800;">${testCounts[c]}</td>
-                  <td style="padding:8px 10px; text-align:right;">₹ ${(TESTS[c]?.rate||100)*testCounts[c]}.00</td>
+                  <td style="padding:8px 10px; text-align:right;">₹ ${money((TESTS[c]?.rate ?? 100)*testCounts[c])}</td>
                 </tr>
               `).join("")
             }
@@ -3514,7 +3458,7 @@ function renderSummariesScreen(container) {
               <tr style="border-bottom:1px solid var(--border-subtle);">
                 <td style="padding:8px 10px; font-weight:700;">${d.name}</td>
                 <td style="padding:8px 10px; text-align:center; font-weight:800;">${docComms[d.name]?.count || 0}</td>
-                <td style="padding:8px 10px; text-align:right; font-weight:800; color:var(--accent-green);">₹ ${docComms[d.name]?.comm || 0}.00</td>
+                <td style="padding:8px 10px; text-align:right; font-weight:800; color:var(--accent-green);">₹ ${money(docComms[d.name]?.comm || 0)}</td>
               </tr>
             `).join("")}
           </tbody>
@@ -3527,7 +3471,7 @@ function renderSummariesScreen(container) {
 function exportSummaryCSV() {
   let csv = "Report No,Date,Patient,Mobile,Sex,Tests,Amount,Status\n";
   jobs.forEach(j => {
-    csv += `"${j.report_no}","${j.date}","${j.name} .${j.initial}.","${j.mobile}","${j.sex}","${j.tests.join(';')}","${j.bill_paid || 150}","${j.status}"\n`;
+    csv += `"${j.report_no}","${j.date}","${j.name} .${j.initial}.","${j.mobile}","${j.sex}","${j.tests.join(';')}","${money(billTotals(j).paid)}","${j.status}"\n`;
   });
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
@@ -3774,6 +3718,7 @@ function loadSampleData() {
    -------------------------------------------------------------------------- */
 
 function openReportPreview(job) {
+  reportJob = job;
   const isHbA1c = job.tests.includes("HBA1C");
 
   // Group tests by clinical department
@@ -4050,16 +3995,19 @@ function openReportPreview(job) {
 
   document.getElementById("modal-dialog-title").textContent = `Official Diagnostic Report — #${job.report_no} ${job.name} .${job.initial}.`;
   document.getElementById("modal-dialog-body").className = "modal-dialog-body";
-  document.getElementById("modal-dialog-body").innerHTML = pagesHTML;
+  document.getElementById("modal-dialog-body").innerHTML = `<div style="padding:12px;color:#141719;background:white;font-weight:700;">${reportApproved(job) ? "Approved for delivery" : "DRAFT — not approved for delivery"}</div>` + pagesHTML;
   document.getElementById("modal-dialog-footer").innerHTML = `
     <button class="btn-m primary" onclick="window.print()">Print Report</button>
-    <button class="btn-m" onclick="openWhatsAppDispatchModal(activeJob)"> WhatsApp Dispatch</button>
+    <button class="btn-m" onclick="approveReport()" ${jobReadiness(job).step!=='review'?'disabled':''}>Approve reviewed report</button>
+    <button class="btn-m" onclick="openWhatsAppDispatchModal(reportJob)" ${reportApproved(job)?'':'disabled'}>WhatsApp Dispatch</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
   document.getElementById("modal-container").classList.add("open");
 }
 
 function openWhatsAppDispatchModal(job) {
+  if (!reportApproved(job)) { openReportPreview(job); return; }
+  reportJob = job;
   let resultSummary = job.tests.map(c => {
     const t = TESTS[c];
     const val = job.results[c] || "—";
@@ -4097,8 +4045,8 @@ function openWhatsAppDispatchModal(job) {
       </div>
 
       <div style="display:flex; gap:10px;">
-        <button class="btn-m primary" onclick="window.print()">1. Save / Download PDF</button>
-        <a class="btn-m" href="${waUrl}" target="_blank" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#201e1d; color:#fff;"> 2. Open WhatsApp Web ↗</a>
+        <button class="btn-m primary" onclick="openReportPreview(reportJob)">1. Open report / Save PDF</button>
+        <a class="btn-m" href="${waUrl}" target="_blank" rel="noopener" onclick="if(!recordDelivery('attempted'))event.preventDefault()" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#201e1d; color:#fff;"> 2. Open WhatsApp Web ↗</a>
       </div>
     </div>
   `;
@@ -4107,73 +4055,54 @@ function openWhatsAppDispatchModal(job) {
   document.getElementById("modal-dialog-body").className = "modal-dialog-body plain";
   document.getElementById("modal-dialog-body").innerHTML = content;
   document.getElementById("modal-dialog-footer").innerHTML = `
-    <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
-  `;
-}
-
-function openBillModal() {
-  const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate || 100), 0);
-  const total = Math.max(0, subtotal - (activeJob.bill_disc || 0));
-
-  const content = `
-    <div style="padding:10px 14px;">
-      <h3 style="margin-top:0; font-size:16px; font-weight:800;">Billing & Payment Settlement — Job #${activeJob.report_no}</h3>
-      <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
-        <thead>
-          <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
-            <th style="padding:8px 10px; text-align:left; font-size:12px; text-transform:none;">Test Description</th>
-            <th style="padding:8px 10px; text-align:right; font-size:12px; text-transform:none;">Rate (₹)</th>
-          </tr>
-        </thead>
-        <tbody> ${activeJob.tests.map(c => `
-            <tr style="border-bottom:1px solid var(--border-subtle);">
-              <td style="padding:8px 10px; font-weight:600;">${TESTS[c]?.n||c}</td>
-              <td style="padding:8px 10px; text-align:right; font-weight:700;">₹ ${TESTS[c]?.rate||100}.00</td>
-            </tr>
-          `).join("")}
-          <tr style="border-top:1px solid var(--border);"><td style="padding:8px 10px;">Gross Subtotal</td><td style="padding:8px 10px; text-align:right; font-weight:800;">₹ ${subtotal}.00</td></tr>
-          <tr>
-            <td style="padding:8px 10px;">Discount (₹)</td>
-            <td style="padding:8px 10px; text-align:right;">
-              <input type="number" class="field-input" value="${activeJob.bill_disc||0}" min="0" max="${subtotal}" style="width:100px; height:28px; text-align:right;" oninput="activeJob.bill_disc=parseInt(this.value)||0; openBillModal();">
-            </td>
-          </tr>
-          <tr style="font-weight:800; font-size:16px; border-top:2px solid var(--border); background:var(--surface-alt);">
-            <td style="padding:10px;">Net Payable Amount</td><td style="padding:10px; text-align:right; color:var(--accent-red);">₹ ${total}.00</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; background:var(--surface-alt); padding:14px; margin-bottom:14px;">
-        <div>
-          <label class="stat-label">Payment Mode</label>
-          <select class="field-input" onchange="activeJob.bill_mode=this.value;">
-            <option value="Cash" ${activeJob.bill_mode==='Cash'?'selected':''}>Cash</option>
-            <option value="UPI / GPay" ${activeJob.bill_mode==='UPI / GPay'?'selected':''}>UPI / GPay</option>
-            <option value="Card" ${activeJob.bill_mode==='Card'?'selected':''}>Debit / Credit Card</option>
-          </select>
-        </div>
-        <div>
-          <label class="stat-label">Amount Received (₹)</label>
-          <input type="number" class="field-input" value="${total}" style="font-weight:800;">
-        </div>
-      </div>
-    </div>
-  `;
-  document.getElementById("modal-dialog-title").textContent = `Billing Settlement #${activeJob.report_no}`;
-  document.getElementById("modal-dialog-body").className = "modal-dialog-body plain";
-  document.getElementById("modal-dialog-body").innerHTML = content;
-  document.getElementById("modal-dialog-footer").innerHTML = `
-    <button class="btn-m primary" onclick="activeJob.bill_paid=${total}; saveJobLocal(); printA4Invoice();">Print A4 bill</button>
-    <button class="btn-m" style="background:#201e1d; color:#fff;" onclick="activeJob.bill_paid=${total}; saveJobLocal(); printPOSReceipt();">Print 80mm POS Receipt</button>
-    <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
+    <span id="delivery-status" role="status">Opening WhatsApp does not confirm delivery.</span>
+    <button class="btn-m" onclick="recordDelivery('confirmed')">I confirmed delivery</button>
+    <button class="btn-m" onclick="recordDelivery('failed')">Delivery failed</button>
+    <button class="btn-m" onclick="closeModal()">Close</button>
   `;
   document.getElementById("modal-container").classList.add("open");
 }
 
+function openBillModal() {
+  const totals = billTotals(activeJob);
+  document.getElementById('modal-dialog-title').textContent = 'Billing — #' + activeJob.report_no;
+  document.getElementById('modal-dialog-body').className = 'modal-dialog-body plain';
+  document.getElementById('modal-dialog-body').innerHTML = `
+    <p>Gross total: ₹ ${money(totals.gross)}</p>
+    <label for="bill-discount">Discount (₹)</label><input id="bill-discount" class="field-input" type="number" min="0" max="${totals.gross}" step="0.01" value="${totals.discount}" oninput="updateBillPreview()">
+    <label for="bill-received">Total received to date (₹)</label><input id="bill-received" class="field-input" type="number" min="0" step="0.01" value="${totals.paid}" oninput="updateBillPreview()">
+    <label for="bill-mode">Payment mode</label><select id="bill-mode" class="field-input">${['Cash','UPI / GPay','Card'].map(mode=>`<option ${activeJob.bill_mode===mode?'selected':''}>${mode}</option>`).join('')}</select>
+    <p id="bill-summary" role="status"></p><p id="bill-error" role="alert" style="color:var(--alert)"></p>
+    <p>Printing a bill does not record payment. Save the received amount explicitly.</p>`;
+  document.getElementById('modal-dialog-footer').innerHTML = `
+    <button class="btn-m primary" onclick="saveBill()">Save payment</button>
+    <button class="btn-m" onclick="if(saveBill())printA4Invoice()">Save & preview A4 bill</button>
+    <button class="btn-m" onclick="if(saveBill())printPOSReceipt()">Save & preview counter slip</button>
+    <button class="btn-m" onclick="closeModal()">Close</button>`;
+  updateBillPreview();
+  document.getElementById('modal-container').classList.add('open');
+}
+function updateBillPreview() {
+  const draft = {...activeJob, bill_disc:document.getElementById('bill-discount').value, paid:document.getElementById('bill-received').value};
+  const t = billTotals(draft);
+  document.getElementById('bill-summary').textContent = `Net ₹ ${money(t.net)} · Received ₹ ${money(t.paid)} · Balance ₹ ${money(t.due)}${t.credit ? ' · Credit ₹ '+money(t.credit) : ''}`;
+}
+function saveBill() {
+  const discount = Number(document.getElementById('bill-discount').value);
+  const paid = Number(document.getElementById('bill-received').value);
+  if (!Number.isFinite(discount) || !Number.isFinite(paid) || discount<0 || paid<0 || discount>billTotals(activeJob).gross) {
+    document.getElementById('bill-error').textContent = 'Enter non-negative amounts; discount cannot exceed the gross total.';return false;
+  }
+  activeJob.bill_disc=Number(money(discount));activeJob.paid=Number(money(paid));activeJob.bill_paid=activeJob.paid;
+  activeJob.bill_mode=document.getElementById('bill-mode').value;
+  if (!saveState()) { document.getElementById('bill-error').textContent=saveMessage;return false; }
+  document.getElementById('bill-error').textContent='';
+  document.getElementById('bill-summary').textContent+=' · Saved';return true;
+}
+
 function printA4Invoice() {
-  const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate || 100), 0);
-  const disc = activeJob.bill_disc || 0;
+  const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate ?? 100), 0);
+  const disc = billTotals(activeJob).discount;
   const net = Math.max(0, subtotal - disc);
 
   const invoiceHTML = `
@@ -4214,12 +4143,15 @@ function printA4Invoice() {
               <td style="padding:8px 10px;">${i + 1}</td>
               <td style="padding:8px 10px; font-weight:600;">${TESTS[c]?.n || c}</td>
               <td style="padding:8px 10px; color:#64748b;">999312 (Pathology)</td>
-              <td style="padding:8px 10px; text-align:right; font-weight:700;">₹ ${(TESTS[c]?.rate || 100).toFixed(2)}</td>
+              <td style="padding:8px 10px; text-align:right; font-weight:700;">₹ ${(TESTS[c]?.rate ?? 100).toFixed(2)}</td>
             </tr>
           `).join("")}
           <tr style="border-top:2px solid #0A3668; font-weight:700;"><td colspan="3" style="padding:8px 10px;">Gross Total</td><td style="padding:8px 10px; text-align:right;">₹ ${subtotal.toFixed(2)}</td></tr>
           <tr><td colspan="3" style="padding:6px 10px; color:#d97706;">Discount Given</td><td style="padding:6px 10px; text-align:right; color:#d97706;">- ₹ ${disc.toFixed(2)}</td></tr>
-          <tr style="background:#f1f5f9; font-size:14px; font-weight:800; border-top:2px solid #0A3668;"><td colspan="3" style="padding:10px;">Net Amount Received (${activeJob.bill_mode || 'Cash'})</td><td style="padding:10px; text-align:right; color:#16a34a;">₹ ${net.toFixed(2)}</td></tr>
+          <tr style="background:#f1f5f9; font-size:14px; font-weight:800; border-top:2px solid #0A3668;"><td colspan="3" style="padding:10px;">Net amount due</td><td style="padding:10px; text-align:right; color:#16a34a;">₹ ${net.toFixed(2)}</td></tr>
+          <tr><td colspan="3">Received (${activeJob.bill_mode || 'Cash'})</td><td style="text-align:right;">₹ ${money(billTotals(activeJob).paid)}</td></tr>
+          <tr><td colspan="3">Balance due</td><td style="text-align:right;">₹ ${money(billTotals(activeJob).due)}</td></tr>
+          <tr><td colspan="3">Credit</td><td style="text-align:right;">₹ ${money(billTotals(activeJob).credit)}</td></tr>
         </tbody>
       </table>
 
@@ -4260,9 +4192,9 @@ function printPOSReceipt() {
       <div>Date: ${activeJob.date}</div>
       <div>Patient: ${activeJob.name} .${activeJob.initial}.</div>
       <div>Mobile: ${activeJob.mobile}</div>
-      ----------------------------------------<br> ${activeJob.tests.map(c => `<div>${(TESTS[c]?.n||c).slice(0,20).padEnd(20, ' ')} ₹${TESTS[c]?.rate||100}.00</div>`).join("")}
+      ----------------------------------------<br> ${activeJob.tests.map(c => `<div>${(TESTS[c]?.n||c).slice(0,20).padEnd(20, ' ')} ₹${TESTS[c]?.rate ?? 100}.00</div>`).join("")}
       ----------------------------------------<br>
-      <div><b>TOTAL PAID: ₹ ${activeJob.bill_paid}.00</b></div>
+      <div><b>NET: ₹ ${money(billTotals(activeJob).net)}</b></div><div>PAID: ₹ ${money(billTotals(activeJob).paid)}</div><div>BALANCE: ₹ ${money(billTotals(activeJob).due)}</div>
       <div>Payment Mode: ${activeJob.bill_mode || 'Cash'}</div>
       ----------------------------------------<br>
       <div style="text-align:center; font-size:11px; margin-top:6px;"> Thank you for choosing New Mithra!<br> Reports ready same day evening.
@@ -4437,10 +4369,10 @@ function openTubeLabelModal(job) {
 function openPOSReceiptModal(job) {
   job = job || activeJob;
   const tests = (job.tests || []).map(c => TESTS[c] || { n: c, rate: 0 });
-  const total = tests.reduce((a, b) => a + (b.rate || 0), 0);
-  const discount = job.bill_disc || job.discount || 0;
-  const net = Math.max(0, total - discount);
-  const paid = job.paid !== undefined ? job.paid : net;
+  const total = billTotals(job).gross;
+  const discount = billTotals(job).discount;
+  const net = billTotals(job).net;
+  const paid = billTotals(job).paid;
   const due = Math.max(0, net - paid);
 
   const receiptHtml = `
@@ -4775,12 +4707,12 @@ function printReceiptDirect() {
    Executive Day-Book & Financial Analytics Dashboard (F10)
    -------------------------------------------------------------------------- */
 function renderAnalyticsScreen(container) {
-  const totalBilled = jobs.reduce((acc, j) => acc + (j.bill_paid || 150), 0);
-  const totalDiscounts = jobs.reduce((acc, j) => acc + (j.bill_disc || 0), 0);
+  const totalBilled = jobs.reduce((acc, j) => acc + billTotals(j).net, 0);
+  const totalDiscounts = jobs.reduce((acc, j) => acc + billTotals(j).discount, 0);
   const grossRevenue = totalBilled + totalDiscounts;
 
-  const cashRev = jobs.filter(j => (j.bill_mode||'Cash') === 'Cash').reduce((acc, j) => acc + (j.bill_paid || 150), 0);
-  const digitalRev = totalBilled - cashRev;
+  const cashRev = jobs.filter(j => (j.bill_mode||'Cash') === 'Cash').reduce((acc, j) => acc + billTotals(j).paid, 0);
+  const digitalRev = jobs.reduce((acc,j)=>acc+billTotals(j).paid,0) - cashRev;
 
   // Test volume frequencies
   const testCounts = {};
@@ -4800,7 +4732,7 @@ function renderAnalyticsScreen(container) {
       const doc = DOCTORS.find(d => j.referrer.includes(d.name));
       if (doc) {
         docComms[doc.name].count++;
-        const amt = (j.bill_paid || 150);
+        const amt = billTotals(j).paid;
         docComms[doc.name].billing += amt;
         docComms[doc.name].comm += Math.round(amt * (doc.pct / 100));
       }
@@ -4828,18 +4760,18 @@ function renderAnalyticsScreen(container) {
           <div style="font-size:11px; color:var(--text-muted);">Registered Workstation Entries</div>
         </div>
         <div class="kpi-card" style="border-left:4px solid var(--accent-green);">
-          <div class="kpi-title">Gross Revenue</div>
-          <div class="kpi-val" style="color:var(--accent-green);">₹ ${grossRevenue}.00</div>
+          <div class="kpi-title">Gross charges</div>
+          <div class="kpi-val" style="color:var(--accent-green);">₹ ${money(grossRevenue)}</div>
           <div style="font-size:11px; color:var(--text-muted);">Total Invoiced Investigations</div>
         </div>
         <div class="kpi-card" style="border-left:4px solid var(--accent-red);">
           <div class="kpi-title">Net Counter Collections</div>
-          <div class="kpi-val" style="color:var(--accent-red);">₹ ${totalBilled}.00</div>
+          <div class="kpi-val" style="color:var(--accent-red);">₹ ${money(totalBilled)}</div>
           <div style="font-size:11px; color:var(--text-muted);">Cash: ₹ ${cashRev} · Digital/UPI: ₹ ${digitalRev}</div>
         </div>
         <div class="kpi-card" style="border-left:4px solid #f59e0b;">
           <div class="kpi-title">Discounts Given</div>
-          <div class="kpi-val" style="color:#f59e0b;">₹ ${totalDiscounts}.00</div>
+          <div class="kpi-val" style="color:#f59e0b;">₹ ${money(totalDiscounts)}</div>
           <div style="font-size:11px; color:var(--text-muted);">Concessions & Waivers</div>
         </div>
       </div>
@@ -4876,15 +4808,15 @@ function renderAnalyticsScreen(container) {
           <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-alt); border-left:3px solid #16703F;">
               <span style="font-weight:700;"> Hard Cash Counter</span>
-              <span style="font-weight:800; font-size:14px;">₹ ${cashRev}.00</span>
+              <span style="font-weight:800; font-size:14px;">₹ ${money(cashRev)}</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-alt); border-left:3px solid #0284c7;">
               <span style="font-weight:700;"> UPI / GPay / Card</span>
-              <span style="font-weight:800; font-size:14px;">₹ ${digitalRev}.00</span>
+              <span style="font-weight:800; font-size:14px;">₹ ${money(digitalRev)}</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-alt); border-left:3px solid #6b7280;">
               <span style="font-weight:700;"> Patient Balance / Due</span>
-              <span style="font-weight:800; font-size:14px;">₹ 0.00</span>
+              <span style="font-weight:800; font-size:14px;">₹ ${money(jobs.reduce((n,j)=>n+billTotals(j).due,0))}</span>
             </div>
           </div>
         </div>
@@ -4910,9 +4842,9 @@ function renderAnalyticsScreen(container) {
                 <tr style="border-bottom:1px solid var(--border-subtle);">
                   <td style="padding:8px 10px; font-weight:700;">${d.name} <span style="font-size:11px; color:var(--text-muted);">(${d.spec})</span></td>
                   <td style="padding:8px 10px; text-align:center; font-weight:800;">${row.count}</td>
-                  <td style="padding:8px 10px; text-align:right;">₹ ${row.billing}.00</td>
+                  <td style="padding:8px 10px; text-align:right;">₹ ${money(row.billing)}</td>
                   <td style="padding:8px 10px; text-align:center; font-weight:700; color:var(--accent-green);">${row.pct}%</td>
-                  <td style="padding:8px 10px; text-align:right; font-weight:800; color:var(--brand-blue);">₹ ${row.comm}.00</td>
+                  <td style="padding:8px 10px; text-align:right; font-weight:800; color:var(--brand-blue);">₹ ${money(row.comm)}</td>
                 </tr>
               `;
             }).join("")}
@@ -4926,8 +4858,8 @@ function renderAnalyticsScreen(container) {
 function exportDaySheetCSV() {
   let csv = "Report No,Date,Patient Name,Age,Sex,Referrer,Tests,Gross (INR),Discount (INR),Paid (INR),Payment Mode\n";
   jobs.forEach(j => {
-    const gross = (j.bill_paid || 150) + (j.bill_disc || 0);
-    csv += `"${j.report_no}","${j.date}","${j.name} .${j.initial}.","${j.age} ${j.age_unit}","${j.sex}","${j.referrer}","${j.tests.join('; ')}",${gross},${j.bill_disc||0},${j.bill_paid||150},"${j.bill_mode||'Cash'}"\n`;
+    const gross = billTotals(j).gross;
+    csv += `"${j.report_no}","${j.date}","${j.name} .${j.initial}.","${j.age} ${j.age_unit}","${j.sex}","${j.referrer}","${j.tests.join('; ')}",${gross},${money(billTotals(j).discount)},${money(billTotals(j).paid)},"${j.bill_mode||'Cash'}"\n`;
   });
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });

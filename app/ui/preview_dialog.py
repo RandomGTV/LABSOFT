@@ -82,7 +82,8 @@ class PreviewDialog(QDialog):
         lay.addWidget(self.scroll, 1)
 
         self.hint = label(
-            "This is exactly what the patient will receive.", "hint")
+            ("Approved report preview." if services.report_is_approved(self.job_id) else
+             "Draft preview — not approved. Use Check & make report before printing, saving or delivery."), "hint")
         lay.addWidget(self.hint)
 
         buttons = [button("Print…", "", self._print),
@@ -91,6 +92,10 @@ class PreviewDialog(QDialog):
                    button("Close", "", self.reject)]
         if self.allow_send:
             buttons.append(button("Looks right — send", "go", self._accept_send))
+        if not services.report_is_approved(self.job_id):
+            for action in buttons:
+                if action is not None and action.text() != "Close":
+                    action.setEnabled(False)
         lay.addWidget(row(*buttons))
 
     # ---------------------------------------------------------------- render
@@ -164,6 +169,9 @@ class PreviewDialog(QDialog):
             super().keyPressEvent(event)
 
     def _print(self) -> None:
+        if not services.report_is_approved(self.job_id):
+            self.hint.setText("Report changed or is not approved. Check & make report again.")
+            return
         printer = QPrinter(QPrinter.PrinterMode.HighResolution)
         dialog = QPrintDialog(printer, self)
         if dialog.exec() != QPrintDialog.DialogCode.Accepted:
@@ -177,6 +185,9 @@ class PreviewDialog(QDialog):
         q.log_action("report_printed", "job", self.job_id, "from preview")
 
     def _save_copy(self) -> None:
+        if not services.report_is_approved(self.job_id):
+            self.hint.setText("Report changed or is not approved. Check & make report again.")
+            return
         from PyQt6.QtWidgets import QFileDialog
 
         job = q.get_job(self.job_id) or {}
@@ -194,5 +205,8 @@ class PreviewDialog(QDialog):
         info(self, "Saved", f"A copy has been written to:\n{path}")
 
     def _accept_send(self) -> None:
+        if not services.report_is_approved(self.job_id):
+            self.hint.setText("Report changed or is not approved. Check & make report again.")
+            return
         self.send_requested = True
         self.accept()

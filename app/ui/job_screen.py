@@ -258,8 +258,79 @@ class JobScreen(QWidget):
         self.rows: Dict[int, ResultRow] = {}
         self._loading = False
 
+        self._draft_ready = False
+        self._draft_blocked = False
         self._build()
         self.new_job()
+        self._restore_draft()
+        self._draft_ready = True
+        for field in (self.name_edit, self.initial_edit, self.phone_edit):
+            field.textChanged.connect(self._write_draft)
+        self.sex_combo.currentTextChanged.connect(self._write_draft)
+        self.age_spin.valueChanged.connect(self._write_draft)
+        self.age_unit.currentTextChanged.connect(self._write_draft)
+        self.referrer_combo.currentIndexChanged.connect(self._write_draft)
+        self.remarks_edit.textChanged.connect(self._write_draft)
+
+    def _write_draft(self, *_args) -> bool:
+        if not self._draft_ready or self._loading or self._draft_blocked:
+            return False
+        from ..core import drafts
+        value = {"version": 1, "job_id": self.job_id, "patient_id": self.patient_id,
+                 "test_ids": self.test_ids,
+                 "fields": {"name": self.name_edit.text(), "initial": self.initial_edit.text(),
+                            "phone": self.phone_edit.text(), "sex": self.sex_combo.currentText(),
+                            "age": self.age_spin.value(), "age_unit": self.age_unit.currentText(),
+                            "referrer_id": self._resolve_referrer(), "remarks": self.remarks_edit.toPlainText()},
+                 "results": {str(rr.test["id"]): {"value": rr.value(), "not_done": rr.not_done}
+                             for rr in self.rows.values()}}
+        try:
+            drafts.write(value)
+        except (OSError, ValueError) as exc:
+            self.message.setText("Could not save recovery draft. Keep this window open and retry Save.")
+            self.message.setStyleSheet(f"color: {style.RED};")
+            return False
+        self.message.setText("Recovery draft saved on this PC")
+        self.message.setStyleSheet(f"color: {style.INK3};")
+        return True
+
+    def _restore_draft(self) -> None:
+        from ..core import drafts
+        try:
+            saved = drafts.read()
+            if not saved:
+                return
+            if saved.get("job_id") and not q.get_job(saved["job_id"]):
+                raise ValueError("The draft belongs to a job that no longer exists")
+            self._loading = True
+            if saved.get("job_id"):
+                self.load_job(saved["job_id"])
+                self._loading = True
+            self.patient_id = saved.get("patient_id")
+            fields = saved["fields"]
+            for key, field in (("name", self.name_edit), ("initial", self.initial_edit), ("phone", self.phone_edit)):
+                field.setText(fields.get(key, ""))
+            self.sex_combo.setCurrentText(fields.get("sex", ""))
+            self.age_spin.setValue(int(fields.get("age", 0)))
+            self.age_unit.setCurrentText(fields.get("age_unit", "Years"))
+            self._reload_referrers(keep_id=fields.get("referrer_id"))
+            self.remarks_edit.setPlainText(fields.get("remarks", ""))
+            self.test_ids = [tid for tid in saved.get("test_ids", []) if q.get_test(tid)]
+            self.rows = {}
+            self._rebuild_grid()
+            for rr in self.rows.values():
+                result = saved.get("results", {}).get(str(rr.test["id"]))
+                if result:
+                    rr.set_value(result["value"])
+                    rr.set_not_done(bool(result.get("not_done")))
+            self._loading = False
+            self._update_actions()
+            self.message.setText("Recovery draft restored — Save to update the job record")
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            self._loading = False
+            self._draft_blocked = True
+            self.message.setText("Recovery draft could not be read; the original file has been preserved.")
+            self.message.setStyleSheet(f"color: {style.RED};")
 
     # ------------------------------------------------------------------ build
     def _build(self) -> None:
@@ -835,7 +906,7 @@ class JobScreen(QWidget):
         foot_lay.setContentsMargins(18, 0, 18, 0)
         foot_lay.setSpacing(9)
         foot_lay.addWidget(label(
-            "Each box saves as you leave it. Nothing waits for a Save.", "hint"))
+            "A recovery draft is kept locally. Save updates the patient and job record.", "hint"))
         foot_lay.addStretch(1)
         self.save_button = button("Save", "", self.save,
                                   "Save without producing a report", "Ctrl+S")
@@ -960,6 +1031,7 @@ class JobScreen(QWidget):
         self._rebuild_grid()
         self._loading = False
         self.name_edit.setFocus()
+        self._write_draft()
 
     def load_job(self, job_id: int) -> None:
         job = q.get_job(job_id)
@@ -1003,6 +1075,7 @@ class JobScreen(QWidget):
         self._load_stored_results()
         self._loading = False
         self._refresh_header()
+        self._write_draft()
 
     # ------------------------------------------------------------- patient
     def _on_name_typed(self, text: str) -> None:
@@ -1447,10 +1520,11 @@ class JobScreen(QWidget):
     # ---------------------------------------------------------- calculation
     def _recalc(self) -> None:
         """Save what has been typed and refresh every calculated value."""
+        self._write_draft()
         if self._loading or not self.test_ids:
-            return
+            return False
         if not self._ensure_job(silent=True):
-            return
+            return False
 
         typed = {jt: rr.value() for jt, rr in self.rows.items()
                  if not rr.is_derived and not rr.not_done}
@@ -1463,7 +1537,7 @@ class JobScreen(QWidget):
             # the success green — so a failure was reported in the colour that
             # means "saved".
             self.message.setStyleSheet(f"color: {style.RED}; font-weight: 600;")
-            return
+            return False
 
         for jt, rr in self.rows.items():
             data = out.get(jt)
@@ -1507,7 +1581,9 @@ class JobScreen(QWidget):
         self._refresh_header()
         self._update_actions()
         self._refresh_bill()
+        recovered = self._write_draft()
         self.job_changed.emit()
+        return recovered
 
     def _update_actions(self) -> None:
         total = len(self.rows)
@@ -1535,6 +1611,7 @@ class JobScreen(QWidget):
             f"{len(self.test_ids)} chosen · {total} result{'s' if total != 1 else ''}"
             if self.test_ids else "")
         self._refresh_counsel()
+        self._write_draft()
 
         if total:
             self.progress_label.setText(f"{done} of {total} entered")
@@ -1695,18 +1772,18 @@ class JobScreen(QWidget):
         r = next((x for x in q.list_referrers() if x["id"] == referrer_id), None)
         return (r["name"] if r else "").strip()
 
-    def save(self) -> None:
+    def save(self) -> bool:
         if not self.test_ids:
             warn(self, "No tests chosen",
                  "Nothing was saved, because this job has no tests yet.\n\n"
                  "Click a panel button, or type a test name in the search box.")
-            return
+            return False
         if not self._ensure_job():
-            return
+            return False
 
         data = self._collect_patient()
         if data is None:
-            return
+            return False
         services.upsert_patient(data["name"], data["phone"], data["sex"],
                                 data["age_value"], data["age_unit"],
                                 patient_id=self.patient_id,
@@ -1725,16 +1802,19 @@ class JobScreen(QWidget):
                      age_at_test=q.age_text(data),
                      age_value_at_test=data.get("age_value"),
                      age_unit_at_test=(data.get("age_unit") or "").lower())
-        self._recalc()
-        self.message.setText("Saved")
+        if not self._recalc():
+            return False
+        self.message.setText("Job record and recovery draft saved")
         self.message.setProperty("role", "ok")
         self.message.setStyleSheet(f"color: {style.GREEN}; font-weight: 600;")
         self.job_changed.emit()
+        return True
 
     def verify(self) -> None:
         if not self._ensure_job():
             return
-        self.save()
+        if not self.save():
+            return
 
         # Bill first is the lab's rule, so an unbilled report is worth stopping
         # for -- but only to ask. Blocking it would mean a patient in a hurry
@@ -1782,7 +1862,8 @@ class JobScreen(QWidget):
             return
         if not self._ensure_job():
             return
-        self._recalc()
+        if not self.save():
+            return
         self.request_preview.emit(self.job_id)
 
     def _open_bill(self) -> None:
@@ -1834,27 +1915,15 @@ class JobScreen(QWidget):
         TubeLabelDialog(self, data, test_names).exec()
 
     def _open_whatsapp_dispatch(self) -> None:
-        if not self.job_id:
+        if not self.save():
             return
-        job = q.get_job(self.job_id) or {}
-        tests = q.job_tests(self.job_id)
-        stored = q.results_for_job(self.job_id)
-        lines = []
-        for t in tests:
-            jt = t["job_test_id"]
-            r = stored.get(jt, {})
-            val = r.get("display_value") or r.get("raw_value") or "—"
-            unit = t.get("unit") or ""
-            flag = f" [{r.get('flag')}]" if r.get("flag") else ""
-            lines.append(f"• *{t['name']}:* {val} {unit}{flag}")
-        
-        data = {
-            "report_no": job.get("report_no", self.job_id),
-            "patient_name": self.printed_name_text() or self.name_edit.text(),
-            "phone": self.phone_edit.text(),
-            "received_at": job.get("received_at", ""),
-        }
-        WhatsAppDialog(self, data, "\n".join(lines)).exec()
+        if not self.job_id or not services.report_is_approved(self.job_id):
+            warn(self, "Review needed", "Use Check & make report to approve the current report before opening delivery.")
+            return
+        from .send_dialog import SendDialog
+        SendDialog(self.job_id, self).exec()
+        self._refresh_header()
+        self.job_changed.emit()
 
     def _remarks_changed(self) -> None:
         if getattr(self, "_loading", False):

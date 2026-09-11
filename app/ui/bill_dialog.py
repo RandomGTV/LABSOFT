@@ -225,7 +225,8 @@ class BillDialog(QDialog):
 
     def _print_a4(self) -> None:
         from .bill_preview import BillPreviewDialog
-        self._save()
+        if not self._save():
+            return
         BillPreviewDialog(self.job_id, self).exec()
 
     def _print_pos(self) -> None:
@@ -238,7 +239,8 @@ class BillDialog(QDialog):
         """
         from .pos_receipt_dialog import POSReceiptDialog
 
-        self._save()
+        if not self._save():
+            return
         POSReceiptDialog(self, self.job_id).exec()
 
     def _add_payment(self) -> None:
@@ -249,6 +251,8 @@ class BillDialog(QDialog):
             warn(self, "Nothing to add", "Enter the amount received first.")
             return
         bill_id = self._save()
+        if not bill_id:
+            return
         q.add_payment(bill_id, amount, self.pay_mode.currentText())
         self.pay_amount.setValue(0)
         self._load_payments()

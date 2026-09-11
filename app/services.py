@@ -8,6 +8,8 @@ is produced from the job screen, a reprint, or a revision.
 from __future__ import annotations
 
 import re
+import json
+import hashlib
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -136,16 +138,35 @@ def recalculate(job_id: int, typed: Optional[Dict[int, str]] = None) -> Dict[int
     return out
 
 
+def report_fingerprint(job_id: int) -> str:
+    job = q.get_job(job_id) or {}
+    fields = ("name_at_test", "patient_name", "patient_phone", "sex_at_test", "age_at_test", "referrer_name", "remarks")
+    tests = q.job_tests(job_id)
+    results = q.results_for_job(job_id)
+    payload = [[job.get(key) for key in fields],
+               [[t["id"], t.get("name"), t.get("unit"), t.get("not_done"), results.get(t["job_test_id"], {}).get("display_value"),
+                 results.get(t["job_test_id"], {}).get("range_text")] for t in tests]]
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
+
+
+def report_is_approved(job_id: int) -> bool:
+    try:
+        saved = json.loads(q.get_setting(f"report_approval_{job_id}") or "{}")
+    except ValueError:
+        return False
+    return saved.get("fingerprint") == report_fingerprint(job_id)
+
+
 def _refresh_status(job_id: int) -> None:
-    """Move a job between draft / in progress / ready. Never demotes a sent one."""
+    """Ready requires approval of the current report; changed reports need review."""
     job = q.get_job(job_id)
-    if not job or job["status"] == turnaround.STATUS_SENT:
+    if not job or (job["status"] == turnaround.STATUS_SENT and report_is_approved(job_id)):
         return
     complete, _missing = q.job_is_complete(job_id)
     results = q.results_for_job(job_id)
     any_entered = any((r.get("display_value") or "").strip() for r in results.values())
 
-    if complete:
+    if complete and report_is_approved(job_id):
         status = turnaround.STATUS_READY
     elif any_entered:
         status = turnaround.STATUS_IN_PROGRESS
@@ -461,12 +482,22 @@ def verify_job(job_id: int) -> Tuple[bool, List[str], Optional[Path]]:
     Returns (ok, missing_test_names, pdf_path). Nothing is generated while any
     test is neither filled in nor marked not done.
     """
+    job = q.get_job(job_id) or {}
+    details = [("Patient name", job.get("name_at_test") or job.get("patient_name")),
+               ("Mobile", job.get("patient_phone")),
+               ("Sex", job.get("sex_at_test") or job.get("patient_sex"))]
+    missing_details = [label for label, value in details if not str(value or "").strip()]
+    if missing_details:
+        return False, missing_details, None
     recalculate(job_id)
     complete, missing = q.job_is_complete(job_id)
     if not complete:
         return False, missing, None
     path = generate_pdf(job_id)
+    from .core import auth
+    q.set_setting(f"report_approval_{job_id}", json.dumps({"fingerprint": report_fingerprint(job_id), "at": q.now_str(), "by": auth.who()}))
     q.update_job(job_id, status=turnaround.STATUS_READY)
+    q.log_action("report_approved", "job", job_id, auth.who())
     return True, [], path
 
 

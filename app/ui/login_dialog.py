@@ -28,7 +28,7 @@ import platform
 from datetime import datetime
 from typing import Optional
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWidgets import (
     QComboBox, QDialog, QFrame, QGridLayout, QHBoxLayout, QLineEdit,
     QStackedWidget, QVBoxLayout, QWidget,
@@ -66,8 +66,7 @@ class ModernLoginDialog(QDialog):
         lay = QHBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
-        lay.addWidget(self._build_hero(), 55)
-        lay.addWidget(self._build_side(), 45)
+        lay.addWidget(self._build_side())
 
     def _build_hero(self) -> QWidget:
         """The laboratory's own panel: who this is, and how the PC is doing."""
@@ -149,7 +148,8 @@ class ModernLoginDialog(QDialog):
 
         self.card = QFrame()
         self.card.setObjectName("signInCard")
-        self.card.setFixedWidth(420)
+        self.card.setMaximumWidth(460)
+        self.card.setMinimumWidth(360)
         card_lay = QVBoxLayout(self.card)
         card_lay.setContentsMargins(32, 30, 32, 28)
         card_lay.setSpacing(0)
@@ -175,7 +175,12 @@ class ModernLoginDialog(QDialog):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
 
-        lay.addWidget(label("Sign in", "cardtitle"))
+        lay.addWidget(label("LABSOFT", "field"))
+        lab_name = label(q.get_setting("lab_name") or "Laboratory", "hint")
+        lab_name.setWordWrap(True)
+        lay.addWidget(lab_name)
+        lay.addSpacing(18)
+        lay.addWidget(label("Staff sign-in", "cardtitle"))
         self.when = label("", "hint")
         lay.addWidget(self.when)
         lay.addSpacing(22)
@@ -184,6 +189,11 @@ class ModernLoginDialog(QDialog):
         lay.addSpacing(6)
         self.user_combo = QComboBox()
         self.user_combo.setFixedHeight(44)
+        self.user_combo.setAccessibleName("Staff account")
+        self.user_combo.setEditable(True)
+        self.user_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.user_combo.completer().setFilterMode(Qt.MatchFlag.MatchContains)
+        self.user_combo.completer().setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         lay.addWidget(self.user_combo)
         lay.addSpacing(16)
 
@@ -196,7 +206,11 @@ class ModernLoginDialog(QDialog):
         self.pin_edit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.pin_edit.setPlaceholderText("••••")
         self.pin_edit.returnPressed.connect(self._do_sign_in)
+        self.pin_edit.setAccessibleName("PIN")
         lay.addWidget(self.pin_edit)
+        self.show_pin = button("Show PIN", "quiet", self._toggle_pin)
+        self.show_pin.setCheckable(True)
+        lay.addWidget(row(self.show_pin, None))
 
         self.signin_error = label("", "error")
         self.signin_error.setWordWrap(True)
@@ -206,6 +220,7 @@ class ModernLoginDialog(QDialog):
 
         lay.addSpacing(18)
         go = button("Sign in", "primary", self._do_sign_in)
+        self.signin_button = go
         go.setFixedHeight(46)
         lay.addWidget(go)
 
@@ -251,10 +266,15 @@ class ModernLoginDialog(QDialog):
             self.user_combo.addItem(f"{u.display_name or u.username} · {role}",
                                     u.username)
 
-        first_run = not users
+        remembered = QSettings("LabSoft", "LabSoft").value("last_staff", "")
+        index = self.user_combo.findData(remembered)
+        if index >= 0:
+            self.user_combo.setCurrentIndex(index)
+        first_run = not q.list_users(include_inactive=True)
+        self.signin_button.setEnabled(bool(users))
         self.user_combo.setEnabled(not first_run)
         self.pin_edit.setEnabled(not first_run)
-        self.add_account.setText("Create the first account" if first_run
+        self.add_account.setText("Set up your laboratory" if first_run
                                  else "Add a staff account")
         if first_run:
             self.user_combo.addItem("No accounts yet", "")
@@ -278,7 +298,19 @@ class ModernLoginDialog(QDialog):
         if not first_run:
             self.pin_edit.setFocus()
 
+    def _toggle_pin(self) -> None:
+        visible = self.show_pin.isChecked()
+        self.pin_edit.setEchoMode(QLineEdit.EchoMode.Normal if visible else QLineEdit.EchoMode.Password)
+        self.show_pin.setText("Hide PIN" if visible else "Show PIN")
+
     def _do_sign_in(self) -> None:
+        if not self.signin_button.isEnabled():
+            return
+        if self.user_combo.currentText() != self.user_combo.itemText(self.user_combo.currentIndex()):
+            self.signin_error.setText("Choose a staff account from the list.")
+            self.signin_error.show()
+            self.user_combo.setFocus()
+            return
         username = (self.user_combo.currentData() or "").strip()
         pin = self.pin_edit.text().strip()
 
@@ -293,8 +325,20 @@ class ModernLoginDialog(QDialog):
 
         # The only check there is. A PIN either matches the stored hash for
         # this account or it does not, and there is no other way through.
-        user = q.sign_in(username, pin)
+        self.signin_button.setEnabled(False)
+        self.signin_button.setText("Signing in…")
+        try:
+            user = q.sign_in(username, pin)
+        except Exception:
+            self.signin_error.setText("Could not open your account. Try again or contact your administrator.")
+            self.signin_error.show()
+            return
+        finally:
+            self.signin_button.setEnabled(True)
+            self.signin_button.setText("Sign in")
         if user:
+            QSettings("LabSoft", "LabSoft").setValue("last_staff", username)
+            self.pin_edit.clear()
             self.user = user
             auth.set_current(user)
             self.accept()
