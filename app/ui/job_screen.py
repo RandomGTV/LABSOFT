@@ -1007,7 +1007,16 @@ class JobScreen(QWidget):
         return block, inner
 
     # -------------------------------------------------------------- lifecycle
-    def new_job(self) -> None:
+    def new_job(self) -> bool:
+        if self._draft_ready and not self._loading:
+            if not self._write_draft():
+                return False
+            if self.job_id:
+                if not self.save():
+                    return False
+            elif self.name_edit.text().strip() or self.phone_edit.text().strip() or self.remarks_edit.toPlainText().strip():
+                if not confirm(self, "Discard unfinished intake?", "This intake has not been registered. Starting a new job will discard it. Cancel to keep working on it.", "Discard and start new"):
+                    return False
         self._loading = True
         self.job_id = None
         self.patient_id = None
@@ -1126,7 +1135,8 @@ class JobScreen(QWidget):
         them type the name again is how a second record for the same person
         gets created.
         """
-        self.new_job()
+        if self.new_job() is False:
+            return
         self._fill_patient_fields(q.get_patient(patient_id))
 
     def _fill_patient_fields(self, p) -> None:
@@ -1166,8 +1176,6 @@ class JobScreen(QWidget):
                 return
         self._fill_patient_fields(person)
         self.history_button.setEnabled(True)
-        if hasattr(self, 'remarks_edit'):
-            self.remarks_edit.clear()
         self.repeat_row.setVisible(bool(self._previous_test_ids()))
         self.test_search.setFocus()
         self.message.setText(

@@ -1979,8 +1979,15 @@ try {
 }
 let reportJob = null;
 function money(value) { return (Math.round(Math.max(0, Number(value) || 0) * 100) / 100).toFixed(2); }
+function jobRate(job, code) {
+  job.test_rates ||= {};
+  if (!Object.prototype.hasOwnProperty.call(job.test_rates, code)) job.test_rates[code] = Number(TESTS[code]?.rate ?? 100);
+  return job.test_rates[code];
+}
+// Legacy jobs have no historic price data; capture today's catalog once.
+for (const job of [...jobs, activeJob]) for (const code of job.tests || []) jobRate(job, code);
 function billTotals(job) {
-  const grossCents = (job.tests || []).reduce((n,c) => n + Math.round(Number(TESTS[c]?.rate ?? 100) * 100), 0);
+  const grossCents = (job.tests || []).reduce((n,c) => n + Math.round(jobRate(job, c) * 100), 0);
   const discountCents = Math.min(grossCents, Math.round(Math.max(0, Number(job.bill_disc) || 0) * 100));
   const paidCents = Math.round(Math.max(0, Number(job.paid ?? job.bill_paid ?? 0) || 0) * 100);
   return {gross:grossCents/100, discount:discountCents/100, net:(grossCents-discountCents)/100,
@@ -2412,7 +2419,7 @@ function renderJobScreen(container) {
   const isNameSet = activeJob.name.trim().length > 0;
   const ready = total > 0 && done === total && isNameSet;
 
-  const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate ?? 100), 0);
+  const subtotal = activeJob.tests.reduce((acc, code) => acc + jobRate(activeJob, code), 0);
   const discount = billTotals(activeJob).discount;
   const netPayable = Math.max(0, subtotal - discount);
   const paid = billTotals(activeJob).paid;
@@ -2541,15 +2548,15 @@ function renderJobScreen(container) {
           <div class="patient-grid-ui">
             <div>
               <label class="counsel-title" style="font-size:7pt;">Name</label>
-              <input type="text" id="patient-name" class="field-input" value="${activeJob.name}" oninput="activeJob.name=this.value; saveState();" placeholder="Patient name" style="height:32px; font-size:12px;">
+              <input type="text" id="patient-name" class="field-input" value="${uiText(activeJob.name)}" oninput="activeJob.name=this.value; saveState();" placeholder="Patient name" style="height:32px; font-size:12px;">
             </div>
             <div>
               <label class="counsel-title" style="font-size:7pt;">Initial</label>
-              <input type="text" class="field-input" value="${activeJob.initial}" oninput="activeJob.initial=this.value; saveState();" placeholder="M" maxlength="4" style="height:32px; font-size:12px; max-width:84px;">
+              <input type="text" class="field-input" value="${uiText(activeJob.initial)}" oninput="activeJob.initial=this.value; saveState();" placeholder="M" maxlength="4" style="height:32px; font-size:12px; max-width:84px;">
             </div>
             <div>
               <label class="counsel-title" style="font-size:7pt;">Mobile</label>
-              <input type="text" id="patient-mobile" class="field-input" value="${activeJob.mobile}" oninput="activeJob.mobile=this.value; saveState();" placeholder="Mobile number" style="height:32px; font-size:12px;">
+              <input type="text" id="patient-mobile" class="field-input" value="${uiText(activeJob.mobile)}" oninput="activeJob.mobile=this.value; saveState();" placeholder="Mobile number" style="height:32px; font-size:12px;">
             </div>
             <div>
               <label class="counsel-title" style="font-size:7pt;">Sex</label>
@@ -2662,7 +2669,7 @@ function renderJobScreen(container) {
 
         <div class="counsel-section">
           <span class="counsel-title">Clinical Remarks & Smear Impression</span>
-          <textarea class="field-input" rows="4" style="width:100%; font-size:12px; font-family:inherit; resize:vertical; background:#FFFFFF; border:1.5px solid #CBD5E1;" placeholder="Enter clinical notes..." oninput="activeJob.clinical_notes=this.value; saveState();">${activeJob.clinical_notes || ''}</textarea>
+          <textarea class="field-input" rows="4" style="width:100%; font-size:12px; font-family:inherit; resize:vertical; background:#FFFFFF; border:1.5px solid #CBD5E1;" placeholder="Enter clinical notes..." oninput="activeJob.clinical_notes=this.value; saveState();">${uiText(activeJob.clinical_notes || '')}</textarea>
         </div>
 
         <div class="counsel-section">
@@ -2705,12 +2712,12 @@ function updateJobNotes() {
 
   if (missing.length) {
     box.innerHTML = `
-      <div style="color:var(--text-muted);">Prints as: <b>${activeJob.name || '…'} .${activeJob.initial}.</b></div>
+      <div style="color:var(--text-muted);">Prints as: <b>${uiText(activeJob.name || '…')} .${uiText(activeJob.initial)}.</b></div>
       <div style="color:var(--accent-amber); font-weight:700;">Still needed: ${missing.join(", ")}</div>
     `;
   } else {
     box.innerHTML = `
-      <div style="color:var(--text-muted);">Prints as: <b>${activeJob.name} .${activeJob.initial}.</b></div>
+      <div style="color:var(--text-muted);">Prints as: <b>${uiText(activeJob.name)} .${uiText(activeJob.initial)}.</b></div>
       <div style="color:var(--accent-green); font-weight:700;"> Patient details complete</div>
     `;
   }
@@ -3003,10 +3010,19 @@ function verifyAndCompleteJob() { reportJob=activeJob; approveReport(); }
 function recordDelivery(state) {
   if (state === 'confirmed' && !confirm('Have you confirmed that the patient received this report? Opening WhatsApp alone does not confirm delivery.')) return false;
   if (!reportJob || !reportApproved(reportJob)) return false;
+  const previousActive = activeJob;
+  const previousReport = JSON.parse(JSON.stringify(reportJob));
+  const previousJobs = JSON.parse(JSON.stringify(jobs));
   reportJob.delivery_state = state;
   reportJob.delivery_events = [...(reportJob.delivery_events || []), {state,at:new Date().toISOString(),by:currentUser?.name || 'Demo user'}];
   activeJob = reportJob;
-  if (!saveState()) return false;
+  if (!saveState()) {
+    Object.keys(reportJob).forEach(key => delete reportJob[key]);
+    Object.assign(reportJob, previousReport);
+    activeJob = previousActive;
+    jobs = previousJobs;
+    return false;
+  }
   const status = document.getElementById('delivery-status');
   if (status) status.textContent = state === 'confirmed' ? 'Delivery confirmed by staff (not a WhatsApp receipt).' : state === 'failed' ? 'Delivery reported failed. Retry when ready.' : 'WhatsApp handoff attempted. Delivery is not confirmed.';
   return true;
@@ -3102,8 +3118,8 @@ function renderQueueScreen(container) {
               <tr data-job-index="${index}" style="border-bottom:1px solid var(--border-subtle);">
                 <td style="padding:10px 14px; font-weight:800; font-size:13.5px;">${j.report_no}</td>
                 <td style="padding:10px 14px;">
-                  <div style="font-weight:700; font-size:13.5px;">${j.name} .${j.initial}.</div>
-                  <div style="font-size:11px; color:var(--text-muted);">${j.mobile} · ${j.sex}</div>
+                  <div style="font-weight:700; font-size:13.5px;">${uiText(j.name)} .${uiText(j.initial)}.</div>
+                  <div style="font-size:11px; color:var(--text-muted);">${uiText(j.mobile)} · ${j.sex}</div>
                 </td>
                 <td style="padding:10px 14px; font-size:12px; color:var(--text-muted);">${j.tests.join(", ")}<br><small>${j.tests.length - jobReadiness(j).missing.length}/${j.tests.length} results entered</small></td>
                 <td style="padding:10px 14px; font-size:12px;">${j.date}</td>
@@ -3164,109 +3180,66 @@ function filterQueueLive(query) {
    03. Patients Registry Screen (Split View & Folder on Disk)
    -------------------------------------------------------------------------- */
 
-function renderPatientsScreen(container) {
-  container.innerHTML = `
-    <div style="flex:1; display:flex; min-height:0;">
-      <!-- Left Patient List -->
-      <div style="width:360px; background:var(--surface); border-right:2px solid var(--border); display:flex; flex-direction:column;">
-        <div style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
-          <div style="display:flex; align-items:baseline; margin-bottom:10px;">
-            <div style="font-size:12.5px; font-weight:700; letter-spacing:0; text-transform:none;">Patients Registry</div>
-            <div style="margin-left:auto; font-size:11px; color:var(--text-muted);">${jobs.length} records</div>
-          </div>
-          <input type="text" class="field-input" placeholder="Search patient by name or phone…">
-        </div>
-        <div style="flex:1; overflow:auto;"> ${jobs.length === 0 ? '<div style="padding:30px; text-align:center; color:var(--text-muted);">No patients registered yet.</div>' :
-            jobs.map((p, i) => `
-              <div style="padding:12px 16px; border-bottom:1px solid var(--border-subtle); cursor:pointer; background:${i===0?'var(--surface-alt)':'transparent'}; box-shadow:${i===0?'inset 4px 0 0 0 var(--accent-red)':'none'};" onclick="selectPatientCard('${p.id}')">
-                <div style="display:flex; align-items:baseline; gap:8px;">
-                  <div style="font-size:13.5px; font-weight:700;">${p.name} .${p.initial}.</div>
-                  <div style="margin-left:auto; font-size:11px; color:var(--text-dim);">${p.date}</div>
-                </div>
-                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${p.mobile} · ${p.sex} (${p.age} ${p.age_unit})</div>
-              </div>
-            `).join("")
-          }
-        </div>
-      </div>
-
-      <!-- Right Patient Folder Details -->
-      <div style="flex:1; display:flex; flex-direction:column; min-width:0; background:var(--surface);"> ${jobs.length === 0 ? '<div style="padding:60px; text-align:center; color:var(--text-muted);">Select or register a patient.</div>' : `
-          <div style="padding:18px 22px; border-bottom:2px solid var(--border);">
-            <div style="display:flex; align-items:flex-start; gap:16px;">
-              <div>
-                <div style="font-size:28px; font-weight:800; letter-spacing:-.025em; line-height:1.1;">${jobs[0].name} .${jobs[0].initial}.</div>
-                <div style="font-size:12.5px; color:var(--text-muted); margin-top:4px;">${jobs[0].sex} · ${jobs[0].age} ${jobs[0].age_unit} · ${jobs[0].mobile} · Ref: ${jobs[0].referrer}</div>
-              </div>
-              <div style="margin-left:auto; display:flex; gap:9px;">
-                <button class="btn-m" onclick="activeJob=JSON.parse(JSON.stringify(jobs[0])); setTab('job');">Edit Details</button>
-                <button class="btn-m primary" onclick="newJobForPatient(jobs[0])">New job for patient</button>
-              </div>
-            </div>
-          </div>
-
-          <div style="flex:1; display:flex; min-height:0;">
-            <div style="flex:1; border-right:1px solid var(--border-light); display:flex; flex-direction:column;">
-              <div style="height:34px; display:flex; align-items:center; padding:0 18px; border-bottom:2px solid var(--border); gap:10px; background:var(--surface-alt);">
-                <div style="font-size:12px; font-weight:700; letter-spacing:0; text-transform:none;">Patient Visits on Disk</div>
-                <div style="font-size:10px; color:var(--text-dim);">patients/${jobs[0].name.replace(/\\s+/g, '_')}/</div>
-              </div>
-              <div style="flex:1; overflow:auto;"> ${jobs.map(v => `
-                  <div style="display:grid; grid-template-columns:100px 1fr 140px 100px; gap:12px; align-items:center; padding:10px 18px; border-bottom:1px solid var(--border-subtle);">
-                    <div style="font-size:12px; font-weight:700;">${v.date}</div>
-                    <div>
-                      <div style="font-size:13px; font-weight:600;">Report #${v.report_no}</div>
-                      <div style="font-size:11px; color:var(--text-muted);">${v.tests.join(", ")}</div>
-                    </div>
-                    <div><span class="status-pill sp-${v.status}">${v.status}</span></div>
-                    <div style="text-align:right;">
-                      <button class="btn-m" onclick="openReportPreview(v)">View PDF</button>
-                    </div>
-                  </div>
-                `).join("")}
-              </div>
-            </div>
-
-            <!-- Haemoglobin / HbA1c Trend Widget -->
-            <div style="width:280px; background:var(--bg); padding:16px;">
-              <div style="font-size:12.5px; font-weight:700; letter-spacing:0; text-transform:none; margin-bottom:12px;">Glycemic / Hb Trend</div>
-              <div style="display:flex; align-items:flex-end; gap:10px; height:120px; border-bottom:2px solid var(--border); padding-bottom:6px;">
-                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
-                  <span style="font-size:10px; font-weight:800;">11.2</span>
-                  <div style="width:100%; height:75px; background:var(--accent-red);"></div>
-                  <span style="font-size:9px; color:var(--text-muted);">Feb</span>
-                </div>
-                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
-                  <span style="font-size:10px; font-weight:800;">10.5</span>
-                  <div style="width:100%; height:65px; background:var(--accent-red);"></div>
-                  <span style="font-size:9px; color:var(--text-muted);">Apr</span>
-                </div>
-                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
-                  <span style="font-size:10px; font-weight:800;">9.8</span>
-                  <div style="width:100%; height:55px; background:var(--accent-amber);"></div>
-                  <span style="font-size:9px; color:var(--text-muted);">Aug</span>
-                </div>
-              </div>
-              <div style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.45;"> Screen trend comparison. Helps clinicians assess glycemic response over time.
-              </div>
-            </div>
-          </div>
-        `}
-      </div>
-    </div>
-  `;
+let selectedPatientRecord = null;
+let patientRegistrySearch = '';
+function selectPatientCard(id) {
+  selectedPatientRecord = String(id);
+  render();
 }
-
+function filterPatientRegistry(value) {
+  patientRegistrySearch = value;
+  let count = 0;
+  document.querySelectorAll('[data-patient-record]').forEach(card => {
+    card.hidden = !card.textContent.toLowerCase().includes(value.trim().toLowerCase());
+    if (!card.hidden) count++;
+  });
+  document.getElementById('patient-search-status').textContent = count ? `${count} matching records` : 'No matching records. Try another name or mobile.';
+}
+function openPatientRecord(id) {
+  const job = jobs.find(j => String(j.id) === String(id));
+  if (!job || !saveState()) return false;
+  const previous = activeJob;
+  activeJob = JSON.parse(JSON.stringify(job));
+  if (!saveState()) { activeJob = previous; return false; }
+  currentTab = 'job'; render(); return true;
+}
+function renderPatientsScreen(container) {
+  const selected = jobs.find(j => String(j.id) === selectedPatientRecord) || jobs[0];
+  selectedPatientRecord = selected ? String(selected.id) : null;
+  container.innerHTML = `<style>
+    .patient-registry{display:grid;grid-template-columns:minmax(240px,320px) minmax(0,1fr);gap:20px;align-items:start}
+    .patient-record-card{display:block;width:100%;text-align:left;padding:14px;margin-bottom:8px;white-space:normal}
+    .patient-record-card[hidden]{display:none}
+    .patient-record-detail{padding:20px;background:var(--panel);border:1px solid var(--line-2);border-radius:12px;overflow-wrap:anywhere}
+    @media(max-width:900px){.patient-registry{grid-template-columns:minmax(0,1fr)}}
+    </style><div class="patient-registry">
+    <section aria-label="Patient records"><h2>Patient records</h2>
+    <label for="patient-registry-search">Search by name or mobile</label>
+    <input id="patient-registry-search" class="field-input" type="search" oninput="filterPatientRegistry(this.value)">
+    <p id="patient-search-status" role="status"></p>
+    ${jobs.map((p,i) => `<button class="btn-m patient-record-card" data-patient-record aria-pressed="${String(p.id) === selectedPatientRecord}" onclick="selectPatientCard(jobs[${i}].id)">
+      <strong>${uiText(p.name)} ${uiText(p.initial || '')}</strong><br>${uiText(p.mobile)} · ${uiText(p.date)}<br>Report ${uiText(p.report_no)}</button>`).join('')}
+    </section><section class="patient-record-detail" aria-label="Selected patient record">
+    ${selected ? `<h2>${uiText(selected.name)}</h2><p>${uiText(selected.mobile)} · ${uiText(selected.sex)} · ${uiText(selected.age)} ${uiText(selected.age_unit)}</p>
+    <p>Report ${uiText(selected.report_no)} · ${uiText(selected.date)}</p>
+    <p>Showing this visit only. Possible matches are available in the job workspace; shared names or phone numbers do not establish patient identity.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn-m" onclick="openPatientRecord(selectedPatientRecord)">Edit details</button>
+    <button class="btn-m primary" onclick="newJobForPatient(jobs.find(j=>String(j.id)===selectedPatientRecord))">New job for patient</button>
+    <button class="btn-m" onclick="openReportPreview(jobs.find(j=>String(j.id)===selectedPatientRecord))">Report preview</button></div>
+    <h3>Recorded results</h3><ul>${selected.tests.map(code=>`<li>${uiText(TESTS[code]?.n || code)}: ${uiText(selected.results[code] ?? 'Not entered')} ${uiText(TESTS[code]?.u || '')}</li>`).join('')}</ul>
+    <p>Cross-visit trends require confirmed patient linkage.</p>` : '<p>No patient records yet. Register a patient in the Job workspace.</p>'}
+    </section></div>`;
+  document.getElementById('patient-registry-search').value = patientRegistrySearch;
+  filterPatientRegistry(patientRegistrySearch);
+}
 function newJobForPatient(p) {
-  activeJob = createEmptyJob();
-  activeJob.name = p.name;
-  activeJob.initial = p.initial;
-  activeJob.mobile = p.mobile;
-  activeJob.sex = p.sex;
-  activeJob.age = p.age;
-  activeJob.age_unit = p.age_unit;
-  activeJob.referrer = p.referrer;
-  setTab('job');
+  if (!p || !saveState()) return false;
+  const previous = activeJob;
+  const next = createEmptyJob();
+  for (const key of ['name','initial','mobile','sex','age','age_unit','referrer']) next[key] = p[key];
+  activeJob = next;
+  if (!saveState()) { activeJob = previous; return false; }
+  currentTab = 'job'; render(); return true;
 }
 
 /* --------------------------------------------------------------------------
@@ -3327,7 +3300,7 @@ function openAddDoctorModal() {
     <button class="btn-m primary" onclick="saveNewDoctor()">Save Doctor</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
-  document.getElementById("modal-container").classList.add("open");
+  showModal();
 }
 
 function saveNewDoctor() {
@@ -3406,7 +3379,7 @@ function renderBillingScreen(container) {
             jobs.map(j => `
               <tr style="border-bottom:1px solid var(--border-subtle);">
                 <td style="padding:10px 14px; font-weight:800;">${j.report_no}</td>
-                <td style="padding:10px 14px; font-weight:700;">${j.name} .${j.initial}.</td>
+                <td style="padding:10px 14px; font-weight:700;">${uiText(j.name)} .${uiText(j.initial)}.</td>
                 <td style="padding:10px 14px; font-size:12px; color:var(--text-muted);">${j.tests.length} tests</td>
                 <td style="padding:10px 14px; font-weight:800;">₹ ${money(billTotals(j).paid)}</td>
                 <td style="padding:10px 14px;">${j.bill_mode || 'Cash'}</td>
@@ -3585,7 +3558,7 @@ function openAddStaffModal() {
     <button class="btn-m primary" onclick="saveNewStaff()">Save Staff</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
-  document.getElementById("modal-container").classList.add("open");
+  showModal();
 }
 
 function saveNewStaff() {
@@ -3898,7 +3871,7 @@ function openReportPreview(job) {
       <div class="meta-row"><span class="meta-k">Barcode / UHID:</span><span class="meta-v"><b>${job.barcode || ('SMP-' + job.report_no)}</b> / ${job.uhid || ('UHID-' + job.report_no)}</span></div>
       <div class="meta-row"><span class="meta-k">Date:</span><span class="meta-v">${job.date}</span></div>
 
-      <div class="meta-row"><span class="meta-k">Patient Name:</span><span class="meta-v"><b>${job.name} .${job.initial}.</b></span></div>
+      <div class="meta-row"><span class="meta-k">Patient Name:</span><span class="meta-v"><b>${uiText(job.name)} .${uiText(job.initial)}.</b></span></div>
       <div class="meta-row"><span class="meta-k">Age / Sex:</span><span class="meta-v">${job.age} ${job.age_unit} / <b>${job.sex}</b></span></div>
       <div class="meta-row"><span class="meta-k">Sample Specimen:</span><span class="meta-v"><b>${job.specimen || 'Serum'}</b></span></div>
 
@@ -3937,7 +3910,7 @@ function openReportPreview(job) {
   const clinicalNotesBlock = job.clinical_notes ? `
     <div style="margin-top:10px; border:1px solid #c9dff7; background:#f8fafc; padding:8px 12px; font-size:11px; line-height:1.4;">
       <div style="font-weight:700; color:#0A3668; text-transform:none; margin-bottom:3px;">Clinical Remarks / Impression:</div>
-      <div style="color:#334155; white-space:pre-line;">${job.clinical_notes}</div>
+      <div style="color:#334155; white-space:pre-line;">${uiText(job.clinical_notes)}</div>
     </div>
   ` : '';
 
@@ -3997,7 +3970,7 @@ function openReportPreview(job) {
     pagesHTML += `
       <div class="report-page"> ${getLetterheadHTML()}
         <div style="display:flex; justify-content:space-between; align-items:center; background:#f0f7ff; border:1px solid #c9dff7; padding:6px 12px; margin-bottom:10px; font-size:11px;">
-          <span><b>Patient:</b> ${job.name} .${job.initial}. (${job.age} ${job.age_unit} / ${job.sex})</span>
+          <span><b>Patient:</b> ${uiText(job.name)} .${uiText(job.initial)}. (${job.age} ${job.age_unit} / ${job.sex})</span>
           <span><b>Report No:</b> #${job.report_no}</span>
           <span style="font-weight:700; color:#0E4D92;">Page 2 of 2</span>
         </div>
@@ -4041,7 +4014,7 @@ function openReportPreview(job) {
     `;
   }
 
-  document.getElementById("modal-dialog-title").textContent = `Official Diagnostic Report — #${job.report_no} ${job.name} .${job.initial}.`;
+  document.getElementById("modal-dialog-title").textContent = `Official Diagnostic Report — #${job.report_no} ${uiText(job.name)} .${uiText(job.initial)}.`;
   document.getElementById("modal-dialog-body").className = "modal-dialog-body";
   document.getElementById("modal-dialog-body").innerHTML = `<div style="padding:12px;color:#141719;background:white;font-weight:700;">${reportApproved(job) ? "Approved for delivery" : "DRAFT — not approved for delivery"}</div>` + pagesHTML;
   document.getElementById("modal-dialog-footer").innerHTML = `
@@ -4050,7 +4023,7 @@ function openReportPreview(job) {
     <button class="btn-m" onclick="openWhatsAppDispatchModal(reportJob)" ${reportApproved(job)?'':'disabled'}>WhatsApp Dispatch</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
-  document.getElementById("modal-container").classList.add("open");
+  showModal();
 }
 
 function openWhatsAppDispatchModal(job) {
@@ -4062,7 +4035,7 @@ function openWhatsAppDispatchModal(job) {
     return `• *${t?.n || c}:* ${val} ${t?.u || ''}`;
   }).join("\n");
 
-  const msg = `*NEW MITHRA MEDICAL LABORATORY*\n*Diagnostic Investigation Report*\n━━━━━━━━━━━━━━━━━━━━\n*Patient:* ${job.name} .${job.initial}.\n*Report No:* #${job.report_no}\n*Date:* ${job.date}\n*Sample Specimen:* ${job.specimen || 'Serum'}\n*Ref by:* ${job.referrer || 'Self'}\n━━━━━━━━━━━━━━━━━━━━\n*INVESTIGATION RESULTS:*\n${resultSummary}\n━━━━━━━━━━━━━━━━━━━━\n _Official digital report generated & verified._\nSample Road, Sample Town\n+91 00000 00000`;
+  const msg = `*NEW MITHRA MEDICAL LABORATORY*\n*Diagnostic Investigation Report*\n━━━━━━━━━━━━━━━━━━━━\n*Patient:* ${uiText(job.name)} .${uiText(job.initial)}.\n*Report No:* #${job.report_no}\n*Date:* ${job.date}\n*Sample Specimen:* ${job.specimen || 'Serum'}\n*Ref by:* ${job.referrer || 'Self'}\n━━━━━━━━━━━━━━━━━━━━\n*INVESTIGATION RESULTS:*\n${resultSummary}\n━━━━━━━━━━━━━━━━━━━━\n _Official digital report generated & verified._\nSample Road, Sample Town\n+91 00000 00000`;
 
   const cleanPhone = job.mobile.replace(/\D/g, "");
   const targetPhone = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
@@ -4074,7 +4047,7 @@ function openWhatsAppDispatchModal(job) {
         <span style="font-size:28px;"></span>
         <div>
           <h3 style="margin:0; color:#FFF; font-size:16px; font-weight:800;">WhatsApp Report Dispatch</h3>
-          <div style="font-size:12px; color:#E0F2F1;">Sending to: <b>+${targetPhone}</b> (${job.name} .${job.initial}.)</div>
+          <div style="font-size:12px; color:#E0F2F1;">Sending to: <b>+${targetPhone}</b> (${uiText(job.name)} .${uiText(job.initial)}.)</div>
         </div>
       </div>
 
@@ -4108,7 +4081,7 @@ function openWhatsAppDispatchModal(job) {
     <button class="btn-m" onclick="recordDelivery('failed')">Delivery failed</button>
     <button class="btn-m" onclick="closeModal()">Close</button>
   `;
-  document.getElementById("modal-container").classList.add("open");
+  showModal();
 }
 
 function openBillModal() {
@@ -4128,7 +4101,7 @@ function openBillModal() {
     <button class="btn-m" onclick="if(saveBill())printPOSReceipt()">Save & preview counter slip</button>
     <button class="btn-m" onclick="closeModal()">Close</button>`;
   updateBillPreview();
-  document.getElementById('modal-container').classList.add('open');
+  showModal();
 }
 function updateBillPreview() {
   const draft = {...activeJob, bill_disc:document.getElementById('bill-discount').value, paid:document.getElementById('bill-received').value};
@@ -4149,7 +4122,7 @@ function saveBill() {
 }
 
 function printA4Invoice() {
-  const subtotal = activeJob.tests.reduce((acc, code) => acc + (TESTS[code]?.rate ?? 100), 0);
+  const subtotal = activeJob.tests.reduce((acc, code) => acc + jobRate(activeJob, code), 0);
   const disc = billTotals(activeJob).discount;
   const net = Math.max(0, subtotal - disc);
 
@@ -4169,9 +4142,9 @@ function printA4Invoice() {
       </div>
 
       <div class="meta-grid" style="margin:16px 0; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0;">
-        <div class="meta-row"><span class="meta-k">Patient Name:</span><span class="meta-v"><b>${activeJob.name} .${activeJob.initial}.</b></span></div>
+        <div class="meta-row"><span class="meta-k">Patient Name:</span><span class="meta-v"><b>${uiText(activeJob.name)} .${uiText(activeJob.initial)}.</b></span></div>
         <div class="meta-row"><span class="meta-k">Age / Sex:</span><span class="meta-v">${activeJob.age} ${activeJob.age_unit} / ${activeJob.sex}</span></div>
-        <div class="meta-row"><span class="meta-k">Mobile:</span><span class="meta-v">${activeJob.mobile}</span></div>
+        <div class="meta-row"><span class="meta-k">Mobile:</span><span class="meta-v">${uiText(activeJob.mobile)}</span></div>
         <div class="meta-row"><span class="meta-k">Ref. Doctor:</span><span class="meta-v">${activeJob.referrer || 'Self'}</span></div>
         <div class="meta-row"><span class="meta-k">Payment Mode:</span><span class="meta-v"><b>${activeJob.bill_mode || 'Cash'}</b></span></div>
         <div class="meta-row"><span class="meta-k">Status:</span><span class="meta-v" style="color:#16a34a; font-weight:800;">PAID IN FULL</span></div>
@@ -4191,7 +4164,7 @@ function printA4Invoice() {
               <td style="padding:8px 10px;">${i + 1}</td>
               <td style="padding:8px 10px; font-weight:600;">${TESTS[c]?.n || c}</td>
               <td style="padding:8px 10px; color:#64748b;">999312 (Pathology)</td>
-              <td style="padding:8px 10px; text-align:right; font-weight:700;">₹ ${(TESTS[c]?.rate ?? 100).toFixed(2)}</td>
+              <td style="padding:8px 10px; text-align:right; font-weight:700;">₹ ${jobRate(activeJob, c).toFixed(2)}</td>
             </tr>
           `).join("")}
           <tr style="border-top:2px solid #0A3668; font-weight:700;"><td colspan="3" style="padding:8px 10px;">Gross Total</td><td style="padding:8px 10px; text-align:right;">₹ ${subtotal.toFixed(2)}</td></tr>
@@ -4238,9 +4211,9 @@ function printPOSReceipt() {
       </div>
       <div>Receipt No: #${activeJob.report_no}</div>
       <div>Date: ${activeJob.date}</div>
-      <div>Patient: ${activeJob.name} .${activeJob.initial}.</div>
-      <div>Mobile: ${activeJob.mobile}</div>
-      ----------------------------------------<br> ${activeJob.tests.map(c => `<div>${(TESTS[c]?.n||c).slice(0,20).padEnd(20, ' ')} ₹${TESTS[c]?.rate ?? 100}.00</div>`).join("")}
+      <div>Patient: ${uiText(activeJob.name)} .${uiText(activeJob.initial)}.</div>
+      <div>Mobile: ${uiText(activeJob.mobile)}</div>
+      ----------------------------------------<br> ${activeJob.tests.map(c => `<div>${(TESTS[c]?.n||c).slice(0,20).padEnd(20, ' ')} ₹${money(jobRate(activeJob, c))}</div>`).join("")}
       ----------------------------------------<br>
       <div><b>NET: ₹ ${money(billTotals(activeJob).net)}</b></div><div>PAID: ₹ ${money(billTotals(activeJob).paid)}</div><div>BALANCE: ₹ ${money(billTotals(activeJob).due)}</div>
       <div>Payment Mode: ${activeJob.bill_mode || 'Cash'}</div>
@@ -4304,12 +4277,36 @@ function showAbout() {
   document.getElementById("modal-dialog-footer").innerHTML = `
     <button class="btn-m primary" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
-  document.getElementById("modal-container").classList.add("open");
+  showModal();
 }
 
-function closeModal() {
-  document.getElementById("modal-container").classList.remove("open");
+let modalReturnFocus = null;
+function showModal() {
+  const modal = document.getElementById('modal-container');
+  if (!modal.classList.contains('open')) modalReturnFocus = document.activeElement;
+  modal.classList.add('open');
+  const box = modal.querySelector('.modal-dialog-box');
+  box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true');
+  box.setAttribute('aria-labelledby','modal-dialog-title'); box.tabIndex = -1;
+  (modal.querySelector('input:not([disabled]),select:not([disabled]),textarea:not([disabled])') || box).focus();
 }
+function closeModal() {
+  document.getElementById('modal-container').classList.remove('open');
+  if (modalReturnFocus?.isConnected) modalReturnFocus.focus();
+  modalReturnFocus = null;
+}
+document.addEventListener('keydown', event => {
+  const modal = document.getElementById('modal-container');
+  if (!modal.classList.contains('open')) return;
+  if (event.key === 'Escape') {event.preventDefault();event.stopImmediatePropagation();closeModal();return;}
+  if (/^F\d+$/.test(event.key)) {event.preventDefault();event.stopImmediatePropagation();return;}
+  if (event.key !== 'Tab') return;
+  const items = [...modal.querySelectorAll('button,input,select,textarea,a[href],[tabindex="0"]')].filter(e=>!e.disabled && e.getClientRects().length);
+  if (!items.length) {event.preventDefault();return;}
+  const index = items.indexOf(document.activeElement);
+  if (event.shiftKey && index <= 0) {event.preventDefault();items.at(-1).focus();}
+  else if (!event.shiftKey && (index < 0 || index === items.length-1)) {event.preventDefault();items[0].focus();}
+}, true);
 
 // Initial boot
 render();
@@ -4408,7 +4405,7 @@ function openTubeLabelModal(job) {
     <button class="btn-m primary" onclick="window.print()">Print Label Sticker</button>
     <button class="btn-m" style="margin-left:auto;" onclick="closeModal()">Close</button>
   `;
-  document.getElementById("modal-container").classList.add("open");
+  showModal();
 }
 
 /* --------------------------------------------------------------------------
@@ -4433,7 +4430,7 @@ function openPOSReceiptModal(job) {
           <b style="font-size:10px;">CASH RECEIPT</b><br>
           ------------------------------------
         </div>
-        <div style="margin:6px 0; font-size:10px;"> Bill No: <b>#${job.id || '101'}</b><br> Date   : ${new Date().toLocaleString()}<br> Patient: <b>${job.name || 'PATIENT'} .${job.initial || ''}.</b> (${job.age || ''} ${job.age_unit || ''}/${job.sex || ''})<br> Ref By : ${job.referrer || 'SELF / DIRECT'}<br>
+        <div style="margin:6px 0; font-size:10px;"> Bill No: <b>#${job.id || '101'}</b><br> Date   : ${new Date().toLocaleString()}<br> Patient: <b>${uiText(job.name || 'PATIENT')} .${uiText(job.initial || '')}.</b> (${job.age || ''} ${job.age_unit || ''}/${job.sex || ''})<br> Ref By : ${job.referrer || 'SELF / DIRECT'}<br>
           ------------------------------------
         </div>
         <table style="width:100%; font-family:monospace; font-size:10.5px; border-collapse:collapse;">
@@ -4455,7 +4452,7 @@ function openPOSReceiptModal(job) {
     <button class="btn-m" onclick="closeModal()">Close</button>
     <button class="btn-m primary" onclick="printReceiptDirect()">${getIcon('printer', 14, '#fff')} Print 80mm Receipt</button>
   `;
-  document.getElementById("modal-container").classList.add("open");
+  showModal();
 }
 
 function printReceiptDirect() {
